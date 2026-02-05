@@ -1,11 +1,18 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import Sidebar from '@/components/Sidebar'
-import { Plus, Download, Trash2, Edit2, Network as NetIcon, ChevronRight, LayoutGrid, List, Laptop, Server, Cpu, Database } from 'lucide-react'
+import Sidebar, { ViewType } from '@/components/Sidebar'
+import DashboardView from '@/components/DashboardView'
+import IPPlannerView from '@/components/IPPlannerView'
+import VLANView from '@/components/VLANView'
+import TopologyView from '@/components/TopologyView'
+import ServicesView from '@/components/ServicesView'
+import ChangelogView from '@/components/ChangelogView'
+import { Plus, Download, Trash2, Edit2, Network as NetIcon, ChevronRight, Laptop, Server, Cpu, Database } from 'lucide-react'
 import { Device } from '@/types'
 
 export default function Home() {
+  const [activeView, setActiveView] = useState<ViewType>('dashboard')
   const [devices, setDevices] = useState<Device[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -13,16 +20,16 @@ export default function Home() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [deviceToDelete, setDeviceToDelete] = useState<string | null>(null)
   const [editingDevice, setEditingDevice] = useState<Device | null>(null)
-  const [viewMode, setViewMode] = useState<'table' | 'planner'>('table')
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
 
-  // Form state
   const [formData, setFormData] = useState({
     name: '',
     macAddress: '',
     ipAddress: '',
     category: 'Server',
-    notes: ''
+    notes: '',
+    platform: '',
+    status: 'active',
   })
 
   useEffect(() => {
@@ -44,8 +51,6 @@ export default function Home() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
-    // Simple validation
     if (!formData.ipAddress.match(/^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/)) {
       alert('Invalid IP Address format')
       return
@@ -63,7 +68,7 @@ export default function Home() {
       if (res.ok) {
         setIsModalOpen(false)
         setEditingDevice(null)
-        setFormData({ name: '', macAddress: '', ipAddress: '', category: 'Server', notes: '' })
+        setFormData({ name: '', macAddress: '', ipAddress: '', category: 'Server', notes: '', platform: '', status: 'active' })
         await fetchDevices()
       } else {
         const err = await res.json()
@@ -71,7 +76,6 @@ export default function Home() {
       }
     } catch (err) {
       console.error(err)
-      alert('An error occurred. Please check console.')
     }
   }
 
@@ -88,8 +92,6 @@ export default function Home() {
         setIsDeleteModalOpen(false)
         setDeviceToDelete(null)
         await fetchDevices()
-      } else {
-        alert('Failed to delete device')
       }
     } catch (err) {
       console.error(err)
@@ -103,179 +105,169 @@ export default function Home() {
       macAddress: device.macAddress,
       ipAddress: device.ipAddress,
       category: device.category,
-      notes: device.notes || ''
+      notes: device.notes || '',
+      platform: device.platform || '',
+      status: device.status || 'active',
     })
     setIsModalOpen(true)
   }
 
+  const openAddWithIp = (ip: string) => {
+    setEditingDevice(null)
+    setFormData({ name: '', macAddress: '', ipAddress: ip, category: 'Server', notes: '', platform: '', status: 'active' })
+    setIsModalOpen(true)
+  }
+
   const exportData = () => {
-    try {
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(devices, null, 2))
-      const downloadAnchorNode = document.createElement('a')
-      downloadAnchorNode.setAttribute("href", dataStr)
-      downloadAnchorNode.setAttribute("download", `homelab_net_plan_${new Date().toISOString().split('T')[0]}.json`)
-      document.body.appendChild(downloadAnchorNode)
-      downloadAnchorNode.click()
-      downloadAnchorNode.remove()
-    } catch (err) {
-      console.error('Export failed:', err)
-    }
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(devices, null, 2))
+    const a = document.createElement('a')
+    a.setAttribute("href", dataStr)
+    a.setAttribute("download", `homelab_export_${new Date().toISOString().split('T')[0]}.json`)
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
   }
 
   const filteredDevices = useMemo(() => {
     return devices.filter(d => {
       const matchesSearch = d.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         d.ipAddress.includes(searchTerm) ||
-        d.macAddress.toLowerCase().includes(searchTerm.toLowerCase())
-      
+        d.macAddress.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (d.platform || '').toLowerCase().includes(searchTerm.toLowerCase())
       const matchesCategory = selectedCategory ? d.category === selectedCategory : true
-      
       return matchesSearch && matchesCategory
     })
   }, [devices, searchTerm, selectedCategory])
 
-  const stats = useMemo(() => [
-    { label: 'Total Clients', value: devices.length },
-    { label: 'Networking', value: devices.filter(d => d.category === 'Networking').length },
-    { label: 'VMs & Containers', value: devices.filter(d => ['VM', 'LXC'].includes(d.category)).length },
-    { label: 'Active Subnet', value: '10.0.10.0/24' }
-  ], [devices])
+  const viewTitles: Record<ViewType, string> = {
+    dashboard: 'Dashboard',
+    devices: 'Devices',
+    ipam: 'IP Address Management',
+    vlans: 'VLAN Management',
+    topology: 'Network Topology',
+    services: 'Services',
+    changelog: 'Change Log',
+  }
 
-  // IP Planner Cells (0-255)
-  const ipPlannerCells = useMemo(() => {
-    const cells = []
-    const occupiedIps = new Set(devices.map(d => parseInt(d.ipAddress.split('.').pop() || '0')))
-    
-    for (let i = 0; i < 256; i++) {
-      const isOccupied = occupiedIps.has(i)
-      const isGateway = i === 1
-      cells.push({
-        num: i,
-        status: isGateway ? 'gateway' : isOccupied ? 'occupied' : 'empty',
-        device: devices.find(d => parseInt(d.ipAddress.split('.').pop() || '0') === i)
-      })
-    }
-    return cells
-  }, [devices])
+  const renderDevicesView = () => (
+    <>
+      <div className="stats-ribbon">
+        <div className="stat-item">
+          <span className="stat-label">Total Devices</span>
+          <span className="stat-value">{devices.length}</span>
+        </div>
+        <div className="stat-item">
+          <span className="stat-label">Networking</span>
+          <span className="stat-value">{devices.filter(d => d.category === 'Networking').length}</span>
+        </div>
+        <div className="stat-item">
+          <span className="stat-label">VMs & Containers</span>
+          <span className="stat-value">{devices.filter(d => ['VM', 'LXC'].includes(d.category)).length}</span>
+        </div>
+        <div className="stat-item">
+          <span className="stat-label">Active</span>
+          <span className="stat-value">{devices.filter(d => d.status === 'active').length}</span>
+        </div>
+      </div>
+      <div className="table-wrapper">
+        <div className="animate-fade-in">
+          <table className="unifi-table">
+            <thead>
+              <tr>
+                <th style={{ width: '40px' }}></th>
+                <th style={{ width: '180px' }}>Name</th>
+                <th style={{ width: '120px' }}>IP Address</th>
+                <th style={{ width: '160px' }}>MAC Address</th>
+                <th style={{ width: '100px' }}>Category</th>
+                <th style={{ width: '100px' }}>Status</th>
+                <th style={{ width: '140px' }}>Platform</th>
+                <th style={{ width: '80px', textAlign: 'right', paddingRight: '1.5rem' }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr><td colSpan={8} style={{ textAlign: 'center', height: '100px', color: 'var(--unifi-text-muted)' }}>Loading...</td></tr>
+              ) : filteredDevices.length === 0 ? (
+                <tr><td colSpan={8} style={{ textAlign: 'center', height: '100px', color: 'var(--unifi-text-muted)' }}>No devices found.</td></tr>
+              ) : filteredDevices.map((device) => (
+                <tr key={device.id}>
+                  <td style={{ textAlign: 'center' }}>
+                    {device.category === 'Networking' ? <NetIcon size={14} color="#0055ff" /> :
+                     device.category === 'Server' ? <Server size={14} color="#10b981" /> :
+                     device.category === 'VM' ? <Cpu size={14} color="#7c3aed" /> :
+                     device.category === 'LXC' ? <Database size={14} color="#f97316" /> :
+                     <Laptop size={14} color="#5e6670" />}
+                  </td>
+                  <td style={{ fontWeight: 500 }}>{device.name}</td>
+                  <td><code style={{ fontSize: '11px', background: '#f1f3f5', padding: '2px 6px', borderRadius: '3px' }}>{device.ipAddress}</code></td>
+                  <td style={{ color: '#5e6670', fontFamily: 'monospace', fontSize: '12px' }}>{device.macAddress}</td>
+                  <td>
+                    <span className={`badge ${
+                      device.category === 'Networking' ? 'badge-blue' :
+                      device.category === 'Server' ? 'badge-green' :
+                      device.category === 'VM' ? 'badge-purple' : 'badge-orange'
+                    }`}>{device.category}</span>
+                  </td>
+                  <td>
+                    <span className={`status-dot ${device.status === 'active' ? 'status-active' : 'status-inactive'}`} />
+                    <span style={{ fontSize: '12px' }}>{device.status}</span>
+                  </td>
+                  <td style={{ color: '#5e6670', fontSize: '12px' }}>{device.platform || '—'}</td>
+                  <td style={{ textAlign: 'right', paddingRight: '1rem' }}>
+                    <div style={{ display: 'flex', gap: '0.25rem', justifyContent: 'flex-end' }}>
+                      <button className="btn" style={{ padding: '0 8px', border: 'none', background: 'transparent' }} onClick={() => openEditModal(device)} title="Edit"><Edit2 size={12} /></button>
+                      <button className="btn" style={{ padding: '0 8px', border: 'none', background: 'transparent', color: '#ef4444' }} onClick={() => confirmDelete(device.id)} title="Delete"><Trash2 size={12} /></button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </>
+  )
 
   return (
     <div className="app-container">
-      <Sidebar 
-        searchTerm={searchTerm} 
-        setSearchTerm={setSearchTerm} 
+      <Sidebar
+        activeView={activeView}
+        setActiveView={setActiveView}
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
         selectedCategory={selectedCategory}
         setSelectedCategory={setSelectedCategory}
       />
-      
+
       <div className="main-content">
         <header className="top-nav">
           <div className="breadcrumbs">
-            <span>Portland</span>
+            <span>Portland Homelab</span>
             <ChevronRight size={14} color="#5e6670" />
-            <strong>Network</strong>
+            <strong>{viewTitles[activeView]}</strong>
           </div>
           <div style={{ display: 'flex', gap: '0.75rem' }}>
-            <div className="btn" onClick={() => setViewMode(viewMode === 'table' ? 'planner' : 'table')}>
-              {viewMode === 'table' ? <LayoutGrid size={14} /> : <List size={14} />}
-              {viewMode === 'table' ? 'IP Planner' : 'Client List'}
-            </div>
-            <button className="btn" onClick={exportData}><Download size={14} /> Export</button>
-            <button className="btn btn-primary" onClick={() => { setEditingDevice(null); setFormData({ name: '', macAddress: '', ipAddress: '', category: 'Server', notes: '' }); setIsModalOpen(true); }}>
-              <Plus size={14} /> Add Device
-            </button>
+            {activeView === 'devices' && (
+              <>
+                <button className="btn" onClick={exportData}><Download size={14} /> Export</button>
+                <button className="btn btn-primary" onClick={() => { setEditingDevice(null); setFormData({ name: '', macAddress: '', ipAddress: '', category: 'Server', notes: '', platform: '', status: 'active' }); setIsModalOpen(true); }}>
+                  <Plus size={14} /> Add Device
+                </button>
+              </>
+            )}
           </div>
         </header>
 
-        <div className="stats-ribbon">
-          {stats.map((stat, i) => (
-            <div key={i} className="stat-item">
-              <span className="stat-label">{stat.label}</span>
-              <span className="stat-value">{stat.value}</span>
-            </div>
-          ))}
-        </div>
-
-        <div className="table-wrapper">
-          {viewMode === 'table' ? (
-            <div className="animate-fade-in">
-              <table className="unifi-table">
-                <thead>
-                  <tr>
-                    <th style={{ width: '40px' }}></th>
-                    <th style={{ width: '200px' }}>Name</th>
-                    <th style={{ width: '120px' }}>IP Address</th>
-                    <th style={{ width: '180px' }}>MAC Address</th>
-                    <th style={{ width: '120px' }}>Category</th>
-                    <th style={{ width: '100px', textAlign: 'right', paddingRight: '2rem' }}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loading ? (
-                    <tr><td colSpan={6} style={{ textAlign: 'center', height: '100px', color: 'var(--unifi-text-muted)' }}>Refreshing devices...</td></tr>
-                  ) : filteredDevices.length === 0 ? (
-                    <tr><td colSpan={6} style={{ textAlign: 'center', height: '100px', color: 'var(--unifi-text-muted)' }}>No devices found.</td></tr>
-                  ) : filteredDevices.map((device) => (
-                    <tr key={device.id}>
-                      <td style={{ textAlign: 'center' }}>
-                        {device.category === 'Networking' ? <NetIcon size={14} color="#0055ff" /> : 
-                         device.category === 'Server' ? <Server size={14} color="#10b981" /> :
-                         device.category === 'VM' ? <Cpu size={14} color="#7c3aed" /> :
-                         device.category === 'LXC' ? <Database size={14} color="#f97316" /> :
-                         <Laptop size={14} color="#5e6670" />}
-                      </td>
-                      <td style={{ fontWeight: 500 }}>{device.name}</td>
-                      <td><code style={{ fontSize: '11px', background: '#f1f3f5', padding: '2px 4px', borderRadius: '3px', border: '1px solid #e2e8f0' }}>{device.ipAddress}</code></td>
-                      <td style={{ color: '#5e6670', fontFamily: 'monospace', fontSize: '12px' }}>{device.macAddress}</td>
-                      <td>
-                        <span className={`badge ${
-                          device.category === 'Networking' ? 'badge-blue' : 
-                          device.category === 'Server' ? 'badge-green' : 
-                          device.category === 'VM' ? 'badge-purple' : 'badge-orange'
-                        }`}>
-                          {device.category}
-                        </span>
-                      </td>
-                      <td style={{ textAlign: 'right', paddingRight: '1rem' }}>
-                        <div style={{ display: 'flex', gap: '0.25rem', justifyContent: 'flex-end' }}>
-                          <button className="btn" style={{ padding: '0 8px', border: 'none', background: 'transparent' }} onClick={() => openEditModal(device)} title="Edit"><Edit2 size={12} /></button>
-                          <button className="btn" style={{ padding: '0 8px', border: 'none', background: 'transparent', color: '#ef4444' }} onClick={() => confirmDelete(device.id)} title="Delete"><Trash2 size={12} /></button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="animate-fade-in">
-              <h2 style={{ fontSize: '14px', fontWeight: 600, marginBottom: '1rem' }}>Subnet 10.0.10.x Map</h2>
-              <div className="ip-grid">
-                {ipPlannerCells.map((cell) => (
-                  <div 
-                    key={cell.num} 
-                    className={`ip-cell ${cell.status}`}
-                    title={cell.device ? `${cell.device.name} (${cell.device.ipAddress})` : `. ${cell.num}`}
-                  >
-                    {cell.num}
-                  </div>
-                ))}
-              </div>
-              <div style={{ marginTop: '1.5rem', display: 'flex', gap: '1.5rem', fontSize: '11px', color: '#5e6670' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <div style={{ width: '12px', height: '12px', background: '#10b981', borderRadius: '2px' }} /> Gateway (.1)
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <div style={{ width: '12px', height: '12px', background: '#0055ff', borderRadius: '2px' }} /> Occupied
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <div style={{ width: '12px', height: '12px', background: '#f1f3f5', borderRadius: '2px' }} /> Available
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
+        {activeView === 'dashboard' && <div className="table-wrapper"><DashboardView /></div>}
+        {activeView === 'devices' && renderDevicesView()}
+        {activeView === 'ipam' && <div className="table-wrapper"><IPPlannerView searchTerm={searchTerm} onAddDevice={openAddWithIp} /></div>}
+        {activeView === 'vlans' && <div className="table-wrapper"><VLANView /></div>}
+        {activeView === 'topology' && <div className="table-wrapper"><TopologyView /></div>}
+        {activeView === 'services' && <div className="table-wrapper"><ServicesView searchTerm={searchTerm} /></div>}
+        {activeView === 'changelog' && <div className="table-wrapper"><ChangelogView searchTerm={searchTerm} /></div>}
       </div>
 
+      {/* Add/Edit Device Modal */}
       {isModalOpen && (
         <div className="modal-overlay">
           <div className="modal-content animate-fade-in">
@@ -302,13 +294,29 @@ export default function Home() {
                   </select>
                 </div>
               </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
+                <div className="input-group">
+                  <label className="input-label">MAC Address</label>
+                  <input required className="unifi-input" value={formData.macAddress} onChange={e => setFormData({...formData, macAddress: e.target.value.toUpperCase()})} placeholder="XX:XX:XX:XX:XX:XX" />
+                </div>
+                <div className="input-group">
+                  <label className="input-label">Platform</label>
+                  <input className="unifi-input" value={formData.platform} onChange={e => setFormData({...formData, platform: e.target.value})} placeholder="e.g. Ubuntu 22.04" />
+                </div>
+              </div>
               <div className="input-group">
-                <label className="input-label">MAC Address</label>
-                <input required className="unifi-input" value={formData.macAddress} onChange={e => setFormData({...formData, macAddress: e.target.value.toUpperCase()})} placeholder="XX:XX:XX:XX:XX:XX" />
+                <label className="input-label">Status</label>
+                <select className="unifi-input" value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})}>
+                  <option value="active">Active</option>
+                  <option value="planned">Planned</option>
+                  <option value="staged">Staged</option>
+                  <option value="offline">Offline</option>
+                  <option value="decommissioned">Decommissioned</option>
+                </select>
               </div>
               <div className="input-group">
                 <label className="input-label">Notes (Optional)</label>
-                <textarea className="unifi-input" style={{ height: 'auto', paddingTop: '0.5rem' }} value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value})} placeholder="Purpose" rows={3} />
+                <textarea className="unifi-input" style={{ height: 'auto', paddingTop: '0.5rem' }} value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value})} placeholder="Purpose or description" rows={3} />
               </div>
               <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem', justifyContent: 'flex-end' }}>
                 <button type="button" className="btn" onClick={() => setIsModalOpen(false)}>Cancel</button>
@@ -319,6 +327,7 @@ export default function Home() {
         </div>
       )}
 
+      {/* Delete Confirmation Modal */}
       {isDeleteModalOpen && (
         <div className="modal-overlay">
           <div className="modal-content animate-fade-in" style={{ width: '400px', textAlign: 'center' }}>
@@ -326,7 +335,7 @@ export default function Home() {
               <Trash2 size={24} />
             </div>
             <h2 style={{ marginBottom: '0.5rem', fontSize: '18px', fontWeight: 600 }}>Delete Device?</h2>
-            <p style={{ color: 'var(--unifi-text-muted)', marginBottom: '2rem' }}>Are you sure you want to remove this device? This action cannot be undone.</p>
+            <p style={{ color: 'var(--unifi-text-muted)', marginBottom: '2rem' }}>This action cannot be undone.</p>
             <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
               <button className="btn" onClick={() => setIsDeleteModalOpen(false)}>Cancel</button>
               <button className="btn btn-destructive" onClick={handleDelete}>Delete Device</button>

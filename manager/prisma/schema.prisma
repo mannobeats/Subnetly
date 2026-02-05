@@ -6,13 +6,209 @@ datasource db {
   provider = "sqlite"
 }
 
+// ─── ORGANIZATION ────────────────────────────────────────────
+model Site {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  address     String?
+  latitude    Float?
+  longitude   Float?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  racks   Rack[]
+  devices Device[]
+  subnets Subnet[]
+  vlans   VLAN[]
+}
+
+model Rack {
+  id          String   @id @default(cuid())
+  name        String
+  siteId      String
+  site        Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  units       Int      @default(42)
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  devices Device[]
+}
+
+// ─── DCIM (Devices & Cabling) ────────────────────────────────
+model Manufacturer {
+  id          String       @id @default(cuid())
+  name        String       @unique
+  slug        String       @unique
+  description String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  deviceTypes DeviceType[]
+}
+
+model DeviceType {
+  id             String       @id @default(cuid())
+  manufacturerId String
+  manufacturer   Manufacturer @relation(fields: [manufacturerId], references: [id], onDelete: Cascade)
+  model          String
+  slug           String       @unique
+  partNumber     String?
+  uHeight        Int          @default(1)
+  isFullDepth    Boolean      @default(true)
+  description    String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  devices Device[]
+}
+
 model Device {
+  id           String      @id @default(cuid())
+  name         String
+  macAddress   String
+  ipAddress    String
+  category     String
+  status       String      @default("active")
+  serial       String?
+  assetTag     String?
+  notes        String?
+  siteId       String?
+  site         Site?       @relation(fields: [siteId], references: [id], onDelete: SetNull)
+  rackId       String?
+  rack         Rack?       @relation(fields: [rackId], references: [id], onDelete: SetNull)
+  rackPosition Int?
+  deviceTypeId String?
+  deviceType   DeviceType? @relation(fields: [deviceTypeId], references: [id], onDelete: SetNull)
+  platform     String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  interfaces Interface[]
+  services   Service[]
+}
+
+model Interface {
+  id          String  @id @default(cuid())
+  name        String
+  deviceId    String
+  device      Device  @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  type        String  @default("1000base-t")
+  speed       Int?
+  macAddress  String?
+  enabled     Boolean @default(true)
+  mtu         Int     @default(1500)
+  description String?
+  mode        String?
+  ipAddressId String?
+
+  cableA Cable[] @relation("CableEndA")
+  cableB Cable[] @relation("CableEndB")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Cable {
+  id           String    @id @default(cuid())
+  interfaceAId String
+  interfaceA   Interface @relation("CableEndA", fields: [interfaceAId], references: [id], onDelete: Cascade)
+  interfaceBId String
+  interfaceB   Interface @relation("CableEndB", fields: [interfaceBId], references: [id], onDelete: Cascade)
+  type         String    @default("cat6")
+  color        String?
+  length       Float?
+  lengthUnit   String    @default("m")
+  label        String?
+  status       String    @default("connected")
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+// ─── IPAM ────────────────────────────────────────────────────
+model Subnet {
+  id          String   @id @default(cuid())
+  prefix      String
+  mask        Int
+  description String?
+  siteId      String?
+  site        Site?    @relation(fields: [siteId], references: [id], onDelete: SetNull)
+  vlanId      String?
+  vlan        VLAN?    @relation(fields: [vlanId], references: [id], onDelete: SetNull)
+  gateway     String?
+  status      String   @default("active")
+  role        String?
+  isPool      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  ipAddresses IPAddress[]
+  ipRanges    IPRange[]
+}
+
+model IPAddress {
+  id          String   @id @default(cuid())
+  address     String
+  mask        Int      @default(24)
+  subnetId    String?
+  subnet      Subnet?  @relation(fields: [subnetId], references: [id], onDelete: SetNull)
+  status      String   @default("active")
+  dnsName     String?
+  description String?
+  assignedTo  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model IPRange {
+  id          String   @id @default(cuid())
+  startAddr   String
+  endAddr     String
+  subnetId    String
+  subnet      Subnet   @relation(fields: [subnetId], references: [id], onDelete: Cascade)
+  role        String   @default("general")
+  description String?
+  status      String   @default("active")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model VLAN {
+  id          String   @id @default(cuid())
+  vid         Int
+  name        String
+  siteId      String?
+  site        Site?    @relation(fields: [siteId], references: [id], onDelete: SetNull)
+  status      String   @default("active")
+  role        String?
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  subnets Subnet[]
+}
+
+// ─── SERVICES ────────────────────────────────────────────────
+model Service {
+  id          String   @id @default(cuid())
+  name        String
+  deviceId    String
+  device      Device   @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  protocol    String   @default("tcp")
+  ports       String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ─── AUDIT ───────────────────────────────────────────────────
+model ChangeLog {
   id         String   @id @default(cuid())
-  name       String
-  macAddress String
-  ipAddress  String
-  category   String
-  notes      String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  objectType String
+  objectId   String
+  action     String
+  changes    String?
+  timestamp  DateTime @default(now())
 }
