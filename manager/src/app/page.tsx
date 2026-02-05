@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import Sidebar from '@/components/Sidebar'
-import { Plus, Download, Trash2, Edit2, Network as NetIcon, ChevronRight, LayoutGrid, List, Laptop } from 'lucide-react'
+import { Plus, Download, Trash2, Edit2, Network as NetIcon, ChevronRight, LayoutGrid, List, Laptop, Server, Cpu, Database } from 'lucide-react'
 import { Device } from '@/types'
 
 export default function Home() {
@@ -10,8 +10,11 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [deviceToDelete, setDeviceToDelete] = useState<string | null>(null)
   const [editingDevice, setEditingDevice] = useState<Device | null>(null)
   const [viewMode, setViewMode] = useState<'table' | 'planner'>('table')
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
 
   // Form state
   const [formData, setFormData] = useState({
@@ -27,6 +30,7 @@ export default function Home() {
   }, [])
 
   const fetchDevices = async () => {
+    setLoading(true)
     try {
       const res = await fetch('/api/devices')
       const data = await res.json()
@@ -40,6 +44,13 @@ export default function Home() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Simple validation
+    if (!formData.ipAddress.match(/^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/)) {
+      alert('Invalid IP Address format')
+      return
+    }
+
     const method = editingDevice ? 'PATCH' : 'POST'
     const url = editingDevice ? `/api/devices/${editingDevice.id}` : '/api/devices'
 
@@ -53,21 +64,35 @@ export default function Home() {
         setIsModalOpen(false)
         setEditingDevice(null)
         setFormData({ name: '', macAddress: '', ipAddress: '', category: 'Server', notes: '' })
-        fetchDevices()
+        await fetchDevices()
+      } else {
+        const err = await res.json()
+        alert(err.error || 'Operation failed')
       }
     } catch (err) {
       console.error(err)
+      alert('An error occurred. Please check console.')
     }
   }
 
-  const deleteDevice = async (id: string) => {
-    if (confirm('Are you sure you want to delete this device?')) {
-      try {
-        await fetch(`/api/devices/${id}`, { method: 'DELETE' })
-        fetchDevices()
-      } catch (err) {
-        console.error(err)
+  const confirmDelete = (id: string) => {
+    setDeviceToDelete(id)
+    setIsDeleteModalOpen(true)
+  }
+
+  const handleDelete = async () => {
+    if (!deviceToDelete) return
+    try {
+      const res = await fetch(`/api/devices/${deviceToDelete}`, { method: 'DELETE' })
+      if (res.ok) {
+        setIsDeleteModalOpen(false)
+        setDeviceToDelete(null)
+        await fetchDevices()
+      } else {
+        alert('Failed to delete device')
       }
+    } catch (err) {
+      console.error(err)
     }
   }
 
@@ -88,7 +113,7 @@ export default function Home() {
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(devices, null, 2))
       const downloadAnchorNode = document.createElement('a')
       downloadAnchorNode.setAttribute("href", dataStr)
-      downloadAnchorNode.setAttribute("download", "homelab_net_plan.json")
+      downloadAnchorNode.setAttribute("download", `homelab_net_plan_${new Date().toISOString().split('T')[0]}.json`)
       document.body.appendChild(downloadAnchorNode)
       downloadAnchorNode.click()
       downloadAnchorNode.remove()
@@ -98,12 +123,16 @@ export default function Home() {
   }
 
   const filteredDevices = useMemo(() => {
-    return devices.filter(d => 
-      d.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      d.ipAddress.includes(searchTerm) ||
-      d.macAddress.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  }, [devices, searchTerm])
+    return devices.filter(d => {
+      const matchesSearch = d.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        d.ipAddress.includes(searchTerm) ||
+        d.macAddress.toLowerCase().includes(searchTerm.toLowerCase())
+      
+      const matchesCategory = selectedCategory ? d.category === selectedCategory : true
+      
+      return matchesSearch && matchesCategory
+    })
+  }, [devices, searchTerm, selectedCategory])
 
   const stats = useMemo(() => [
     { label: 'Total Clients', value: devices.length },
@@ -131,7 +160,12 @@ export default function Home() {
 
   return (
     <div className="app-container">
-      <Sidebar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+      <Sidebar 
+        searchTerm={searchTerm} 
+        setSearchTerm={setSearchTerm} 
+        selectedCategory={selectedCategory}
+        setSelectedCategory={setSelectedCategory}
+      />
       
       <div className="main-content">
         <header className="top-nav">
@@ -146,7 +180,7 @@ export default function Home() {
               {viewMode === 'table' ? 'IP Planner' : 'Client List'}
             </div>
             <button className="btn" onClick={exportData}><Download size={14} /> Export</button>
-            <button className="btn btn-primary" onClick={() => { setEditingDevice(null); setIsModalOpen(true); }}>
+            <button className="btn btn-primary" onClick={() => { setEditingDevice(null); setFormData({ name: '', macAddress: '', ipAddress: '', category: 'Server', notes: '' }); setIsModalOpen(true); }}>
               <Plus size={14} /> Add Device
             </button>
           </div>
@@ -170,24 +204,28 @@ export default function Home() {
                     <th style={{ width: '40px' }}></th>
                     <th style={{ width: '200px' }}>Name</th>
                     <th style={{ width: '120px' }}>IP Address</th>
-                    <th style={{ width: '150px' }}>MAC Address</th>
+                    <th style={{ width: '180px' }}>MAC Address</th>
                     <th style={{ width: '120px' }}>Category</th>
-                    <th style={{ width: '100px' }}>Actions</th>
+                    <th style={{ width: '100px', textAlign: 'right', paddingRight: '2rem' }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {loading ? (
-                    <tr><td colSpan={6} style={{ textAlign: 'center', height: '100px' }}>Loading devices...</td></tr>
+                    <tr><td colSpan={6} style={{ textAlign: 'center', height: '100px', color: 'var(--unifi-text-muted)' }}>Refreshing devices...</td></tr>
                   ) : filteredDevices.length === 0 ? (
-                    <tr><td colSpan={6} style={{ textAlign: 'center', height: '100px' }}>No devices found.</td></tr>
+                    <tr><td colSpan={6} style={{ textAlign: 'center', height: '100px', color: 'var(--unifi-text-muted)' }}>No devices found.</td></tr>
                   ) : filteredDevices.map((device) => (
                     <tr key={device.id}>
                       <td style={{ textAlign: 'center' }}>
-                        {device.category === 'Networking' ? <NetIcon size={14} color="#0055ff" /> : <Laptop size={14} color="#5e6670" />}
+                        {device.category === 'Networking' ? <NetIcon size={14} color="#0055ff" /> : 
+                         device.category === 'Server' ? <Server size={14} color="#10b981" /> :
+                         device.category === 'VM' ? <Cpu size={14} color="#7c3aed" /> :
+                         device.category === 'LXC' ? <Database size={14} color="#f97316" /> :
+                         <Laptop size={14} color="#5e6670" />}
                       </td>
                       <td style={{ fontWeight: 500 }}>{device.name}</td>
-                      <td><code style={{ fontSize: '11px', background: '#f1f3f5', padding: '2px 4px', borderRadius: '3px' }}>{device.ipAddress}</code></td>
-                      <td style={{ color: '#5e6670', fontFamily: 'monospace' }}>{device.macAddress}</td>
+                      <td><code style={{ fontSize: '11px', background: '#f1f3f5', padding: '2px 4px', borderRadius: '3px', border: '1px solid #e2e8f0' }}>{device.ipAddress}</code></td>
+                      <td style={{ color: '#5e6670', fontFamily: 'monospace', fontSize: '12px' }}>{device.macAddress}</td>
                       <td>
                         <span className={`badge ${
                           device.category === 'Networking' ? 'badge-blue' : 
@@ -197,10 +235,10 @@ export default function Home() {
                           {device.category}
                         </span>
                       </td>
-                      <td>
-                        <div style={{ display: 'flex', gap: '0.25rem' }}>
-                          <button className="btn" style={{ padding: '0 6px', border: 'none' }} onClick={() => openEditModal(device)}><Edit2 size={12} /></button>
-                          <button className="btn" style={{ padding: '0 6px', border: 'none', color: '#ef4444' }} onClick={() => deleteDevice(device.id)}><Trash2 size={12} /></button>
+                      <td style={{ textAlign: 'right', paddingRight: '1rem' }}>
+                        <div style={{ display: 'flex', gap: '0.25rem', justifyContent: 'flex-end' }}>
+                          <button className="btn" style={{ padding: '0 8px', border: 'none', background: 'transparent' }} onClick={() => openEditModal(device)} title="Edit"><Edit2 size={12} /></button>
+                          <button className="btn" style={{ padding: '0 8px', border: 'none', background: 'transparent', color: '#ef4444' }} onClick={() => confirmDelete(device.id)} title="Delete"><Trash2 size={12} /></button>
                         </div>
                       </td>
                     </tr>
@@ -255,18 +293,18 @@ export default function Home() {
                 <div className="input-group">
                   <label className="input-label">Category</label>
                   <select className="unifi-input" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})}>
-                    <option>Networking</option>
-                    <option>Server</option>
-                    <option>VM</option>
-                    <option>LXC</option>
-                    <option>Client</option>
-                    <option>IoT</option>
+                    <option value="Networking">Networking</option>
+                    <option value="Server">Server</option>
+                    <option value="VM">VM</option>
+                    <option value="LXC">LXC</option>
+                    <option value="Client">Client</option>
+                    <option value="IoT">IoT</option>
                   </select>
                 </div>
               </div>
               <div className="input-group">
                 <label className="input-label">MAC Address</label>
-                <input required className="unifi-input" value={formData.macAddress} onChange={e => setFormData({...formData, macAddress: e.target.value})} placeholder="XX:XX:XX:XX:XX:XX" />
+                <input required className="unifi-input" value={formData.macAddress} onChange={e => setFormData({...formData, macAddress: e.target.value.toUpperCase()})} placeholder="XX:XX:XX:XX:XX:XX" />
               </div>
               <div className="input-group">
                 <label className="input-label">Notes (Optional)</label>
@@ -277,6 +315,22 @@ export default function Home() {
                 <button type="submit" className="btn btn-primary">{editingDevice ? 'Apply Changes' : 'Save Device'}</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {isDeleteModalOpen && (
+        <div className="modal-overlay">
+          <div className="modal-content animate-fade-in" style={{ width: '400px', textAlign: 'center' }}>
+            <div style={{ background: '#fee2e2', width: '48px', height: '48px', borderRadius: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem', color: '#dc2626' }}>
+              <Trash2 size={24} />
+            </div>
+            <h2 style={{ marginBottom: '0.5rem', fontSize: '18px', fontWeight: 600 }}>Delete Device?</h2>
+            <p style={{ color: 'var(--unifi-text-muted)', marginBottom: '2rem' }}>Are you sure you want to remove this device? This action cannot be undone.</p>
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+              <button className="btn" onClick={() => setIsDeleteModalOpen(false)}>Cancel</button>
+              <button className="btn btn-destructive" onClick={handleDelete}>Delete Device</button>
+            </div>
           </div>
         </div>
       )}

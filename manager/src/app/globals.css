@@ -233,6 +233,26 @@ body {
   background: #0044cc;
 }
 
+.btn-destructive {
+  background: #fee2e2;
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+.btn-destructive:hover {
+  background: #fef2f2;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
 /* Modal */
 .modal-overlay {
   position: fixed;
@@ -352,8 +372,16 @@ body {
   cursor: pointer;
 }
 
+.filter-item.active-filter {
+  color: var(--unifi-blue);
+  background: #eef5ff;
+  border-radius: 4px;
+}
+
 .filter-item:hover {
   color: var(--unifi-blue);
+  background: var(--unifi-hover);
+  border-radius: 4px;
 }
 
 .filter-item input {
