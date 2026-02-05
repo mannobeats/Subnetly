@@ -1,53 +1,83 @@
 'use client'
 
-import { LayoutDashboard, Server, Shield, Network, Settings, LogOut } from 'lucide-react'
+import { Network, Search, Settings, Server, Cpu, Database, Cloud } from 'lucide-react'
 
-const Sidebar = () => {
-  return (
-    <div className="sidebar glass" style={{ width: '280px', height: '100vh', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '2rem', borderRight: '1px solid var(--border)' }}>
-      <div className="logo" style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-        <div style={{ width: '40px', height: '40px', background: 'var(--primary)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifySelf: 'center', justifyContent: 'center' }}>
-          <Network color="white" />
-        </div>
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 700 }}>Homelab IP</h2>
-      </div>
-
-      <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
-        <SidebarLink icon={<LayoutDashboard size={20} />} label="Dashboard" active />
-        <SidebarLink icon={<Server size={20} />} label="Devices" />
-        <SidebarLink icon={<Shield size={20} />} label="Security" />
-        <SidebarLink icon={<Network size={20} />} label="Subnets" />
-      </nav>
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', borderTop: '1px solid var(--border)', paddingTop: '1.5rem' }}>
-        <SidebarLink icon={<Settings size={20} />} label="Settings" />
-        <SidebarLink icon={<LogOut size={20} />} label="Logout" />
-      </div>
-
-      <style jsx>{`
-        .sidebar {
-          position: sticky;
-          top: 0;
-          z-index: 50;
-        }
-      `}</style>
-    </div>
-  )
+interface SidebarProps {
+  searchTerm: string
+  setSearchTerm: (value: string) => void
 }
 
-const SidebarLink = ({ icon, label, active = false }: { icon: any, label: string, active?: boolean }) => {
+const Sidebar = ({ searchTerm, setSearchTerm }: SidebarProps) => {
   return (
-    <div className={`btn ${active ? 'btn-primary' : 'btn-secondary'}`} style={{ 
-      justifyContent: 'flex-start', 
-      width: '100%', 
-      background: active ? 'var(--primary)' : 'transparent',
-      color: active ? 'white' : 'var(--secondary-foreground)',
-      border: 'none',
-      padding: '0.75rem 1rem'
-    }}>
-      {icon}
-      <span>{label}</span>
-    </div>
+    <>
+      {/* Primary Sidebar - Icons Only */}
+      <div className="sidebar-primary">
+        <div className="sidebar-icon active">
+          <Network size={20} />
+        </div>
+        <div className="sidebar-icon">
+          <Cpu size={20} />
+        </div>
+        <div className="sidebar-icon">
+          <Database size={20} />
+        </div>
+        <div className="sidebar-icon">
+          <Cloud size={20} />
+        </div>
+        <div style={{ flex: 1 }} />
+        <div className="sidebar-icon">
+          <Settings size={20} />
+        </div>
+      </div>
+
+      {/* Secondary Sidebar - Filters & Search */}
+      <div className="sidebar-secondary">
+        <div style={{ marginBottom: '2rem' }}>
+          <div style={{ position: 'relative', marginBottom: '1.5rem' }}>
+            <Search style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--unifi-text-muted)' }} size={14} />
+            <input 
+              type="text" 
+              className="unifi-input" 
+              placeholder="Search clients..." 
+              style={{ paddingLeft: '2rem', height: '32px' }}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+        </div>
+
+        <h3>Filters</h3>
+        <div className="filter-list" style={{ marginBottom: '2rem' }}>
+          <label className="filter-item">
+            <input type="checkbox" defaultChecked />
+            <span>All Devices</span>
+          </label>
+          <label className="filter-item">
+            <input type="checkbox" />
+            <span>Active Only</span>
+          </label>
+          <label className="filter-item">
+            <input type="checkbox" />
+            <span>Static IPs</span>
+          </label>
+        </div>
+
+        <h3>Categories</h3>
+        <div className="filter-list" style={{ marginBottom: '2rem' }}>
+          <div className="filter-item"><Server size={14} color="#5e6670" /> <span>Servers</span></div>
+          <div className="filter-item"><Cpu size={14} color="#5e6670" /> <span>Virtual Machines</span></div>
+          <div className="filter-item"><Database size={14} color="#5e6670" /> <span>LXC Containers</span></div>
+          <div className="filter-item"><Network size={14} color="#5e6670" /> <span>Networking</span></div>
+        </div>
+
+        <h3>Vendor</h3>
+        <div className="filter-list">
+          <div className="filter-item"><span>Proxmox</span></div>
+          <div className="filter-item"><span>GL.iNet</span></div>
+          <div className="filter-item"><span>Apple</span></div>
+        </div>
+      </div>
+    </>
   )
 }
 
