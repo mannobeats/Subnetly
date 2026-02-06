@@ -1,11 +1,8 @@
 import { PrismaClient } from '@prisma/client'
-import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3'
-
-import path from 'path'
+import { PrismaPg } from '@prisma/adapter-pg'
 
 const prismaClientSingleton = () => {
-  const dbPath = path.join(process.cwd(), 'dev.db')
-  const adapter = new PrismaBetterSqlite3({ url: dbPath })
+  const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL })
   return new PrismaClient({ adapter })
 }
 
@@ -16,5 +13,7 @@ declare global {
 const prisma = globalThis.prisma ?? prismaClientSingleton()
 
 export default prisma
+
+if (process.env.NODE_ENV !== 'production') globalThis.prisma = prisma
 
 if (process.env.NODE_ENV !== 'production') globalThis.prisma = prisma
