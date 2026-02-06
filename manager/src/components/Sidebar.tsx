@@ -38,6 +38,7 @@ interface SidebarProps {
   onSwitchSite?: (siteId: string) => void
   onCreateSite?: (name: string) => void
   categories?: CustomCategory[]
+  vlanRoles?: CustomCategory[]
 }
 
 const navItems: { id: ViewType; icon: React.ElementType; label: string }[] = [
@@ -50,7 +51,7 @@ const navItems: { id: ViewType; icon: React.ElementType; label: string }[] = [
   { id: 'changelog', icon: History, label: 'Changelog' },
 ]
 
-const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selectedCategory, setSelectedCategory, selectedVlanRole, setSelectedVlanRole, selectedIpFilter, setSelectedIpFilter, selectedServiceFilter, setSelectedServiceFilter, selectedChangelogFilter, setSelectedChangelogFilter, searchInputRef, userName, userEmail, onLogout, settingsTab, setSettingsTab, sites = [], activeSiteId, onSwitchSite, onCreateSite, categories = [] }: SidebarProps) => {
+const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selectedCategory, setSelectedCategory, selectedVlanRole, setSelectedVlanRole, selectedIpFilter, setSelectedIpFilter, selectedServiceFilter, setSelectedServiceFilter, selectedChangelogFilter, setSelectedChangelogFilter, searchInputRef, userName, userEmail, onLogout, settingsTab, setSettingsTab, sites = [], activeSiteId, onSwitchSite, onCreateSite, categories = [], vlanRoles = [] }: SidebarProps) => {
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [siteMenuOpen, setSiteMenuOpen] = useState(false)
   const [newSiteName, setNewSiteName] = useState('')
@@ -294,12 +295,16 @@ const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selecte
             </div>
             <h3>Device Types</h3>
             <div className="filter-list" style={{ marginBottom: '1.5rem' }}>
-              <div className={`filter-item ${selectedCategory === 'Server' ? 'active-filter' : ''}`} onClick={() => setSelectedCategory(selectedCategory === 'Server' ? null : 'Server')}><div className="legend-dot" style={{ background: '#10b981' }} /> <span>Server</span></div>
-              <div className={`filter-item ${selectedCategory === 'VM' ? 'active-filter' : ''}`} onClick={() => setSelectedCategory(selectedCategory === 'VM' ? null : 'VM')}><div className="legend-dot" style={{ background: '#7c3aed' }} /> <span>VM</span></div>
-              <div className={`filter-item ${selectedCategory === 'LXC' ? 'active-filter' : ''}`} onClick={() => setSelectedCategory(selectedCategory === 'LXC' ? null : 'LXC')}><div className="legend-dot" style={{ background: '#f97316' }} /> <span>LXC Container</span></div>
-              <div className={`filter-item ${selectedCategory === 'Networking' ? 'active-filter' : ''}`} onClick={() => setSelectedCategory(selectedCategory === 'Networking' ? null : 'Networking')}><div className="legend-dot" style={{ background: '#0055ff' }} /> <span>Networking</span></div>
-              <div className={`filter-item ${selectedCategory === 'IoT' ? 'active-filter' : ''}`} onClick={() => setSelectedCategory(selectedCategory === 'IoT' ? null : 'IoT')}><div className="legend-dot" style={{ background: '#06b6d4' }} /> <span>IoT</span></div>
-              <div className={`filter-item ${selectedCategory === 'Client' ? 'active-filter' : ''}`} onClick={() => setSelectedCategory(selectedCategory === 'Client' ? null : 'Client')}><div className="legend-dot" style={{ background: '#5e6670' }} /> <span>Client</span></div>
+              {categories.length > 0 ? categories.map(cat => (
+                <div key={cat.id} className={`filter-item ${selectedCategory === cat.name ? 'active-filter' : ''}`} onClick={() => setSelectedCategory(selectedCategory === cat.name ? null : cat.name)}>
+                  <div className="legend-dot" style={{ background: cat.color }} /> <span>{cat.name}</span>
+                </div>
+              )) : (
+                <>
+                  <div className={`filter-item ${selectedCategory === 'Server' ? 'active-filter' : ''}`} onClick={() => setSelectedCategory(selectedCategory === 'Server' ? null : 'Server')}><div className="legend-dot" style={{ background: '#10b981' }} /> <span>Server</span></div>
+                  <div className={`filter-item ${selectedCategory === 'Networking' ? 'active-filter' : ''}`} onClick={() => setSelectedCategory(selectedCategory === 'Networking' ? null : 'Networking')}><div className="legend-dot" style={{ background: '#0055ff' }} /> <span>Networking</span></div>
+                </>
+              )}
             </div>
             <h3>Controls</h3>
             <div className="filter-list">
@@ -344,11 +349,24 @@ const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selecte
             </div>
             <h3>VLAN Roles</h3>
             <div className="filter-list">
-              <div className={`filter-item ${selectedVlanRole === 'management' ? 'active-filter' : ''}`} onClick={() => setSelectedVlanRole(selectedVlanRole === 'management' ? null : 'management')}><div className="legend-dot" style={{ background: '#0055ff' }} /> <span>Management</span></div>
-              <div className={`filter-item ${selectedVlanRole === 'production' ? 'active-filter' : ''}`} onClick={() => setSelectedVlanRole(selectedVlanRole === 'production' ? null : 'production')}><div className="legend-dot" style={{ background: '#10b981' }} /> <span>Production</span></div>
-              <div className={`filter-item ${selectedVlanRole === 'iot' ? 'active-filter' : ''}`} onClick={() => setSelectedVlanRole(selectedVlanRole === 'iot' ? null : 'iot')}><div className="legend-dot" style={{ background: '#f97316' }} /> <span>IoT</span></div>
-              <div className={`filter-item ${selectedVlanRole === 'guest' ? 'active-filter' : ''}`} onClick={() => setSelectedVlanRole(selectedVlanRole === 'guest' ? null : 'guest')}><div className="legend-dot" style={{ background: '#8b5cf6' }} /> <span>Guest</span></div>
+              {vlanRoles.length > 0 ? vlanRoles.map(role => (
+                <div key={role.id} className={`filter-item ${selectedVlanRole === role.slug ? 'active-filter' : ''}`} onClick={() => setSelectedVlanRole(selectedVlanRole === role.slug ? null : role.slug)}>
+                  <div className="legend-dot" style={{ background: role.color }} /> <span>{role.name}</span>
+                </div>
+              )) : (
+                <>
+                  <div className={`filter-item ${selectedVlanRole === 'management' ? 'active-filter' : ''}`} onClick={() => setSelectedVlanRole(selectedVlanRole === 'management' ? null : 'management')}><div className="legend-dot" style={{ background: '#0055ff' }} /> <span>Management</span></div>
+                  <div className={`filter-item ${selectedVlanRole === 'production' ? 'active-filter' : ''}`} onClick={() => setSelectedVlanRole(selectedVlanRole === 'production' ? null : 'production')}><div className="legend-dot" style={{ background: '#10b981' }} /> <span>Production</span></div>
+                </>
+              )}
             </div>
+            {vlanRoles.length > 0 && (
+              <div style={{ marginTop: '0.75rem' }}>
+                <div className="filter-item" style={{ fontSize: '11px', color: 'var(--text-light)' }} onClick={() => { setSettingsTab?.('vlan-roles'); setActiveView('settings') }}>
+                  <Tag size={12} /> <span>Manage Roles</span>
+                </div>
+              </div>
+            )}
           </>
         )}
         {activeView === 'settings' && (
@@ -378,6 +396,9 @@ const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selecte
               </div>
               <div className={`filter-item ${settingsTab === 'sites' ? 'active-filter' : ''}`} onClick={() => setSettingsTab?.('sites')}>
                 <MapPin size={14} color={settingsTab === 'sites' ? '#0055ff' : '#5e6670'} /> <span>Sites</span>
+              </div>
+              <div className={`filter-item ${settingsTab === 'vlan-roles' ? 'active-filter' : ''}`} onClick={() => setSettingsTab?.('vlan-roles')}>
+                <Network size={14} color={settingsTab === 'vlan-roles' ? '#0055ff' : '#5e6670'} /> <span>VLAN Roles</span>
               </div>
             </div>
             <h3>System</h3>

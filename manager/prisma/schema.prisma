@@ -34,6 +34,7 @@ model Site {
 
 model CustomCategory {
   id        String   @id @default(cuid())
+  type      String   @default("device")
   name      String
   slug      String
   icon      String   @default("server")
@@ -44,7 +45,7 @@ model CustomCategory {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([siteId, slug])
+  @@unique([siteId, type, slug])
   @@index([siteId])
 }
 

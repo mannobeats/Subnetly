@@ -1,7 +1,9 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { Network, Plus, Shield, Wifi, Server, Laptop, Edit2, Trash2 } from 'lucide-react'
+import { Network, Plus, Edit2, Trash2 } from 'lucide-react'
+import { CustomCategory } from '@/types'
+import { getCategoryIcon } from '@/lib/category-icons'
 
 interface VLANData {
   id: string
@@ -13,28 +15,22 @@ interface VLANData {
   subnets: { id: string; prefix: string; mask: number; description?: string | null; gateway?: string | null }[]
 }
 
-const roleColors: Record<string, string> = {
+const defaultRoleColors: Record<string, string> = {
   management: '#0055ff',
   production: '#10b981',
   iot: '#f97316',
   guest: '#8b5cf6',
 }
 
-const roleIcons: Record<string, React.ElementType> = {
-  management: Shield,
-  production: Server,
-  iot: Laptop,
-  guest: Wifi,
-}
-
 interface VLANViewProps {
   searchTerm?: string
   selectedRole?: string | null
+  vlanRoles?: CustomCategory[]
 }
 
 const emptyForm = { vid: '', name: '', status: 'active', role: '', description: '' }
 
-const VLANView = ({ searchTerm = '', selectedRole = null }: VLANViewProps) => {
+const VLANView = ({ searchTerm = '', selectedRole = null, vlanRoles = [] }: VLANViewProps) => {
   const [vlans, setVlans] = useState<VLANData[]>([])
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
@@ -113,8 +109,9 @@ const VLANView = ({ searchTerm = '', selectedRole = null }: VLANViewProps) => {
         <>
           <div className="vlan-grid">
             {filteredVlans.map(v => {
-              const color = roleColors[v.role || ''] || '#64748b'
-              const Icon = roleIcons[v.role || ''] || Network
+              const roleEntry = vlanRoles.find(r => r.slug === v.role)
+              const color = roleEntry?.color || defaultRoleColors[v.role || ''] || '#64748b'
+              const Icon = roleEntry ? getCategoryIcon(roleEntry.icon) : Network
               return (
                 <div key={v.id} className="vlan-card">
                   <div className="vlan-card-header">
@@ -176,9 +173,9 @@ const VLANView = ({ searchTerm = '', selectedRole = null }: VLANViewProps) => {
               <tbody>
                 {filteredVlans.map(v => (
                   <tr key={v.id}>
-                    <td><code style={{ fontSize: '12px', fontWeight: 600, color: roleColors[v.role || ''] || '#64748b' }}>{v.vid}</code></td>
+                    <td><code style={{ fontSize: '12px', fontWeight: 600, color: (vlanRoles.find(r => r.slug === v.role)?.color || defaultRoleColors[v.role || ''] || '#64748b') }}>{v.vid}</code></td>
                     <td style={{ fontWeight: 500 }}>{v.name}</td>
-                    <td><span className="badge" style={{ background: `${roleColors[v.role || ''] || '#64748b'}14`, color: roleColors[v.role || ''] || '#64748b' }}>{v.role || '—'}</span></td>
+                    <td><span className="badge" style={{ background: `${(vlanRoles.find(r => r.slug === v.role)?.color || defaultRoleColors[v.role || ''] || '#64748b')}14`, color: vlanRoles.find(r => r.slug === v.role)?.color || defaultRoleColors[v.role || ''] || '#64748b' }}>{v.role || '—'}</span></td>
                     <td><span className={`badge badge-${v.status === 'active' ? 'green' : 'orange'}`}>{v.status}</span></td>
                     <td>{v.subnets.map(s => <code key={s.id} style={{ fontSize: '11px', background: '#f1f3f5', padding: '2px 6px', borderRadius: '3px', marginRight: '4px' }}>{s.prefix}/{s.mask}</code>)}</td>
                     <td style={{ color: 'var(--unifi-text-muted)' }}>{v.description || '—'}</td>
@@ -215,10 +212,16 @@ const VLANView = ({ searchTerm = '', selectedRole = null }: VLANViewProps) => {
                   <label className="input-label">Role</label>
                   <select className="unifi-input" value={form.role} onChange={e => setForm({ ...form, role: e.target.value })}>
                     <option value="">None</option>
-                    <option value="management">Management</option>
-                    <option value="production">Production</option>
-                    <option value="iot">IoT</option>
-                    <option value="guest">Guest</option>
+                    {vlanRoles.length > 0 ? vlanRoles.map(r => (
+                      <option key={r.id} value={r.slug}>{r.name}</option>
+                    )) : (
+                      <>
+                        <option value="management">Management</option>
+                        <option value="production">Production</option>
+                        <option value="iot">IoT</option>
+                        <option value="guest">Guest</option>
+                      </>
+                    )}
                   </select>
                 </div>
                 <div className="input-group">

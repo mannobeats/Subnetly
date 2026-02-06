@@ -2,13 +2,16 @@ import { NextResponse } from 'next/server'
 import { getActiveSite } from '@/lib/site-context'
 import prisma from '@/lib/db'
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const { siteId } = await getActiveSite()
     if (!siteId) return NextResponse.json({ error: 'No active site' }, { status: 401 })
 
+    const url = new URL(request.url)
+    const type = url.searchParams.get('type') || undefined
+
     const categories = await prisma.customCategory.findMany({
-      where: { siteId },
+      where: { siteId, ...(type ? { type } : {}) },
       orderBy: { sortOrder: 'asc' },
     })
 
@@ -28,16 +31,17 @@ export async function POST(request: Request) {
     if (!name) return NextResponse.json({ error: 'Name is required' }, { status: 400 })
 
     const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+    const type = body.type || 'device'
 
-    // Check for duplicate within site
+    // Check for duplicate within site+type
     const existing = await prisma.customCategory.findUnique({
-      where: { siteId_slug: { siteId, slug } },
+      where: { siteId_type_slug: { siteId, type, slug } },
     })
     if (existing) return NextResponse.json({ error: 'Category already exists' }, { status: 409 })
 
-    // Get max sort order
+    // Get max sort order for this type
     const maxOrder = await prisma.customCategory.findFirst({
-      where: { siteId },
+      where: { siteId, type },
       orderBy: { sortOrder: 'desc' },
       select: { sortOrder: true },
     })
@@ -46,6 +50,7 @@ export async function POST(request: Request) {
       data: {
         name,
         slug,
+        type,
         icon: body.icon || 'server',
         color: body.color || '#5e6670',
         siteId,

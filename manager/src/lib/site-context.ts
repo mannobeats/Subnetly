@@ -36,16 +36,22 @@ export async function getActiveSite() {
 }
 
 export async function seedDefaultCategories(siteId: string) {
-  const defaults = [
-    { name: 'Server', slug: 'server', icon: 'server', color: '#10b981', sortOrder: 0 },
-    { name: 'VM', slug: 'vm', icon: 'cpu', color: '#7c3aed', sortOrder: 1 },
-    { name: 'LXC', slug: 'lxc', icon: 'database', color: '#f97316', sortOrder: 2 },
-    { name: 'Networking', slug: 'networking', icon: 'network', color: '#0055ff', sortOrder: 3 },
-    { name: 'Client', slug: 'client', icon: 'laptop', color: '#5e6670', sortOrder: 4 },
-    { name: 'IoT', slug: 'iot', icon: 'wifi', color: '#06b6d4', sortOrder: 5 },
+  const deviceCategories = [
+    { type: 'device', name: 'Server', slug: 'server', icon: 'server', color: '#10b981', sortOrder: 0 },
+    { type: 'device', name: 'VM', slug: 'vm', icon: 'cpu', color: '#7c3aed', sortOrder: 1 },
+    { type: 'device', name: 'LXC', slug: 'lxc', icon: 'database', color: '#f97316', sortOrder: 2 },
+    { type: 'device', name: 'Networking', slug: 'networking', icon: 'network', color: '#0055ff', sortOrder: 3 },
+    { type: 'device', name: 'Client', slug: 'client', icon: 'laptop', color: '#5e6670', sortOrder: 4 },
+    { type: 'device', name: 'IoT', slug: 'iot', icon: 'wifi', color: '#06b6d4', sortOrder: 5 },
+  ]
+  const vlanRoles = [
+    { type: 'vlan_role', name: 'Management', slug: 'management', icon: 'shield', color: '#0055ff', sortOrder: 0 },
+    { type: 'vlan_role', name: 'Production', slug: 'production', icon: 'server', color: '#10b981', sortOrder: 1 },
+    { type: 'vlan_role', name: 'IoT', slug: 'iot', icon: 'wifi', color: '#f97316', sortOrder: 2 },
+    { type: 'vlan_role', name: 'Guest', slug: 'guest', icon: 'globe', color: '#8b5cf6', sortOrder: 3 },
   ]
   await prisma.customCategory.createMany({
-    data: defaults.map(d => ({ ...d, siteId })),
+    data: [...deviceCategories, ...vlanRoles].map(d => ({ ...d, siteId })),
     skipDuplicates: true,
   })
 }

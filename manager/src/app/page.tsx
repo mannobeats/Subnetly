@@ -32,18 +32,21 @@ export default function Home() {
   const [sites, setSites] = useState<Site[]>([])
   const [activeSiteId, setActiveSiteId] = useState<string | null>(null)
   const [categories, setCategories] = useState<CustomCategory[]>([])
+  const [vlanRoles, setVlanRoles] = useState<CustomCategory[]>([])
 
   const fetchSitesAndCategories = useCallback(async () => {
     try {
-      const [sitesRes, catsRes] = await Promise.all([
+      const [sitesRes, catsRes, rolesRes] = await Promise.all([
         fetch('/api/sites').then(r => r.json()),
-        fetch('/api/categories').then(r => r.json()),
+        fetch('/api/categories?type=device').then(r => r.json()),
+        fetch('/api/categories?type=vlan_role').then(r => r.json()),
       ])
       if (sitesRes.sites) {
         setSites(sitesRes.sites)
         setActiveSiteId(sitesRes.activeSiteId || null)
       }
       if (Array.isArray(catsRes)) setCategories(catsRes)
+      if (Array.isArray(rolesRes)) setVlanRoles(rolesRes)
     } catch { /* ignore */ }
   }, [])
 
@@ -508,6 +511,7 @@ export default function Home() {
         onSwitchSite={handleSwitchSite}
         onCreateSite={handleCreateSite}
         categories={categories}
+        vlanRoles={vlanRoles}
       />
 
       <div className="main-content">
@@ -532,11 +536,11 @@ export default function Home() {
         {activeView === 'dashboard' && <div className="table-wrapper"><DashboardView /></div>}
         {activeView === 'devices' && renderDevicesView()}
         {activeView === 'ipam' && <div className="table-wrapper"><IPPlannerView searchTerm={searchTerm} selectedIpFilter={selectedIpFilter} /></div>}
-        {activeView === 'vlans' && <div className="table-wrapper"><VLANView searchTerm={searchTerm} selectedRole={selectedVlanRole} /></div>}
+        {activeView === 'vlans' && <div className="table-wrapper"><VLANView searchTerm={searchTerm} selectedRole={selectedVlanRole} vlanRoles={vlanRoles} /></div>}
         {activeView === 'topology' && <div className="table-wrapper"><TopologyView selectedCategory={selectedCategory} /></div>}
         {activeView === 'services' && <div className="table-wrapper"><ServicesView searchTerm={searchTerm} selectedProtocol={selectedServiceFilter} /></div>}
         {activeView === 'changelog' && <div className="table-wrapper"><ChangelogView searchTerm={searchTerm} selectedFilter={selectedChangelogFilter} /></div>}
-        {activeView === 'settings' && <div className="table-wrapper"><SettingsView activeTab={settingsTab as 'profile' | 'security' | 'notifications' | 'application' | 'data' | 'about' | 'categories' | 'sites'} categories={categories} onCategoriesChange={fetchSitesAndCategories} sites={sites} activeSiteId={activeSiteId} onSitesChange={fetchSitesAndCategories} /></div>}
+        {activeView === 'settings' && <div className="table-wrapper"><SettingsView activeTab={settingsTab as 'profile' | 'security' | 'notifications' | 'application' | 'data' | 'about' | 'categories' | 'sites' | 'vlan-roles'} categories={categories} vlanRoles={vlanRoles} onCategoriesChange={fetchSitesAndCategories} sites={sites} activeSiteId={activeSiteId} onSitesChange={fetchSitesAndCategories} /></div>}
       </div>
 
       {/* Add/Edit Device Modal */}

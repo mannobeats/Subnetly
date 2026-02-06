@@ -17,6 +17,7 @@ export interface Site {
 
 export interface CustomCategory {
   id: string
+  type: string
   name: string
   slug: string
   icon: string

@@ -7,12 +7,11 @@ export async function GET() {
     const { siteId } = await getActiveSite()
     if (!siteId) return NextResponse.json({ counts: { devices: 0, subnets: 0, vlans: 0, ipAddresses: 0, services: 0 }, categoryBreakdown: {}, statusBreakdown: {}, subnetStats: [], recentChanges: [], services: [] })
 
-    const [devices, subnets, vlans, ipAddresses, ipRanges, services, changelog] = await Promise.all([
+    const [devices, subnets, vlans, ipAddresses, services, changelog] = await Promise.all([
       prisma.device.findMany({ where: { siteId }, include: { deviceType: { include: { manufacturer: true } }, services: true } }),
       prisma.subnet.findMany({ where: { siteId }, include: { vlan: true, ipAddresses: true, ipRanges: true } }),
       prisma.vLAN.findMany({ where: { siteId }, include: { subnets: true } }),
       prisma.iPAddress.findMany({ where: { subnet: { siteId } } }),
-      prisma.iPRange.findMany({ where: { subnet: { siteId } } }),
       prisma.service.findMany({ where: { siteId }, include: { device: true } }),
       prisma.changeLog.findMany({ where: { siteId }, orderBy: { timestamp: 'desc' }, take: 10 }),
     ])

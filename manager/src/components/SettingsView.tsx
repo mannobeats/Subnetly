@@ -1,12 +1,12 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { authClient } from '@/lib/auth-client'
 import { Lock, Database, Save, Check, AlertCircle, Loader2, Plus, Trash2, Edit2, MapPin } from 'lucide-react'
 import { CustomCategory, Site } from '@/types'
-import { getCategoryIcon, ICON_OPTIONS, COLOR_OPTIONS, ICON_MAP } from '@/lib/category-icons'
+import { getCategoryIcon, ICON_OPTIONS, ICON_MAP } from '@/lib/category-icons'
 
-type SettingsTab = 'profile' | 'security' | 'notifications' | 'application' | 'data' | 'about' | 'categories' | 'sites'
+type SettingsTab = 'profile' | 'security' | 'notifications' | 'application' | 'data' | 'about' | 'categories' | 'sites' | 'vlan-roles'
 
 interface UserSession {
   user: {
@@ -20,13 +20,14 @@ interface UserSession {
 interface SettingsViewProps {
   activeTab?: SettingsTab
   categories?: CustomCategory[]
+  vlanRoles?: CustomCategory[]
   onCategoriesChange?: () => void
   sites?: Site[]
   activeSiteId?: string | null
   onSitesChange?: () => void
 }
 
-export default function SettingsView({ activeTab = 'profile', categories = [], onCategoriesChange, sites = [], activeSiteId, onSitesChange }: SettingsViewProps) {
+export default function SettingsView({ activeTab = 'profile', categories = [], vlanRoles = [], onCategoriesChange, sites = [], activeSiteId, onSitesChange }: SettingsViewProps) {
   const [session, setSession] = useState<UserSession | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -494,6 +495,11 @@ export default function SettingsView({ activeTab = 'profile', categories = [], o
             <SitesTab sites={sites} activeSiteId={activeSiteId} onSitesChange={onSitesChange} />
           )}
 
+          {/* ── VLAN ROLES ── */}
+          {activeTab === 'vlan-roles' && (
+            <VlanRolesTab roles={vlanRoles} onRolesChange={onCategoriesChange} />
+          )}
+
           {/* ── ABOUT ── */}
           {activeTab === 'about' && (
             <>
@@ -616,8 +622,10 @@ function CategoriesTab({ categories, onCategoriesChange }: { categories: CustomC
             <label className="input-label">Color</label>
             <input type="color" value={newColor} onChange={e => setNewColor(e.target.value)} style={{ width: '100%', height: '34px', padding: '2px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', cursor: 'pointer' }} />
           </div>
-          <button className="btn btn-primary" style={{ height: '34px' }} onClick={handleCreate} disabled={!newName.trim()}>
-            <Plus size={14} /> Add
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
+          <button className="btn btn-primary" onClick={handleCreate} disabled={!newName.trim()}>
+            <Plus size={14} /> Add Category
           </button>
         </div>
       </div>
@@ -741,7 +749,9 @@ function SitesTab({ sites, activeSiteId, onSitesChange }: { sites: Site[], activ
             <label className="input-label">Description (optional)</label>
             <input className="unifi-input" value={newDesc} onChange={e => setNewDesc(e.target.value)} placeholder="e.g. Main rack in basement" />
           </div>
-          <button className="btn btn-primary" style={{ height: '34px' }} onClick={handleCreate} disabled={!newName.trim()}>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
+          <button className="btn btn-primary" onClick={handleCreate} disabled={!newName.trim()}>
             <Plus size={14} /> Create Site
           </button>
         </div>
@@ -794,6 +804,128 @@ function SitesTab({ sites, activeSiteId, onSitesChange }: { sites: Site[], activ
                         <Trash2 size={13} />
                       </button>
                     )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+    </>
+  )
+}
+
+function VlanRolesTab({ roles, onRolesChange }: { roles: CustomCategory[], onRolesChange?: () => void }) {
+  const [newName, setNewName] = useState('')
+  const [newIcon, setNewIcon] = useState('shield')
+  const [newColor, setNewColor] = useState('#0055ff')
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editName, setEditName] = useState('')
+  const [editIcon, setEditIcon] = useState('')
+  const [editColor, setEditColor] = useState('')
+
+  const handleCreate = async () => {
+    if (!newName.trim()) return
+    await fetch('/api/categories', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: newName.trim(), icon: newIcon, color: newColor, type: 'vlan_role' }),
+    })
+    setNewName('')
+    setNewIcon('shield')
+    setNewColor('#0055ff')
+    onRolesChange?.()
+  }
+
+  const handleUpdate = async (id: string) => {
+    await fetch(`/api/categories/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: editName, icon: editIcon, color: editColor }),
+    })
+    setEditingId(null)
+    onRolesChange?.()
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Delete this VLAN role?')) return
+    await fetch(`/api/categories/${id}`, { method: 'DELETE' })
+    onRolesChange?.()
+  }
+
+  return (
+    <>
+      <h2>VLAN Roles</h2>
+      <p className="settings-panel-desc">Manage custom VLAN roles used to categorize your VLANs</p>
+
+      <div className="settings-section">
+        <h3>Add New Role</h3>
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+          <div className="input-group" style={{ flex: 1, minWidth: '140px' }}>
+            <label className="input-label">Name</label>
+            <input className="unifi-input" value={newName} onChange={e => setNewName(e.target.value)} placeholder="e.g. DMZ" onKeyDown={e => e.key === 'Enter' && handleCreate()} />
+          </div>
+          <div className="input-group" style={{ width: '120px' }}>
+            <label className="input-label">Icon</label>
+            <select className="unifi-input" value={newIcon} onChange={e => setNewIcon(e.target.value)}>
+              {ICON_OPTIONS.map(i => <option key={i} value={i}>{i}</option>)}
+            </select>
+          </div>
+          <div className="input-group" style={{ width: '60px' }}>
+            <label className="input-label">Color</label>
+            <input type="color" value={newColor} onChange={e => setNewColor(e.target.value)} style={{ width: '100%', height: '34px', padding: '2px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', cursor: 'pointer' }} />
+          </div>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
+          <button className="btn btn-primary" onClick={handleCreate} disabled={!newName.trim()}>
+            <Plus size={14} /> Add Role
+          </button>
+        </div>
+      </div>
+
+      <div className="settings-section">
+        <h3>Current Roles ({roles.length})</h3>
+        {roles.length === 0 ? (
+          <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>No VLAN roles yet. Add one above.</p>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            {roles.map(role => {
+              const Icon = getCategoryIcon(role.icon)
+              if (editingId === role.id) {
+                return (
+                  <div key={role.id} className="settings-row" style={{ padding: '0.75rem' }}>
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flex: 1, flexWrap: 'wrap' }}>
+                      <input className="unifi-input" style={{ width: '140px', height: '30px' }} value={editName} onChange={e => setEditName(e.target.value)} />
+                      <select className="unifi-input" style={{ width: '110px', height: '30px' }} value={editIcon} onChange={e => setEditIcon(e.target.value)}>
+                        {ICON_OPTIONS.map(i => <option key={i} value={i}>{i}</option>)}
+                      </select>
+                      <input type="color" value={editColor} onChange={e => setEditColor(e.target.value)} style={{ width: '36px', height: '30px', padding: '2px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', cursor: 'pointer' }} />
+                      <button className="btn btn-primary" style={{ height: '30px', padding: '0 10px', fontSize: '11px' }} onClick={() => handleUpdate(role.id)}>
+                        <Check size={12} /> Save
+                      </button>
+                      <button className="btn" style={{ height: '30px', padding: '0 10px', fontSize: '11px' }} onClick={() => setEditingId(null)}>Cancel</button>
+                    </div>
+                  </div>
+                )
+              }
+              return (
+                <div key={role.id} className="settings-row">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: role.color + '18', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Icon size={16} color={role.color} />
+                    </div>
+                    <div>
+                      <div className="settings-row-label">{role.name}</div>
+                      <div className="settings-row-desc">{role.slug} · {role.color}</div>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.25rem' }}>
+                    <button className="btn" style={{ padding: '4px 8px', border: 'none', background: 'transparent' }} onClick={() => { setEditingId(role.id); setEditName(role.name); setEditIcon(role.icon); setEditColor(role.color) }} title="Edit">
+                      <Edit2 size={13} />
+                    </button>
+                    <button className="btn" style={{ padding: '4px 8px', border: 'none', background: 'transparent', color: 'var(--red)' }} onClick={() => handleDelete(role.id)} title="Delete">
+                      <Trash2 size={13} />
+                    </button>
                   </div>
                 </div>
               )
