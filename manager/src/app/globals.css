@@ -1909,18 +1909,16 @@ body {
 }
 
 .user-menu-dropdown {
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  margin-bottom: 8px;
+  position: fixed;
+  bottom: 12px;
+  left: 56px;
   background: #ffffff;
   border: 1px solid var(--unifi-border);
   border-radius: 8px;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
-  min-width: 200px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 4px 10px -3px rgba(0, 0, 0, 0.1);
+  min-width: 220px;
   padding: 0.5rem;
-  z-index: 200;
+  z-index: 1000;
 }
 
 .user-menu-header {
@@ -1980,19 +1978,6 @@ body {
 /* ─── SETTINGS VIEW ──────────────────────────────────────── */
 .settings-view {
   padding: 0;
-}
-
-.settings-grid {
-  display: grid;
-  grid-template-columns: 240px 1fr;
-  gap: 0;
-  min-height: calc(100vh - 56px);
-}
-
-.settings-nav {
-  background: #ffffff;
-  border-right: 1px solid var(--unifi-border);
-  padding: 1.5rem 0;
 }
 
 .settings-nav-item {

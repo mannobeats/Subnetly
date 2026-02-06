@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { authClient } from '@/lib/auth-client'
-import { User, Lock, Bell, Database, Shield, Globe, Save, Check, AlertCircle, Loader2 } from 'lucide-react'
+import { Lock, Database, Save, Check, AlertCircle, Loader2 } from 'lucide-react'
 
 type SettingsTab = 'profile' | 'security' | 'notifications' | 'application' | 'data' | 'about'
 
@@ -15,8 +15,11 @@ interface UserSession {
   }
 }
 
-export default function SettingsView() {
-  const [activeTab, setActiveTab] = useState<SettingsTab>('profile')
+interface SettingsViewProps {
+  activeTab?: SettingsTab
+}
+
+export default function SettingsView({ activeTab = 'profile' }: SettingsViewProps) {
   const [session, setSession] = useState<UserSession | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -138,15 +141,6 @@ export default function SettingsView() {
     }
   }
 
-  const navItems: { id: SettingsTab; label: string; icon: React.ReactNode }[] = [
-    { id: 'profile', label: 'Profile', icon: <User size={16} /> },
-    { id: 'security', label: 'Security', icon: <Lock size={16} /> },
-    { id: 'notifications', label: 'Notifications', icon: <Bell size={16} /> },
-    { id: 'application', label: 'Application', icon: <Globe size={16} /> },
-    { id: 'data', label: 'Data & Storage', icon: <Database size={16} /> },
-    { id: 'about', label: 'About', icon: <Shield size={16} /> },
-  ]
-
   if (loading) {
     return <div className="view-loading"><Loader2 size={20} className="spin" /> Loading settings...</div>
   }
@@ -157,20 +151,6 @@ export default function SettingsView() {
 
   return (
     <div className="settings-view animate-fade-in">
-      <div className="settings-grid">
-        <nav className="settings-nav">
-          {navItems.map(item => (
-            <button
-              key={item.id}
-              className={`settings-nav-item ${activeTab === item.id ? 'active' : ''}`}
-              onClick={() => setActiveTab(item.id)}
-            >
-              {item.icon}
-              {item.label}
-            </button>
-          ))}
-        </nav>
-
         <div className="settings-panel">
           {/* ── PROFILE ── */}
           {activeTab === 'profile' && (
@@ -548,7 +528,6 @@ export default function SettingsView() {
             </>
           )}
         </div>
-      </div>
     </div>
   )
 }

@@ -3,7 +3,7 @@
 import { 
   LayoutDashboard, Server, Network, Globe, Share2,
   Box, History, Settings, Search, Cpu, Database, 
-  Laptop, Wifi, Command, LogOut, User
+  Laptop, Wifi, Command, LogOut, User, Lock, Bell, Shield
 } from 'lucide-react'
 import { RefObject, useState, useRef, useEffect } from 'react'
 
@@ -28,6 +28,8 @@ interface SidebarProps {
   userName?: string
   userEmail?: string
   onLogout?: () => void
+  settingsTab?: string
+  setSettingsTab?: (tab: string) => void
 }
 
 const navItems: { id: ViewType; icon: React.ElementType; label: string }[] = [
@@ -40,7 +42,7 @@ const navItems: { id: ViewType; icon: React.ElementType; label: string }[] = [
   { id: 'changelog', icon: History, label: 'Changelog' },
 ]
 
-const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selectedCategory, setSelectedCategory, selectedVlanRole, setSelectedVlanRole, selectedIpFilter, setSelectedIpFilter, selectedServiceFilter, setSelectedServiceFilter, selectedChangelogFilter, setSelectedChangelogFilter, searchInputRef, userName, userEmail, onLogout }: SidebarProps) => {
+const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selectedCategory, setSelectedCategory, selectedVlanRole, setSelectedVlanRole, selectedIpFilter, setSelectedIpFilter, selectedServiceFilter, setSelectedServiceFilter, selectedChangelogFilter, setSelectedChangelogFilter, searchInputRef, userName, userEmail, onLogout, settingsTab, setSettingsTab }: SidebarProps) => {
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const userMenuRef = useRef<HTMLDivElement>(null)
 
@@ -256,6 +258,37 @@ const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selecte
               <div className={`filter-item ${selectedVlanRole === 'production' ? 'active-filter' : ''}`} onClick={() => setSelectedVlanRole(selectedVlanRole === 'production' ? null : 'production')}><div className="legend-dot" style={{ background: '#10b981' }} /> <span>Production</span></div>
               <div className={`filter-item ${selectedVlanRole === 'iot' ? 'active-filter' : ''}`} onClick={() => setSelectedVlanRole(selectedVlanRole === 'iot' ? null : 'iot')}><div className="legend-dot" style={{ background: '#f97316' }} /> <span>IoT</span></div>
               <div className={`filter-item ${selectedVlanRole === 'guest' ? 'active-filter' : ''}`} onClick={() => setSelectedVlanRole(selectedVlanRole === 'guest' ? null : 'guest')}><div className="legend-dot" style={{ background: '#8b5cf6' }} /> <span>Guest</span></div>
+            </div>
+          </>
+        )}
+        {activeView === 'settings' && (
+          <>
+            <h3>Account</h3>
+            <div className="filter-list" style={{ marginBottom: '1.5rem' }}>
+              <div className={`filter-item ${settingsTab === 'profile' ? 'active-filter' : ''}`} onClick={() => setSettingsTab?.('profile')}>
+                <User size={14} color={settingsTab === 'profile' ? '#0055ff' : '#5e6670'} /> <span>Profile</span>
+              </div>
+              <div className={`filter-item ${settingsTab === 'security' ? 'active-filter' : ''}`} onClick={() => setSettingsTab?.('security')}>
+                <Lock size={14} color={settingsTab === 'security' ? '#0055ff' : '#5e6670'} /> <span>Security</span>
+              </div>
+            </div>
+            <h3>Preferences</h3>
+            <div className="filter-list" style={{ marginBottom: '1.5rem' }}>
+              <div className={`filter-item ${settingsTab === 'notifications' ? 'active-filter' : ''}`} onClick={() => setSettingsTab?.('notifications')}>
+                <Bell size={14} color={settingsTab === 'notifications' ? '#0055ff' : '#5e6670'} /> <span>Notifications</span>
+              </div>
+              <div className={`filter-item ${settingsTab === 'application' ? 'active-filter' : ''}`} onClick={() => setSettingsTab?.('application')}>
+                <Globe size={14} color={settingsTab === 'application' ? '#0055ff' : '#5e6670'} /> <span>Application</span>
+              </div>
+            </div>
+            <h3>System</h3>
+            <div className="filter-list">
+              <div className={`filter-item ${settingsTab === 'data' ? 'active-filter' : ''}`} onClick={() => setSettingsTab?.('data')}>
+                <Database size={14} color={settingsTab === 'data' ? '#0055ff' : '#5e6670'} /> <span>Data & Storage</span>
+              </div>
+              <div className={`filter-item ${settingsTab === 'about' ? 'active-filter' : ''}`} onClick={() => setSettingsTab?.('about')}>
+                <Shield size={14} color={settingsTab === 'about' ? '#0055ff' : '#5e6670'} /> <span>About</span>
+              </div>
             </div>
           </>
         )}

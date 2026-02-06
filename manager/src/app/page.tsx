@@ -83,6 +83,7 @@ export default function Home() {
   const [selectedIpFilter, setSelectedIpFilter] = useState<string | null>(null)
   const [selectedServiceFilter, setSelectedServiceFilter] = useState<string | null>(null)
   const [selectedChangelogFilter, setSelectedChangelogFilter] = useState<string | null>(null)
+  const [settingsTab, setSettingsTab] = useState('profile')
   const searchInputRef = useRef<HTMLInputElement>(null)
   const [subnets, setSubnets] = useState<SubnetOption[]>([])
   const [selectedSubnetId, setSelectedSubnetId] = useState<string>('')
@@ -466,6 +467,8 @@ export default function Home() {
         userName={userName}
         userEmail={userEmail}
         onLogout={handleLogout}
+        settingsTab={settingsTab}
+        setSettingsTab={setSettingsTab}
       />
 
       <div className="main-content">
@@ -494,7 +497,7 @@ export default function Home() {
         {activeView === 'topology' && <div className="table-wrapper"><TopologyView selectedCategory={selectedCategory} /></div>}
         {activeView === 'services' && <div className="table-wrapper"><ServicesView searchTerm={searchTerm} selectedProtocol={selectedServiceFilter} /></div>}
         {activeView === 'changelog' && <div className="table-wrapper"><ChangelogView searchTerm={searchTerm} selectedFilter={selectedChangelogFilter} /></div>}
-        {activeView === 'settings' && <div className="table-wrapper"><SettingsView /></div>}
+        {activeView === 'settings' && <div className="table-wrapper"><SettingsView activeTab={settingsTab as 'profile' | 'security' | 'notifications' | 'application' | 'data' | 'about'} /></div>}
       </div>
 
       {/* Add/Edit Device Modal */}
