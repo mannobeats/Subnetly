@@ -22,6 +22,8 @@ interface SidebarProps {
   setSelectedIpFilter: (filter: string | null) => void
   selectedServiceFilter: string | null
   setSelectedServiceFilter: (filter: string | null) => void
+  selectedChangelogFilter: string | null
+  setSelectedChangelogFilter: (filter: string | null) => void
   searchInputRef?: RefObject<HTMLInputElement | null>
 }
 
@@ -35,7 +37,7 @@ const navItems: { id: ViewType; icon: React.ElementType; label: string }[] = [
   { id: 'changelog', icon: History, label: 'Changelog' },
 ]
 
-const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selectedCategory, setSelectedCategory, selectedVlanRole, setSelectedVlanRole, selectedIpFilter, setSelectedIpFilter, selectedServiceFilter, setSelectedServiceFilter, searchInputRef }: SidebarProps) => {
+const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selectedCategory, setSelectedCategory, selectedVlanRole, setSelectedVlanRole, selectedIpFilter, setSelectedIpFilter, selectedServiceFilter, setSelectedServiceFilter, selectedChangelogFilter, setSelectedChangelogFilter, searchInputRef }: SidebarProps) => {
   return (
     <>
       {/* Primary Sidebar - Icons Only */}
@@ -211,20 +213,26 @@ const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selecte
         )}
         {activeView === 'changelog' && (
           <>
-            <h3>Info</h3>
-            <div className="filter-list">
-              <div className="filter-item" style={{ fontSize: '11px', color: '#5e6670' }}><div className="legend-dot" style={{ background: '#10b981' }} /> <span>Created</span></div>
-              <div className="filter-item" style={{ fontSize: '11px', color: '#5e6670' }}><div className="legend-dot" style={{ background: '#0055ff' }} /> <span>Updated</span></div>
-              <div className="filter-item" style={{ fontSize: '11px', color: '#5e6670' }}><div className="legend-dot" style={{ background: '#ef4444' }} /> <span>Deleted</span></div>
+            <h3>Filters</h3>
+            <div className="filter-list" style={{ marginBottom: '1.5rem' }}>
+              <div className={`filter-item ${selectedChangelogFilter === null ? 'active-filter' : ''}`} onClick={() => setSelectedChangelogFilter(null)}>
+                <History size={14} color={selectedChangelogFilter === null ? '#0055ff' : '#5e6670'} /> <span>All Changes</span>
+              </div>
             </div>
-            <h3 style={{ marginTop: '1.5rem' }}>Object Types</h3>
+            <h3>Action Type</h3>
+            <div className="filter-list" style={{ marginBottom: '1.5rem' }}>
+              <div className={`filter-item ${selectedChangelogFilter === 'create' ? 'active-filter' : ''}`} onClick={() => setSelectedChangelogFilter(selectedChangelogFilter === 'create' ? null : 'create')}><div className="legend-dot" style={{ background: '#10b981' }} /> <span>Created</span></div>
+              <div className={`filter-item ${selectedChangelogFilter === 'update' ? 'active-filter' : ''}`} onClick={() => setSelectedChangelogFilter(selectedChangelogFilter === 'update' ? null : 'update')}><div className="legend-dot" style={{ background: '#0055ff' }} /> <span>Updated</span></div>
+              <div className={`filter-item ${selectedChangelogFilter === 'delete' ? 'active-filter' : ''}`} onClick={() => setSelectedChangelogFilter(selectedChangelogFilter === 'delete' ? null : 'delete')}><div className="legend-dot" style={{ background: '#ef4444' }} /> <span>Deleted</span></div>
+            </div>
+            <h3>Object Type</h3>
             <div className="filter-list">
-              <div className="filter-item" style={{ fontSize: '11px', color: '#5e6670' }}><Server size={12} color="#5e6670" /> <span>Device</span></div>
-              <div className="filter-item" style={{ fontSize: '11px', color: '#5e6670' }}><Globe size={12} color="#5e6670" /> <span>Subnet</span></div>
-              <div className="filter-item" style={{ fontSize: '11px', color: '#5e6670' }}><Globe size={12} color="#5e6670" /> <span>IP Address</span></div>
-              <div className="filter-item" style={{ fontSize: '11px', color: '#5e6670' }}><Network size={12} color="#5e6670" /> <span>VLAN</span></div>
-              <div className="filter-item" style={{ fontSize: '11px', color: '#5e6670' }}><Box size={12} color="#5e6670" /> <span>Service</span></div>
-              <div className="filter-item" style={{ fontSize: '11px', color: '#5e6670' }}><Globe size={12} color="#5e6670" /> <span>IP Range</span></div>
+              <div className={`filter-item ${selectedChangelogFilter === 'Device' ? 'active-filter' : ''}`} onClick={() => setSelectedChangelogFilter(selectedChangelogFilter === 'Device' ? null : 'Device')}><Server size={12} color={selectedChangelogFilter === 'Device' ? '#0055ff' : '#5e6670'} /> <span>Device</span></div>
+              <div className={`filter-item ${selectedChangelogFilter === 'Subnet' ? 'active-filter' : ''}`} onClick={() => setSelectedChangelogFilter(selectedChangelogFilter === 'Subnet' ? null : 'Subnet')}><Globe size={12} color={selectedChangelogFilter === 'Subnet' ? '#0055ff' : '#5e6670'} /> <span>Subnet</span></div>
+              <div className={`filter-item ${selectedChangelogFilter === 'IPAddress' ? 'active-filter' : ''}`} onClick={() => setSelectedChangelogFilter(selectedChangelogFilter === 'IPAddress' ? null : 'IPAddress')}><Globe size={12} color={selectedChangelogFilter === 'IPAddress' ? '#0055ff' : '#5e6670'} /> <span>IP Address</span></div>
+              <div className={`filter-item ${selectedChangelogFilter === 'VLAN' ? 'active-filter' : ''}`} onClick={() => setSelectedChangelogFilter(selectedChangelogFilter === 'VLAN' ? null : 'VLAN')}><Network size={12} color={selectedChangelogFilter === 'VLAN' ? '#0055ff' : '#5e6670'} /> <span>VLAN</span></div>
+              <div className={`filter-item ${selectedChangelogFilter === 'Service' ? 'active-filter' : ''}`} onClick={() => setSelectedChangelogFilter(selectedChangelogFilter === 'Service' ? null : 'Service')}><Box size={12} color={selectedChangelogFilter === 'Service' ? '#0055ff' : '#5e6670'} /> <span>Service</span></div>
+              <div className={`filter-item ${selectedChangelogFilter === 'IPRange' ? 'active-filter' : ''}`} onClick={() => setSelectedChangelogFilter(selectedChangelogFilter === 'IPRange' ? null : 'IPRange')}><Globe size={12} color={selectedChangelogFilter === 'IPRange' ? '#0055ff' : '#5e6670'} /> <span>IP Range</span></div>
             </div>
           </>
         )}

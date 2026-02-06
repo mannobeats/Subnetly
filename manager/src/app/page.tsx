@@ -46,6 +46,7 @@ export default function Home() {
   const [selectedVlanRole, setSelectedVlanRole] = useState<string | null>(null)
   const [selectedIpFilter, setSelectedIpFilter] = useState<string | null>(null)
   const [selectedServiceFilter, setSelectedServiceFilter] = useState<string | null>(null)
+  const [selectedChangelogFilter, setSelectedChangelogFilter] = useState<string | null>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const [subnets, setSubnets] = useState<SubnetOption[]>([])
   const [selectedSubnetId, setSelectedSubnetId] = useState<string>('')
@@ -407,6 +408,8 @@ export default function Home() {
         setSelectedIpFilter={setSelectedIpFilter}
         selectedServiceFilter={selectedServiceFilter}
         setSelectedServiceFilter={setSelectedServiceFilter}
+        selectedChangelogFilter={selectedChangelogFilter}
+        setSelectedChangelogFilter={setSelectedChangelogFilter}
         searchInputRef={searchInputRef}
       />
 
@@ -435,7 +438,7 @@ export default function Home() {
         {activeView === 'vlans' && <div className="table-wrapper"><VLANView searchTerm={searchTerm} selectedRole={selectedVlanRole} /></div>}
         {activeView === 'topology' && <div className="table-wrapper"><TopologyView selectedCategory={selectedCategory} /></div>}
         {activeView === 'services' && <div className="table-wrapper"><ServicesView searchTerm={searchTerm} selectedProtocol={selectedServiceFilter} /></div>}
-        {activeView === 'changelog' && <div className="table-wrapper"><ChangelogView searchTerm={searchTerm} /></div>}
+        {activeView === 'changelog' && <div className="table-wrapper"><ChangelogView searchTerm={searchTerm} selectedFilter={selectedChangelogFilter} /></div>}
       </div>
 
       {/* Add/Edit Device Modal */}

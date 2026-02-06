@@ -12,3 +12,12 @@ export async function GET() {
     return NextResponse.json({ error: 'Failed to fetch changelog' }, { status: 500 })
   }
 }
+
+export async function DELETE() {
+  try {
+    await prisma.changeLog.deleteMany({})
+    return NextResponse.json({ success: true })
+  } catch {
+    return NextResponse.json({ error: 'Failed to clear changelog' }, { status: 500 })
+  }
+}
