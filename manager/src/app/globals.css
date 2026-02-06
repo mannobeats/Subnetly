@@ -1,33 +1,89 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
-  --unifi-bg: #fbfcfd;
-  --unifi-sidebar-bg: #ffffff;
-  --unifi-blue: #0055ff;
-  --unifi-text: #1a1a1a;
-  --unifi-text-muted: #5e6670;
-  --unifi-border: #e6e8eb;
-  --unifi-hover: #f3f5f7;
-  --unifi-active: #eef1f4;
+  /* ── Core palette ── */
+  --white: #ffffff;
+  --black: #1a1a1a;
+
+  /* ── Brand ── */
+  --blue: #0055ff;
+  --blue-light: #3b82f6;
+  --blue-dark: #0044cc;
+  --blue-bg: #eef5ff;
+  --blue-ring: rgba(0, 85, 255, 0.3);
+
+  /* ── Semantic ── */
+  --green: #10b981;
+  --green-bg: #ecfdf5;
+  --red: #dc2626;
+  --red-dark: #b91c1c;
+  --red-bg: #fef2f2;
+  --red-bg-subtle: #fee2e2;
+  --red-border: #fecaca;
+  --purple: #7c3aed;
+  --purple-bg: #f5f3ff;
+  --orange: #f97316;
+  --orange-bg: #fff7ed;
+  --cyan: #06b6d4;
+
+  /* ── Info callout (blue tint) ── */
+  --info-bg: #eef5ff;
+  --info-border: #bfdbfe;
+  --info-text: #1e40af;
+  --info-accent: #3b82f6;
+  --info-code-bg: #dbeafe;
+
+  /* ── Neutrals ── */
+  --bg: #fbfcfd;
+  --surface: #ffffff;
+  --surface-alt: #fafbfc;
+  --muted-bg: #f1f3f5;
+  --muted-bg-alt: #f1f5f9;
+  --text: #1a1a1a;
+  --text-muted: #5e6670;
+  --text-light: #94a3b8;
+  --text-slate: #64748b;
+  --border: #e6e8eb;
+  --hover: #f3f5f7;
+  --active: #eef1f4;
+  --dark-bg: #1e293b;
+  --toggle-off: #d1d5db;
+  --text-faint: #adb5bd;
+
+  /* ── Gradients ── */
+  --gradient-blue: linear-gradient(135deg, var(--blue), var(--blue-light));
+  --gradient-login-bg: linear-gradient(135deg, #f8fafc 0%, #eef2ff 50%, #f0f9ff 100%);
+
+  /* ── Shadows ── */
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 20px 25px -5px rgba(0, 0, 0, 0.08);
+  --shadow-popup: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 4px 10px -3px rgba(0, 0, 0, 0.1);
+  --shadow-tooltip: 0 8px 24px rgba(0, 0, 0, 0.2);
+
+  /* ── Sizing ── */
   --radius: 6px;
-  
-  --primary: var(--unifi-blue);
-  --background: var(--unifi-bg);
-  --foreground: var(--unifi-text);
-  --border: var(--unifi-border);
+  --radius-lg: 8px;
+  --radius-xl: 10px;
+  --sidebar-w: 64px;
+  --sidebar2-w: 280px;
+  --topnav-h: 56px;
+
+  /* ── Aliases ── */
+  --primary: var(--blue);
+  --background: var(--bg);
+  --foreground: var(--text);
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  background-color: var(--unifi-bg);
-  color: var(--unifi-text);
-  font-size: 13px; /* UniFi uses small, crisp font */
+  background-color: var(--bg);
+  color: var(--text);
+  font-size: 13px;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -41,10 +97,10 @@ body {
 
 /* Primary Slim Sidebar */
 .sidebar-primary {
-  width: 64px;
+  width: var(--sidebar-w);
   height: 100%;
-  background: #ffffff;
-  border-right: 1px solid var(--unifi-border);
+  background: var(--surface);
+  border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -59,28 +115,28 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--unifi-text-muted);
+  color: var(--text-muted);
   cursor: pointer;
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   transition: all 0.2s;
 }
 
 .sidebar-icon:hover {
-  background: var(--unifi-hover);
-  color: var(--unifi-blue);
+  background: var(--hover);
+  color: var(--blue);
 }
 
 .sidebar-icon.active {
-  color: var(--unifi-blue);
-  background: #eef5ff;
+  color: var(--blue);
+  background: var(--blue-bg);
 }
 
 /* Secondary Sidebar (Filters) */
 .sidebar-secondary {
-  width: 280px;
+  width: var(--sidebar2-w);
   height: 100%;
-  background: #ffffff;
-  border-right: 1px solid var(--unifi-border);
+  background: var(--surface);
+  border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   padding: 1.5rem;
@@ -90,7 +146,7 @@ body {
 .sidebar-secondary h3 {
   font-size: 11px;
   text-transform: uppercase;
-  color: var(--unifi-text-muted);
+  color: var(--text-muted);
   letter-spacing: 0.05em;
   margin-bottom: 1rem;
   font-weight: 600;
@@ -102,14 +158,14 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: var(--unifi-bg);
+  background: var(--bg);
 }
 
 /* Top Navigation Bar */
 .top-nav {
-  height: 56px;
-  background: #ffffff;
-  border-bottom: 1px solid var(--unifi-border);
+  height: var(--topnav-h);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
   padding: 0 1.5rem;
@@ -124,11 +180,11 @@ body {
 }
 
 .breadcrumbs span {
-  color: var(--unifi-text-muted);
+  color: var(--text-muted);
 }
 
 .breadcrumbs strong {
-  color: var(--unifi-text);
+  color: var(--text);
   font-weight: 600;
 }
 
@@ -142,9 +198,9 @@ body {
 .unifi-table {
   width: 100%;
   border-collapse: collapse;
-  background: #ffffff;
+  background: var(--surface);
   border-radius: var(--radius);
-  border: 1px solid var(--unifi-border);
+  border: 1px solid var(--border);
   table-layout: fixed;
 }
 
@@ -154,15 +210,15 @@ body {
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
-  color: var(--unifi-text-muted);
-  border-bottom: 1px solid var(--unifi-border);
-  background: #fafbfc;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-alt);
 }
 
 .unifi-table td {
   padding: 0.75rem 1rem;
-  border-bottom: 1px solid var(--unifi-border);
-  color: var(--unifi-text);
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
   font-size: 13px;
   vertical-align: middle;
   white-space: nowrap;
@@ -171,7 +227,7 @@ body {
 }
 
 .unifi-table tr:hover td {
-  background: var(--unifi-hover);
+  background: var(--hover);
 }
 
 /* Stats Ribbon */
@@ -179,8 +235,8 @@ body {
   display: flex;
   gap: 2rem;
   padding: 1rem 1.5rem;
-  background: #ffffff;
-  border-bottom: 1px solid var(--unifi-border);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
 }
 
 .stat-item {
@@ -191,7 +247,7 @@ body {
 
 .stat-label {
   font-size: 11px;
-  color: var(--unifi-text-muted);
+  color: var(--text-muted);
   text-transform: uppercase;
   font-weight: 600;
 }
@@ -199,7 +255,7 @@ body {
 .stat-value {
   font-size: 18px;
   font-weight: 700;
-  color: var(--unifi-blue);
+  color: var(--blue);
 }
 
 /* Buttons */
@@ -214,33 +270,23 @@ body {
   align-items: center;
   gap: 0.5rem;
   transition: all 0.2s;
-  border: 1px solid var(--unifi-border);
-  background: #ffffff;
-  color: var(--unifi-text);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
 }
 
 .btn:hover {
-  background: var(--unifi-hover);
+  background: var(--hover);
 }
 
 .btn-primary {
-  background: var(--unifi-blue);
-  color: #ffffff;
+  background: var(--blue);
+  color: var(--white);
   border: none;
 }
 
 .btn-primary:hover {
-  background: #0044cc;
-}
-
-.btn-destructive {
-  background: #fee2e2;
-  color: #dc2626;
-  border-color: #fecaca;
-}
-
-.btn-destructive:hover {
-  background: #fef2f2;
+  background: var(--blue-dark);
 }
 
 /* Animations */
@@ -266,10 +312,10 @@ body {
 }
 
 .modal-content {
-  background: #ffffff;
+  background: var(--surface);
   width: 480px;
-  border-radius: 8px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
   padding: 2rem;
 }
 
@@ -283,23 +329,23 @@ body {
   font-size: 12px;
   font-weight: 600;
   margin-bottom: 0.5rem;
-  color: var(--unifi-text-muted);
+  color: var(--text-muted);
 }
 
 .unifi-input {
   width: 100%;
   height: 36px;
-  border: 1px solid var(--unifi-border);
+  border: 1px solid var(--border);
   border-radius: 4px;
   padding: 0 0.75rem;
   font-size: 13px;
-  background: #fafbfc;
+  background: var(--surface-alt);
 }
 
 .unifi-input:focus {
   outline: none;
-  border-color: var(--unifi-blue);
-  background: #ffffff;
+  border-color: var(--blue);
+  background: var(--surface);
 }
 
 /* IP Planning Grid */
@@ -307,34 +353,34 @@ body {
   display: grid;
   grid-template-columns: repeat(16, 1fr);
   gap: 4px;
-  background: #ffffff;
+  background: var(--surface);
   padding: 1.5rem;
-  border: 1px solid var(--unifi-border);
-  border-radius: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
   margin-top: 1rem;
 }
 
 .ip-cell {
   aspect-ratio: 1;
   border-radius: 2px;
-  background: #f1f3f5;
+  background: var(--muted-bg);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 9px;
-  color: #adb5bd;
+  color: var(--text-faint);
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .ip-cell.occupied {
-  background: var(--unifi-blue);
-  color: #ffffff;
+  background: var(--blue);
+  color: var(--white);
 }
 
 .ip-cell.gateway {
-  background: #10b981;
-  color: #ffffff;
+  background: var(--green);
+  color: var(--white);
 }
 
 .ip-cell:hover {
@@ -351,10 +397,10 @@ body {
   font-weight: 600;
 }
 
-.badge-blue { background: #eef5ff; color: #0055ff; }
-.badge-green { background: #ecfdf5; color: #10b981; }
-.badge-purple { background: #f5f3ff; color: #7c3aed; }
-.badge-orange { background: #fff7ed; color: #f97316; }
+.badge-blue { background: var(--blue-bg); color: var(--blue); }
+.badge-green { background: var(--green-bg); color: var(--green); }
+.badge-purple { background: var(--purple-bg); color: var(--purple); }
+.badge-orange { background: var(--orange-bg); color: var(--orange); }
 
 /* Filter list */
 .filter-list {
@@ -368,19 +414,19 @@ body {
   align-items: center;
   gap: 0.75rem;
   padding: 0.5rem 0;
-  color: var(--unifi-text);
+  color: var(--text);
   cursor: pointer;
 }
 
 .filter-item.active-filter {
-  color: var(--unifi-blue);
-  background: #eef5ff;
+  color: var(--blue);
+  background: var(--blue-bg);
   border-radius: 4px;
 }
 
 .filter-item:hover {
-  color: var(--unifi-blue);
-  background: var(--unifi-hover);
+  color: var(--blue);
+  background: var(--hover);
   border-radius: 4px;
 }
 
@@ -396,7 +442,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--unifi-blue);
+  color: var(--blue);
   margin-bottom: 0.5rem;
 }
 
@@ -404,7 +450,7 @@ body {
   font-size: 14px;
   font-weight: 600;
   margin-bottom: 1.25rem;
-  color: var(--unifi-text);
+  color: var(--text);
 }
 
 /* Legend Dot */
@@ -424,8 +470,8 @@ body {
   margin-right: 6px;
   vertical-align: middle;
 }
-.status-active { background: #10b981; }
-.status-inactive { background: #94a3b8; }
+.status-active { background: var(--green); }
+.status-inactive { background: var(--text-light); }
 
 /* View Loading */
 .view-loading {
@@ -433,7 +479,7 @@ body {
   align-items: center;
   justify-content: center;
   height: 200px;
-  color: var(--unifi-text-muted);
+  color: var(--text-muted);
   font-size: 13px;
 }
 
@@ -450,8 +496,8 @@ body {
 }
 
 .dash-stat-card {
-  background: #ffffff;
-  border: 1px solid var(--unifi-border);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 1.25rem;
   display: flex;
@@ -477,26 +523,26 @@ body {
 .dash-stat-value {
   font-size: 24px;
   font-weight: 700;
-  color: var(--unifi-text);
+  color: var(--text);
   line-height: 1;
 }
 
 .dash-stat-label {
   font-size: 12px;
-  color: var(--unifi-text-muted);
+  color: var(--text-muted);
   font-weight: 500;
   margin-top: 4px;
 }
 
 .dash-stat-sub {
   font-size: 11px;
-  color: #94a3b8;
+  color: var(--text-light);
   margin-top: 2px;
 }
 
 .dash-section {
-  background: #ffffff;
-  border: 1px solid var(--unifi-border);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 1.25rem;
   margin-bottom: 1rem;
@@ -512,13 +558,13 @@ body {
 .dash-section-header h2 {
   font-size: 13px;
   font-weight: 600;
-  color: var(--unifi-text);
+  color: var(--text);
 }
 
 .dash-section-badge {
   font-size: 11px;
-  color: var(--unifi-text-muted);
-  background: #f1f3f5;
+  color: var(--text-muted);
+  background: var(--muted-bg);
   padding: 2px 8px;
   border-radius: 4px;
 }
@@ -538,8 +584,8 @@ body {
 }
 
 .dash-subnet-card {
-  background: #fafbfc;
-  border: 1px solid var(--unifi-border);
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
   border-radius: 6px;
   padding: 1rem;
 }
@@ -554,15 +600,15 @@ body {
 .dash-subnet-prefix {
   font-size: 13px;
   font-weight: 600;
-  color: var(--unifi-text);
-  background: #f1f3f5;
+  color: var(--text);
+  background: var(--muted-bg);
   padding: 2px 8px;
   border-radius: 4px;
 }
 
 .dash-subnet-desc {
   font-size: 12px;
-  color: var(--unifi-text-muted);
+  color: var(--text-muted);
   margin-bottom: 0.75rem;
 }
 
@@ -572,7 +618,7 @@ body {
 
 .dash-utilization-bar {
   height: 6px;
-  background: #f1f3f5;
+  background: var(--muted-bg);
   border-radius: 3px;
   overflow: hidden;
   margin-bottom: 0.35rem;
@@ -588,7 +634,7 @@ body {
   display: flex;
   justify-content: space-between;
   font-size: 11px;
-  color: var(--unifi-text-muted);
+  color: var(--text-muted);
 }
 
 .dash-utilization-pct {
@@ -641,7 +687,7 @@ body {
 .dash-category-bar {
   flex: 1;
   height: 6px;
-  background: #f1f3f5;
+  background: var(--muted-bg);
   border-radius: 3px;
   overflow: hidden;
 }
@@ -655,7 +701,7 @@ body {
 .dash-category-count {
   font-size: 12px;
   font-weight: 600;
-  color: var(--unifi-text);
+  color: var(--text);
   min-width: 20px;
   text-align: right;
 }
@@ -683,8 +729,8 @@ body {
   flex-shrink: 0;
 }
 
-.dash-change-icon.create { background: #ecfdf5; color: #10b981; }
-.dash-change-icon.update { background: #eef5ff; color: #0055ff; }
+.dash-change-icon.create { background: var(--green-bg); color: var(--green); }
+.dash-change-icon.update { background: var(--blue-bg); color: var(--blue); }
 
 .dash-change-info {
   display: flex;
@@ -699,7 +745,7 @@ body {
 
 .dash-change-time {
   font-size: 10px;
-  color: #94a3b8;
+  color: var(--text-light);
 }
 
 /* Services Grid */
@@ -710,8 +756,8 @@ body {
 }
 
 .dash-service-card {
-  background: #fafbfc;
-  border: 1px solid var(--unifi-border);
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
   border-radius: 6px;
   padding: 0.75rem;
 }
@@ -730,14 +776,14 @@ body {
 }
 
 .dash-service-detail code {
-  background: #f1f3f5;
+  background: var(--muted-bg);
   padding: 1px 6px;
   border-radius: 3px;
   font-size: 10px;
 }
 
 .dash-service-device {
-  color: var(--unifi-text-muted);
+  color: var(--text-muted);
   font-size: 10px;
 }
 
@@ -751,8 +797,8 @@ body {
   align-items: flex-end;
   gap: 2rem;
   margin-bottom: 1rem;
-  background: #ffffff;
-  border: 1px solid var(--unifi-border);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 1rem 1.25rem;
 }
@@ -774,7 +820,7 @@ body {
   top: 50%;
   transform: translateY(-50%);
   pointer-events: none;
-  color: var(--unifi-text-muted);
+  color: var(--text-muted);
 }
 
 .ipam-util-section {
@@ -791,7 +837,7 @@ body {
 .ipam-util-label {
   font-size: 11px;
   font-weight: 600;
-  color: var(--unifi-text-muted);
+  color: var(--text-muted);
   text-transform: uppercase;
 }
 
@@ -802,7 +848,7 @@ body {
 
 .ipam-util-bar {
   height: 8px;
-  background: #f1f3f5;
+  background: var(--muted-bg);
   border-radius: 4px;
   overflow: hidden;
   margin-bottom: 0.35rem;
@@ -816,7 +862,7 @@ body {
 
 .ipam-util-detail {
   font-size: 11px;
-  color: var(--unifi-text-muted);
+  color: var(--text-muted);
 }
 
 /* IP Ranges Bar */
@@ -845,14 +891,14 @@ body {
 }
 
 .ipam-range-desc {
-  color: var(--unifi-text-muted);
+  color: var(--text-muted);
   font-weight: 400;
 }
 
 /* IP Grid */
 .ipam-grid-container {
-  background: #ffffff;
-  border: 1px solid var(--unifi-border);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 1.25rem;
   margin-bottom: 1.5rem;
@@ -884,7 +930,7 @@ body {
 }
 
 .ipam-cell.highlighted {
-  box-shadow: 0 0 0 2px #0055ff, 0 4px 12px rgba(0, 85, 255, 0.3);
+  box-shadow: 0 0 0 2px var(--blue), 0 4px 12px var(--blue-ring);
   z-index: 11;
 }
 
@@ -915,8 +961,8 @@ body {
   bottom: 1.5rem;
   left: 50%;
   transform: translateX(-50%);
-  background: #1e293b;
-  color: #ffffff;
+  background: var(--dark-bg);
+  color: var(--white);
   padding: 0.75rem 1.25rem;
   border-radius: 8px;
   display: flex;
@@ -924,7 +970,7 @@ body {
   gap: 0.75rem;
   font-size: 12px;
   z-index: 100;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-tooltip);
 }
 
 .ipam-tooltip-content {
@@ -939,19 +985,19 @@ body {
 }
 
 .ipam-tooltip-desc {
-  color: #94a3b8;
+  color: var(--text-light);
   font-size: 11px;
 }
 
 .ipam-tooltip-action {
-  color: #60a5fa;
+  color: var(--blue-light);
   font-size: 11px;
   font-weight: 500;
 }
 
 .ipam-table-section {
-  background: #ffffff;
-  border: 1px solid var(--unifi-border);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 1.25rem;
 }
@@ -969,8 +1015,8 @@ body {
 }
 
 .vlan-card {
-  background: #ffffff;
-  border: 1px solid var(--unifi-border);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 1.25rem;
   transition: box-shadow 0.2s;
@@ -1011,19 +1057,19 @@ body {
 
 .vlan-vid {
   font-size: 11px;
-  color: var(--unifi-text-muted);
+  color: var(--text-muted);
   font-weight: 600;
 }
 
 .vlan-name {
   font-size: 15px;
   font-weight: 600;
-  color: var(--unifi-text);
+  color: var(--text);
 }
 
 .vlan-card-desc {
   font-size: 12px;
-  color: var(--unifi-text-muted);
+  color: var(--text-muted);
   margin-bottom: 0.75rem;
   line-height: 1.5;
 }
@@ -1037,7 +1083,7 @@ body {
 
 .vlan-role-label {
   font-size: 11px;
-  color: var(--unifi-text-muted);
+  color: var(--text-muted);
   font-weight: 600;
   text-transform: uppercase;
 }
@@ -1049,8 +1095,8 @@ body {
 }
 
 .vlan-subnets {
-  background: #fafbfc;
-  border: 1px solid var(--unifi-border);
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
   border-radius: 6px;
   padding: 0.75rem;
   margin-bottom: 0.75rem;
@@ -1058,7 +1104,7 @@ body {
 
 .vlan-subnets-label {
   font-size: 10px;
-  color: var(--unifi-text-muted);
+  color: var(--text-muted);
   font-weight: 600;
   text-transform: uppercase;
   display: block;
@@ -1075,14 +1121,14 @@ body {
 .vlan-subnet-prefix {
   font-size: 12px;
   font-weight: 500;
-  background: #f1f3f5;
+  background: var(--muted-bg);
   padding: 2px 6px;
   border-radius: 3px;
 }
 
 .vlan-subnet-gw {
   font-size: 10px;
-  color: var(--unifi-text-muted);
+  color: var(--text-muted);
 }
 
 .vlan-card-footer {
@@ -1104,8 +1150,8 @@ body {
 
 .topo-canvas {
   flex: 1;
-  background: #ffffff;
-  border: 1px solid var(--unifi-border);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 8px;
   overflow: auto;
   min-height: 500px;
@@ -1127,8 +1173,8 @@ body {
 
 .topo-detail-panel {
   width: 320px;
-  background: #ffffff;
-  border: 1px solid var(--unifi-border);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 1.25rem;
   margin-left: 1rem;
@@ -1142,7 +1188,7 @@ body {
   gap: 1rem;
   margin-bottom: 1.25rem;
   padding-bottom: 1rem;
-  border-bottom: 1px solid var(--unifi-border);
+  border-bottom: 1px solid var(--border);
 }
 
 .topo-detail-header h3 {
@@ -1175,7 +1221,7 @@ body {
 
 .topo-detail-label {
   font-size: 11px;
-  color: var(--unifi-text-muted);
+  color: var(--text-muted);
   font-weight: 600;
   text-transform: uppercase;
 }
@@ -1183,12 +1229,12 @@ body {
 .topo-detail-section {
   margin-top: 1rem;
   padding-top: 1rem;
-  border-top: 1px solid var(--unifi-border);
+  border-top: 1px solid var(--border);
 }
 
 .topo-detail-section h4 {
   font-size: 11px;
-  color: var(--unifi-text-muted);
+  color: var(--text-muted);
   font-weight: 600;
   text-transform: uppercase;
   margin-bottom: 0.75rem;
@@ -1216,7 +1262,7 @@ body {
 
 .topo-service-port {
   font-size: 10px;
-  background: #f1f3f5;
+  background: var(--muted-bg);
   padding: 2px 6px;
   border-radius: 3px;
 }
@@ -1234,8 +1280,8 @@ body {
 }
 
 .services-device-card {
-  background: #ffffff;
-  border: 1px solid var(--unifi-border);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 8px;
   overflow: hidden;
 }
@@ -1245,8 +1291,8 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 1rem 1.25rem;
-  background: #fafbfc;
-  border-bottom: 1px solid var(--unifi-border);
+  background: var(--surface-alt);
+  border-bottom: 1px solid var(--border);
 }
 
 .services-device-name {
@@ -1256,7 +1302,7 @@ body {
 
 .services-device-ip {
   font-size: 11px;
-  color: var(--unifi-text-muted);
+  color: var(--text-muted);
 }
 
 .services-list {
@@ -1272,15 +1318,15 @@ body {
 }
 
 .services-item:hover {
-  background: var(--unifi-hover);
+  background: var(--hover);
 }
 
 .services-item-icon {
   width: 28px;
   height: 28px;
   border-radius: 6px;
-  background: #eef5ff;
-  color: var(--unifi-blue);
+  background: var(--blue-bg);
+  color: var(--blue);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1300,12 +1346,12 @@ body {
 
 .services-item-desc {
   font-size: 10px;
-  color: var(--unifi-text-muted);
+  color: var(--text-muted);
 }
 
 .services-item-port {
   font-size: 10px;
-  background: #f1f3f5;
+  background: var(--muted-bg);
   padding: 2px 8px;
   border-radius: 3px;
   flex-shrink: 0;
@@ -1326,7 +1372,7 @@ body {
   display: flex;
   gap: 1rem;
   padding: 1rem 0;
-  border-bottom: 1px solid var(--unifi-border);
+  border-bottom: 1px solid var(--border);
 }
 
 .changelog-entry:last-child {
@@ -1361,12 +1407,12 @@ body {
 
 .changelog-type {
   font-size: 12px;
-  color: var(--unifi-text-muted);
+  color: var(--text-muted);
 }
 
 .changelog-changes {
-  background: #fafbfc;
-  border: 1px solid var(--unifi-border);
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
   border-radius: 6px;
   padding: 0.5rem 0.75rem;
   margin-bottom: 0.5rem;
@@ -1380,7 +1426,7 @@ body {
 }
 
 .changelog-key {
-  color: var(--unifi-text-muted);
+  color: var(--text-muted);
   font-weight: 500;
 }
 
@@ -1394,7 +1440,7 @@ body {
   align-items: center;
   gap: 0.35rem;
   font-size: 10px;
-  color: #94a3b8;
+  color: var(--text-light);
 }
 
 /* ─── TOPOLOGY CONTROLS ──────────────────────────────────── */
@@ -1405,12 +1451,12 @@ body {
   display: flex;
   align-items: center;
   gap: 4px;
-  background: #ffffff;
-  border: 1px solid var(--unifi-border);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 4px 8px;
   z-index: 10;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-sm);
 }
 
 .topo-ctrl-btn {
@@ -1423,18 +1469,18 @@ body {
   background: transparent;
   border-radius: 6px;
   cursor: pointer;
-  color: #64748b;
+  color: var(--text-slate);
   transition: all 0.15s;
 }
 
 .topo-ctrl-btn:hover {
-  background: #f1f5f9;
-  color: #1a1a1a;
+  background: var(--muted-bg-alt);
+  color: var(--text);
 }
 
 .topo-zoom-label {
   font-size: 10px;
-  color: #94a3b8;
+  color: var(--text-light);
   font-weight: 500;
   min-width: 32px;
   text-align: center;
@@ -1442,13 +1488,13 @@ body {
 
 /* ─── DESTRUCTIVE BUTTON ─────────────────────────────────── */
 .btn-destructive {
-  background: #dc2626 !important;
-  color: #ffffff !important;
+  background: var(--red) !important;
+  color: var(--white) !important;
   border: none !important;
 }
 
 .btn-destructive:hover {
-  background: #b91c1c !important;
+  background: var(--red-dark) !important;
 }
 
 /* ─── EMPTY STATES ───────────────────────────────────────── */
@@ -1459,8 +1505,8 @@ body {
   justify-content: center;
   padding: 4rem 2rem;
   text-align: center;
-  background: #ffffff;
-  border: 1px solid var(--unifi-border);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 8px;
 }
 
@@ -1468,20 +1514,20 @@ body {
   font-size: 16px;
   font-weight: 600;
   margin: 1rem 0 0.5rem;
-  color: var(--unifi-text);
+  color: var(--text);
 }
 
 .empty-state p {
   font-size: 13px;
-  color: var(--unifi-text-muted);
+  color: var(--text-muted);
   margin-bottom: 1.5rem;
   max-width: 360px;
 }
 
 /* ─── TOPOLOGY SUBNET LEGEND ─────────────────────────────── */
 .topo-ctrl-active {
-  background: #eff6ff !important;
-  color: #3b82f6 !important;
+  background: var(--blue-bg) !important;
+  color: var(--blue-light) !important;
 }
 
 .topo-subnet-legend {
@@ -1491,12 +1537,12 @@ body {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  background: #ffffff;
-  border: 1px solid var(--unifi-border);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 8px 12px;
   z-index: 10;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-sm);
 }
 
 .topo-subnet-legend-item {
@@ -1515,17 +1561,17 @@ body {
 .topo-subnet-legend-text {
   font-size: 10px;
   font-weight: 500;
-  color: #64748b;
+  color: var(--text-slate);
   white-space: nowrap;
 }
 
 /* ─── IPAM VIEW TOGGLE ───────────────────────────────────── */
 .ipam-view-toggle {
   display: flex;
-  border: 1px solid var(--unifi-border);
+  border: 1px solid var(--border);
   border-radius: 8px;
   overflow: hidden;
-  background: #ffffff;
+  background: var(--surface);
 }
 
 .ipam-toggle-btn {
@@ -1537,28 +1583,28 @@ body {
   border: none;
   background: transparent;
   cursor: pointer;
-  color: #94a3b8;
+  color: var(--text-light);
   transition: all 0.15s;
 }
 
 .ipam-toggle-btn:hover {
-  background: #f1f5f9;
-  color: #64748b;
+  background: var(--muted-bg-alt);
+  color: var(--text-slate);
 }
 
 .ipam-toggle-btn.active {
-  background: #0055ff;
-  color: #ffffff;
+  background: var(--blue);
+  color: var(--white);
 }
 
 .ipam-toggle-btn + .ipam-toggle-btn {
-  border-left: 1px solid var(--unifi-border);
+  border-left: 1px solid var(--border);
 }
 
 /* ─── IPAM LIST VIEW ─────────────────────────────────────── */
 .ipam-list-view {
-  background: #ffffff;
-  border: 1px solid var(--unifi-border);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 8px;
   overflow: hidden;
 }
@@ -1587,8 +1633,8 @@ body {
 }
 
 .ipam-summary-card {
-  background: #ffffff;
-  border: 1px solid var(--unifi-border);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 10px;
   padding: 1.25rem;
   text-align: center;
@@ -1604,18 +1650,18 @@ body {
 .ipam-summary-card-label {
   font-size: 12px;
   font-weight: 600;
-  color: var(--unifi-text);
+  color: var(--text);
   margin-bottom: 2px;
 }
 
 .ipam-summary-card-sub {
   font-size: 10px;
-  color: #94a3b8;
+  color: var(--text-light);
 }
 
 .ipam-summary-section {
-  background: #ffffff;
-  border: 1px solid var(--unifi-border);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 10px;
   padding: 1.25rem;
 }
@@ -1623,7 +1669,7 @@ body {
 .ipam-summary-section-title {
   font-size: 13px;
   font-weight: 600;
-  color: var(--unifi-text);
+  color: var(--text);
   margin-bottom: 1rem;
 }
 
@@ -1638,7 +1684,7 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 0.35rem 0;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--muted-bg-alt);
   font-size: 12px;
 }
 
@@ -1647,13 +1693,13 @@ body {
 }
 
 .ipam-summary-detail-label {
-  color: #94a3b8;
+  color: var(--text-light);
   font-weight: 500;
 }
 
 .ipam-summary-detail-row code {
   font-size: 11px;
-  background: #f1f3f5;
+  background: var(--muted-bg);
   padding: 2px 8px;
   border-radius: 4px;
 }
@@ -1677,7 +1723,7 @@ body {
   flex-wrap: wrap;
   gap: 0.75rem;
   font-size: 11px;
-  color: #64748b;
+  color: var(--text-slate);
 }
 
 .ipam-breakdown-dot {
@@ -1715,14 +1761,11 @@ body {
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 0.75rem;
-  background: #fafbfc;
-  border: 1px solid #f1f5f9;
+  background: var(--surface-alt);
+  border: 1px solid var(--muted-bg-alt);
   border-radius: 8px;
   font-size: 12px;
 }
-
-/* ─── ADDITIONAL BADGES ──────────────────────────────────── */
-.badge-purple { background: #f5f3ff; color: #7c3aed; }
 
 /* ─── LOGIN PAGE ─────────────────────────────────────────── */
 .login-page {
@@ -1730,18 +1773,18 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 50%, #f0f9ff 100%);
+  background: var(--gradient-login-bg);
   padding: 1rem;
 }
 
 .login-card {
-  background: #ffffff;
+  background: var(--surface);
   border-radius: 12px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 20px 25px -5px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-card);
   padding: 2.5rem;
   width: 100%;
   max-width: 400px;
-  border: 1px solid var(--unifi-border);
+  border: 1px solid var(--border);
 }
 
 .login-header {
@@ -1753,8 +1796,8 @@ body {
   width: 56px;
   height: 56px;
   border-radius: 14px;
-  background: linear-gradient(135deg, #0055ff, #3b82f6);
-  color: #ffffff;
+  background: var(--gradient-blue);
+  color: var(--white);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1764,25 +1807,25 @@ body {
 .login-header h1 {
   font-size: 20px;
   font-weight: 700;
-  color: var(--unifi-text);
+  color: var(--text);
   margin-bottom: 0.25rem;
 }
 
 .login-header p {
   font-size: 13px;
-  color: var(--unifi-text-muted);
+  color: var(--text-muted);
 }
 
 .login-setup-notice {
   display: flex;
   gap: 0.75rem;
   padding: 0.75rem 1rem;
-  background: #eef5ff;
-  border: 1px solid #bfdbfe;
+  background: var(--blue-bg);
+  border: 1px solid var(--info-border);
   border-radius: 6px;
   margin-bottom: 1.5rem;
   font-size: 12px;
-  color: #1e40af;
+  color: var(--info-text);
   align-items: flex-start;
 }
 
@@ -1795,12 +1838,12 @@ body {
   display: block;
   margin-top: 0.25rem;
   font-size: 11px;
-  color: #3b82f6;
+  color: var(--info-accent);
   line-height: 1.6;
 }
 
 .login-default-creds code {
-  background: #dbeafe;
+  background: var(--info-code-bg);
   padding: 1px 6px;
   border-radius: 3px;
   font-size: 11px;
@@ -1811,12 +1854,12 @@ body {
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1rem;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
+  background: var(--red-bg);
+  border: 1px solid var(--red-border);
   border-radius: 6px;
   margin-bottom: 1.5rem;
   font-size: 12px;
-  color: #dc2626;
+  color: var(--red);
 }
 
 .login-password-wrap {
@@ -1835,14 +1878,14 @@ body {
   background: none;
   border: none;
   cursor: pointer;
-  color: var(--unifi-text-muted);
+  color: var(--text-muted);
   padding: 4px;
   display: flex;
   align-items: center;
 }
 
 .login-password-toggle:hover {
-  color: var(--unifi-text);
+  color: var(--text);
 }
 
 .login-submit {
@@ -1863,7 +1906,7 @@ body {
   text-align: center;
   margin-top: 1.5rem;
   font-size: 11px;
-  color: #94a3b8;
+  color: var(--text-light);
 }
 
 .login-loading {
@@ -1872,7 +1915,7 @@ body {
   align-items: center;
   gap: 1rem;
   padding: 2rem;
-  color: var(--unifi-text-muted);
+  color: var(--text-muted);
   font-size: 13px;
 }
 
@@ -1890,8 +1933,8 @@ body {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #0055ff, #3b82f6);
-  color: #ffffff;
+  background: var(--gradient-blue);
+  color: var(--white);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1905,17 +1948,17 @@ body {
 
 .user-menu-trigger:hover {
   transform: scale(1.1);
-  box-shadow: 0 2px 8px rgba(0, 85, 255, 0.3);
+  box-shadow: 0 2px 8px var(--blue-ring);
 }
 
 .user-menu-dropdown {
   position: fixed;
   bottom: 12px;
   left: 56px;
-  background: #ffffff;
-  border: 1px solid var(--unifi-border);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 8px;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 4px 10px -3px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-popup);
   min-width: 220px;
   padding: 0.5rem;
   z-index: 1000;
@@ -1923,19 +1966,19 @@ body {
 
 .user-menu-header {
   padding: 0.75rem;
-  border-bottom: 1px solid var(--unifi-border);
+  border-bottom: 1px solid var(--border);
   margin-bottom: 0.25rem;
 }
 
 .user-menu-name {
   font-size: 13px;
   font-weight: 600;
-  color: var(--unifi-text);
+  color: var(--text);
 }
 
 .user-menu-email {
   font-size: 11px;
-  color: var(--unifi-text-muted);
+  color: var(--text-muted);
   margin-top: 2px;
 }
 
@@ -1945,7 +1988,7 @@ body {
   gap: 0.75rem;
   padding: 0.5rem 0.75rem;
   font-size: 13px;
-  color: var(--unifi-text);
+  color: var(--text);
   cursor: pointer;
   border-radius: 4px;
   border: none;
@@ -1956,22 +1999,22 @@ body {
 }
 
 .user-menu-item:hover {
-  background: var(--unifi-hover);
-  color: var(--unifi-blue);
+  background: var(--hover);
+  color: var(--blue);
 }
 
 .user-menu-item.danger {
-  color: #dc2626;
+  color: var(--red);
 }
 
 .user-menu-item.danger:hover {
-  background: #fef2f2;
-  color: #dc2626;
+  background: var(--red-bg);
+  color: var(--red);
 }
 
 .user-menu-divider {
   height: 1px;
-  background: var(--unifi-border);
+  background: var(--border);
   margin: 0.25rem 0;
 }
 
@@ -1986,7 +2029,7 @@ body {
   gap: 0.75rem;
   padding: 0.625rem 1.5rem;
   font-size: 13px;
-  color: var(--unifi-text);
+  color: var(--text);
   cursor: pointer;
   border: none;
   background: none;
@@ -1996,15 +2039,15 @@ body {
 }
 
 .settings-nav-item:hover {
-  background: var(--unifi-hover);
-  color: var(--unifi-blue);
+  background: var(--hover);
+  color: var(--blue);
 }
 
 .settings-nav-item.active {
-  background: #eef5ff;
-  color: var(--unifi-blue);
+  background: var(--blue-bg);
+  color: var(--blue);
   font-weight: 600;
-  border-right: 2px solid var(--unifi-blue);
+  border-right: 2px solid var(--blue);
 }
 
 .settings-panel {
@@ -2015,19 +2058,19 @@ body {
 .settings-panel h2 {
   font-size: 18px;
   font-weight: 700;
-  color: var(--unifi-text);
+  color: var(--text);
   margin-bottom: 0.5rem;
 }
 
 .settings-panel-desc {
   font-size: 13px;
-  color: var(--unifi-text-muted);
+  color: var(--text-muted);
   margin-bottom: 2rem;
 }
 
 .settings-section {
-  background: #ffffff;
-  border: 1px solid var(--unifi-border);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 1.5rem;
   margin-bottom: 1.5rem;
@@ -2036,7 +2079,7 @@ body {
 .settings-section h3 {
   font-size: 14px;
   font-weight: 600;
-  color: var(--unifi-text);
+  color: var(--text);
   margin-bottom: 1.25rem;
 }
 
@@ -2045,7 +2088,7 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 0.75rem 0;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--muted-bg-alt);
 }
 
 .settings-row:last-child {
@@ -2055,25 +2098,25 @@ body {
 .settings-row-label {
   font-size: 13px;
   font-weight: 500;
-  color: var(--unifi-text);
+  color: var(--text);
 }
 
 .settings-row-desc {
   font-size: 11px;
-  color: var(--unifi-text-muted);
+  color: var(--text-muted);
   margin-top: 2px;
 }
 
 .settings-row-value {
   font-size: 13px;
-  color: var(--unifi-text-muted);
+  color: var(--text-muted);
 }
 
 .settings-toggle {
   width: 40px;
   height: 22px;
   border-radius: 11px;
-  background: #d1d5db;
+  background: var(--toggle-off);
   border: none;
   cursor: pointer;
   position: relative;
@@ -2081,7 +2124,7 @@ body {
 }
 
 .settings-toggle.active {
-  background: var(--unifi-blue);
+  background: var(--blue);
 }
 
 .settings-toggle::after {
@@ -2090,7 +2133,7 @@ body {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: #ffffff;
+  background: var(--surface);
   top: 2px;
   left: 2px;
   transition: transform 0.2s;
@@ -2111,8 +2154,8 @@ body {
   width: 64px;
   height: 64px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #0055ff, #3b82f6);
-  color: #ffffff;
+  background: var(--gradient-blue);
+  color: var(--white);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2123,9 +2166,9 @@ body {
 }
 
 .settings-danger-zone {
-  border-color: #fecaca;
+  border-color: var(--red-border);
 }
 
 .settings-danger-zone h3 {
-  color: #dc2626;
+  color: var(--red);
 }
