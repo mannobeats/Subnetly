@@ -3,8 +3,9 @@
 import { 
   LayoutDashboard, Server, Network, Globe, Share2, 
   Box, History, Settings, Search, Cpu, Database, 
-  Laptop, Wifi
+  Laptop, Wifi, Command
 } from 'lucide-react'
+import { RefObject } from 'react'
 
 export type ViewType = 'dashboard' | 'devices' | 'ipam' | 'vlans' | 'topology' | 'services' | 'changelog'
 
@@ -15,6 +16,9 @@ interface SidebarProps {
   setSearchTerm: (value: string) => void
   selectedCategory: string | null
   setSelectedCategory: (category: string | null) => void
+  selectedVlanRole: string | null
+  setSelectedVlanRole: (role: string | null) => void
+  searchInputRef?: RefObject<HTMLInputElement | null>
 }
 
 const navItems: { id: ViewType; icon: React.ElementType; label: string }[] = [
@@ -27,7 +31,7 @@ const navItems: { id: ViewType; icon: React.ElementType; label: string }[] = [
   { id: 'changelog', icon: History, label: 'Changelog' },
 ]
 
-const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selectedCategory, setSelectedCategory }: SidebarProps) => {
+const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selectedCategory, setSelectedCategory, selectedVlanRole, setSelectedVlanRole, searchInputRef }: SidebarProps) => {
   return (
     <>
       {/* Primary Sidebar - Icons Only */}
@@ -58,13 +62,19 @@ const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selecte
         <div style={{ position: 'relative', marginBottom: '1.5rem' }}>
           <Search style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--unifi-text-muted)' }} size={14} />
           <input 
+            ref={searchInputRef}
             type="text" 
             className="unifi-input" 
             placeholder="Search..." 
-            style={{ paddingLeft: '2rem', height: '32px' }}
+            style={{ paddingLeft: '2rem', paddingRight: '2.5rem', height: '32px' }}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
+          {!searchTerm && (
+            <span style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', gap: '2px', color: '#94a3b8', fontSize: '10px', pointerEvents: 'none' }}>
+              <Command size={10} /> K
+            </span>
+          )}
         </div>
 
         {activeView === 'devices' && (
@@ -124,12 +134,18 @@ const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selecte
 
         {activeView === 'vlans' && (
           <>
+            <h3>Filters</h3>
+            <div className="filter-list" style={{ marginBottom: '1.5rem' }}>
+              <div className={`filter-item ${selectedVlanRole === null ? 'active-filter' : ''}`} onClick={() => setSelectedVlanRole(null)}>
+                <Network size={14} color={selectedVlanRole === null ? '#0055ff' : '#5e6670'} /> <span>All VLANs</span>
+              </div>
+            </div>
             <h3>VLAN Roles</h3>
             <div className="filter-list">
-              <div className="filter-item"><div className="legend-dot" style={{ background: '#0055ff' }} /> <span>Management</span></div>
-              <div className="filter-item"><div className="legend-dot" style={{ background: '#10b981' }} /> <span>Production</span></div>
-              <div className="filter-item"><div className="legend-dot" style={{ background: '#f97316' }} /> <span>IoT</span></div>
-              <div className="filter-item"><div className="legend-dot" style={{ background: '#8b5cf6' }} /> <span>Guest</span></div>
+              <div className={`filter-item ${selectedVlanRole === 'management' ? 'active-filter' : ''}`} onClick={() => setSelectedVlanRole(selectedVlanRole === 'management' ? null : 'management')}><div className="legend-dot" style={{ background: '#0055ff' }} /> <span>Management</span></div>
+              <div className={`filter-item ${selectedVlanRole === 'production' ? 'active-filter' : ''}`} onClick={() => setSelectedVlanRole(selectedVlanRole === 'production' ? null : 'production')}><div className="legend-dot" style={{ background: '#10b981' }} /> <span>Production</span></div>
+              <div className={`filter-item ${selectedVlanRole === 'iot' ? 'active-filter' : ''}`} onClick={() => setSelectedVlanRole(selectedVlanRole === 'iot' ? null : 'iot')}><div className="legend-dot" style={{ background: '#f97316' }} /> <span>IoT</span></div>
+              <div className={`filter-item ${selectedVlanRole === 'guest' ? 'active-filter' : ''}`} onClick={() => setSelectedVlanRole(selectedVlanRole === 'guest' ? null : 'guest')}><div className="legend-dot" style={{ background: '#8b5cf6' }} /> <span>Guest</span></div>
             </div>
           </>
         )}

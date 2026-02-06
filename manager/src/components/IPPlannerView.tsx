@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { IPAddress, IPRange, Device } from '@/types'
-import { Info, Plus, Trash2, Globe, Server, LayoutGrid, List, BarChart3 } from 'lucide-react'
+import { Info, Plus, Trash2, Globe, Server, LayoutGrid, List, BarChart3, Edit2 } from 'lucide-react'
 
 interface SubnetWithRelations {
   id: string
@@ -47,10 +47,11 @@ const IPPlannerView = ({ searchTerm }: IPPlannerProps) => {
   const [ipModalOpen, setIpModalOpen] = useState(false)
   const [deleteSubnetModal, setDeleteSubnetModal] = useState(false)
   const [subnetForm, setSubnetForm] = useState(emptySubnetForm)
+  const [editingSubnetId, setEditingSubnetId] = useState<string | null>(null)
   const [rangeForm, setRangeForm] = useState(emptyRangeForm)
   const [ipForm, setIpForm] = useState(emptyIpForm)
 
-  const fetchData = () => {
+  const fetchData = useCallback(() => {
     Promise.all([
       fetch('/api/subnets').then(r => r.json()),
       fetch('/api/vlans').then(r => r.json()),
@@ -59,11 +60,14 @@ const IPPlannerView = ({ searchTerm }: IPPlannerProps) => {
       setSubnets(subnetData)
       setVlans(vlanData)
       setDevices(deviceData)
-      if (subnetData.length > 0 && !selectedSubnet) setSelectedSubnet(subnetData[0].id)
+      setSelectedSubnet(prev => {
+        if (prev && subnetData.some((s: SubnetWithRelations) => s.id === prev)) return prev
+        return subnetData.length > 0 ? subnetData[0].id : null
+      })
     }).finally(() => setLoading(false))
-  }
+  }, [])
 
-  useEffect(() => { fetchData() }, [])
+  useEffect(() => { fetchData() }, [fetchData])
 
   const subnet = useMemo(() => subnets.find(s => s.id === selectedSubnet), [subnets, selectedSubnet])
 
@@ -130,28 +134,52 @@ const IPPlannerView = ({ searchTerm }: IPPlannerProps) => {
   }, [subnet, cellData])
 
   // Subnet CRUD
-  const handleCreateSubnet = async (e: React.FormEvent) => {
+  const handleSaveSubnet = async (e: React.FormEvent) => {
     e.preventDefault()
-    const res = await fetch('/api/subnets', {
-      method: 'POST',
+    const payload = {
+      prefix: subnetForm.prefix,
+      mask: parseInt(subnetForm.mask),
+      description: subnetForm.description || null,
+      gateway: subnetForm.gateway || null,
+      vlanId: subnetForm.vlanId || null,
+      role: subnetForm.role || null,
+      status: 'active',
+    }
+    const method = editingSubnetId ? 'PATCH' : 'POST'
+    const url = editingSubnetId ? `/api/subnets/${editingSubnetId}` : '/api/subnets'
+    const res = await fetch(url, {
+      method,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        prefix: subnetForm.prefix,
-        mask: parseInt(subnetForm.mask),
-        description: subnetForm.description || null,
-        gateway: subnetForm.gateway || null,
-        vlanId: subnetForm.vlanId || null,
-        role: subnetForm.role || null,
-        status: 'active',
-      }),
+      body: JSON.stringify(payload),
     })
     if (res.ok) {
-      const newSubnet = await res.json()
+      const saved = await res.json()
       setSubnetModalOpen(false)
       setSubnetForm(emptySubnetForm)
+      setEditingSubnetId(null)
       fetchData()
-      setSelectedSubnet(newSubnet.id)
-    } else { alert('Failed to create subnet') }
+      if (!editingSubnetId) setSelectedSubnet(saved.id)
+    } else { alert(editingSubnetId ? 'Failed to update subnet' : 'Failed to create subnet') }
+  }
+
+  const openEditSubnet = () => {
+    if (!subnet) return
+    setEditingSubnetId(subnet.id)
+    setSubnetForm({
+      prefix: subnet.prefix,
+      mask: String(subnet.mask),
+      description: subnet.description || '',
+      gateway: subnet.gateway || '',
+      vlanId: subnet.vlan?.id || '',
+      role: subnet.role || '',
+    })
+    setSubnetModalOpen(true)
+  }
+
+  const openCreateSubnet = () => {
+    setEditingSubnetId(null)
+    setSubnetForm(emptySubnetForm)
+    setSubnetModalOpen(true)
   }
 
   const handleDeleteSubnet = async () => {
@@ -257,7 +285,7 @@ const IPPlannerView = ({ searchTerm }: IPPlannerProps) => {
           <Globe size={40} color="#cbd5e1" />
           <h3>No subnets configured</h3>
           <p>Create your first subnet to start planning IP addresses.</p>
-          <button className="btn btn-primary" onClick={() => { setSubnetForm(emptySubnetForm); setSubnetModalOpen(true) }}><Plus size={14} /> Create Subnet</button>
+          <button className="btn btn-primary" onClick={openCreateSubnet}><Plus size={14} /> Create Subnet</button>
         </div>
         {subnetModalOpen && renderSubnetModal()}
       </div>
@@ -268,8 +296,8 @@ const IPPlannerView = ({ searchTerm }: IPPlannerProps) => {
     return (
       <div className="modal-overlay">
         <div className="modal-content animate-fade-in">
-          <h2 style={{ marginBottom: '1.5rem', fontSize: '16px', fontWeight: 600 }}>Create Subnet</h2>
-          <form onSubmit={handleCreateSubnet}>
+          <h2 style={{ marginBottom: '1.5rem', fontSize: '16px', fontWeight: 600 }}>{editingSubnetId ? 'Edit Subnet' : 'Create Subnet'}</h2>
+          <form onSubmit={handleSaveSubnet}>
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.25rem' }}>
               <div className="input-group">
                 <label className="input-label">Network Prefix</label>
@@ -318,8 +346,8 @@ const IPPlannerView = ({ searchTerm }: IPPlannerProps) => {
               </div>
             </div>
             <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem', justifyContent: 'flex-end' }}>
-              <button type="button" className="btn" onClick={() => setSubnetModalOpen(false)}>Cancel</button>
-              <button type="submit" className="btn btn-primary">Create Subnet</button>
+              <button type="button" className="btn" onClick={() => { setSubnetModalOpen(false); setEditingSubnetId(null) }}>Cancel</button>
+              <button type="submit" className="btn btn-primary">{editingSubnetId ? 'Save Changes' : 'Create Subnet'}</button>
             </div>
           </form>
         </div>
@@ -355,7 +383,8 @@ const IPPlannerView = ({ searchTerm }: IPPlannerProps) => {
             <button className={`ipam-toggle-btn ${viewMode === 'list' ? 'active' : ''}`} onClick={() => setViewMode('list')} title="List View"><List size={14} /></button>
             <button className={`ipam-toggle-btn ${viewMode === 'summary' ? 'active' : ''}`} onClick={() => setViewMode('summary')} title="Summary"><BarChart3 size={14} /></button>
           </div>
-          <button className="btn btn-primary" onClick={() => { setSubnetForm(emptySubnetForm); setSubnetModalOpen(true) }}><Plus size={14} /> Subnet</button>
+          <button className="btn btn-primary" onClick={openCreateSubnet}><Plus size={14} /> Subnet</button>
+          {subnet && <button className="btn" onClick={openEditSubnet} title="Edit Subnet"><Edit2 size={14} /></button>}
           {subnet && <button className="btn" onClick={() => { setRangeForm(emptyRangeForm); setRangeModalOpen(true) }}><Plus size={14} /> Range</button>}
           {subnet && <button className="btn" onClick={() => setDeleteSubnetModal(true)} style={{ color: '#ef4444' }}><Trash2 size={14} /></button>}
         </div>

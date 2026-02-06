@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Network, Plus, Shield, Wifi, Server, Laptop, Edit2, Trash2 } from 'lucide-react'
 
 interface VLANData {
@@ -27,9 +27,14 @@ const roleIcons: Record<string, React.ElementType> = {
   guest: Wifi,
 }
 
+interface VLANViewProps {
+  searchTerm?: string
+  selectedRole?: string | null
+}
+
 const emptyForm = { vid: '', name: '', status: 'active', role: '', description: '' }
 
-const VLANView = () => {
+const VLANView = ({ searchTerm = '', selectedRole = null }: VLANViewProps) => {
   const [vlans, setVlans] = useState<VLANData[]>([])
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
@@ -74,6 +79,19 @@ const VLANView = () => {
     if (res.ok) { setDeleteModalOpen(false); setDeleteTarget(null); fetchVlans() }
   }
 
+  const filteredVlans = useMemo(() => {
+    return vlans.filter(v => {
+      const matchesRole = selectedRole ? v.role === selectedRole : true
+      const matchesSearch = !searchTerm || 
+        v.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        String(v.vid).includes(searchTerm) ||
+        (v.description || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (v.role || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        v.subnets.some(s => s.prefix.includes(searchTerm))
+      return matchesRole && matchesSearch
+    })
+  }, [vlans, selectedRole, searchTerm])
+
   if (loading) return <div className="view-loading">Loading VLANs...</div>
 
   return (
@@ -94,7 +112,7 @@ const VLANView = () => {
       ) : (
         <>
           <div className="vlan-grid">
-            {vlans.map(v => {
+            {filteredVlans.map(v => {
               const color = roleColors[v.role || ''] || '#64748b'
               const Icon = roleIcons[v.role || ''] || Network
               return (
@@ -156,7 +174,7 @@ const VLANView = () => {
                 </tr>
               </thead>
               <tbody>
-                {vlans.map(v => (
+                {filteredVlans.map(v => (
                   <tr key={v.id}>
                     <td><code style={{ fontSize: '12px', fontWeight: 600, color: roleColors[v.role || ''] || '#64748b' }}>{v.vid}</code></td>
                     <td style={{ fontWeight: 500 }}>{v.name}</td>

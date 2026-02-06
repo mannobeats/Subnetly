@@ -8,7 +8,7 @@ export async function GET() {
       orderBy: { prefix: 'asc' },
     })
     return NextResponse.json(subnets)
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to fetch subnets' }, { status: 500 })
   }
 }
@@ -34,7 +34,7 @@ export async function POST(request: Request) {
       data: { objectType: 'Subnet', objectId: subnet.id, action: 'create', changes: JSON.stringify(body) },
     })
     return NextResponse.json(subnet)
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to create subnet' }, { status: 500 })
   }
 }

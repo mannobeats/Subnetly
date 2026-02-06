@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import Sidebar, { ViewType } from '@/components/Sidebar'
 import DashboardView from '@/components/DashboardView'
 import IPPlannerView from '@/components/IPPlannerView'
@@ -22,18 +22,18 @@ interface SubnetOption {
 }
 
 export default function Home() {
-  const [activeView, setActiveViewRaw] = useState<ViewType>(() => {
-    if (typeof window !== 'undefined') {
-      const hash = window.location.hash.replace('#', '') as ViewType
-      const valid: ViewType[] = ['dashboard', 'devices', 'ipam', 'vlans', 'topology', 'services', 'changelog']
-      if (valid.includes(hash)) return hash
-    }
-    return 'dashboard'
-  })
+  const [activeView, setActiveViewRaw] = useState<ViewType>('dashboard')
 
   const setActiveView = useCallback((view: ViewType) => {
     setActiveViewRaw(view)
     window.location.hash = view
+  }, [])
+
+  // Restore view from URL hash after hydration
+  useEffect(() => {
+    const hash = window.location.hash.replace('#', '') as ViewType
+    const valid: ViewType[] = ['dashboard', 'devices', 'ipam', 'vlans', 'topology', 'services', 'changelog']
+    if (valid.includes(hash)) setActiveViewRaw(hash)
   }, [])
   const [devices, setDevices] = useState<Device[]>([])
   const [loading, setLoading] = useState(true)
@@ -43,6 +43,8 @@ export default function Home() {
   const [deviceToDelete, setDeviceToDelete] = useState<string | null>(null)
   const [editingDevice, setEditingDevice] = useState<Device | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const [selectedVlanRole, setSelectedVlanRole] = useState<string | null>(null)
+  const searchInputRef = useRef<HTMLInputElement>(null)
   const [subnets, setSubnets] = useState<SubnetOption[]>([])
   const [selectedSubnetId, setSelectedSubnetId] = useState<string>('')
   const [availableIps, setAvailableIps] = useState<string[]>([])
@@ -57,10 +59,83 @@ export default function Home() {
     status: 'active',
   })
 
+  const exportData = useCallback(() => {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(devices, null, 2))
+    const a = document.createElement('a')
+    a.setAttribute("href", dataStr)
+    a.setAttribute("download", `homelab_export_${new Date().toISOString().split('T')[0]}.json`)
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+  }, [devices])
+
   useEffect(() => {
     fetchDevices()
     fetchSubnets()
   }, [])
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement
+      const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable
+
+      // Escape: close modals
+      if (e.key === 'Escape') {
+        if (isModalOpen) { setIsModalOpen(false); return }
+        if (isDeleteModalOpen) { setIsDeleteModalOpen(false); return }
+        // Blur search if focused
+        if (document.activeElement === searchInputRef.current) {
+          searchInputRef.current?.blur()
+          setSearchTerm('')
+          return
+        }
+      }
+
+      // Don't handle shortcuts when typing in inputs
+      if (isInput) return
+
+      // / or Cmd+K: focus search
+      if (e.key === '/' || (e.metaKey && e.key === 'k')) {
+        e.preventDefault()
+        searchInputRef.current?.focus()
+        return
+      }
+
+      const views: ViewType[] = ['dashboard', 'devices', 'ipam', 'vlans', 'topology', 'services', 'changelog']
+      // 1-7: switch views
+      const num = parseInt(e.key)
+      if (num >= 1 && num <= 7) {
+        e.preventDefault()
+        setActiveView(views[num - 1])
+        return
+      }
+
+      // N: new item (context-dependent)
+      if (e.key === 'n' || e.key === 'N') {
+        if (activeView === 'devices') {
+          e.preventDefault()
+          setEditingDevice(null)
+          setFormData({ name: '', macAddress: '', ipAddress: '', category: 'Server', notes: '', platform: '', status: 'active' })
+          setSelectedSubnetId('')
+          setAvailableIps([])
+          fetchSubnets()
+          setIsModalOpen(true)
+        }
+        return
+      }
+
+      // E: export (devices view)
+      if ((e.key === 'e' || e.key === 'E') && activeView === 'devices') {
+        e.preventDefault()
+        exportData()
+        return
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [activeView, isModalOpen, isDeleteModalOpen, setActiveView, exportData])
 
   const fetchDevices = async () => {
     setLoading(true)
@@ -175,16 +250,6 @@ export default function Home() {
       status: device.status || 'active',
     })
     setIsModalOpen(true)
-  }
-
-  const exportData = () => {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(devices, null, 2))
-    const a = document.createElement('a')
-    a.setAttribute("href", dataStr)
-    a.setAttribute("download", `homelab_export_${new Date().toISOString().split('T')[0]}.json`)
-    document.body.appendChild(a)
-    a.click()
-    a.remove()
   }
 
   const filteredDevices = useMemo(() => {
@@ -312,6 +377,9 @@ export default function Home() {
         setSearchTerm={setSearchTerm}
         selectedCategory={selectedCategory}
         setSelectedCategory={setSelectedCategory}
+        selectedVlanRole={selectedVlanRole}
+        setSelectedVlanRole={setSelectedVlanRole}
+        searchInputRef={searchInputRef}
       />
 
       <div className="main-content">
@@ -336,7 +404,7 @@ export default function Home() {
         {activeView === 'dashboard' && <div className="table-wrapper"><DashboardView /></div>}
         {activeView === 'devices' && renderDevicesView()}
         {activeView === 'ipam' && <div className="table-wrapper"><IPPlannerView searchTerm={searchTerm} /></div>}
-        {activeView === 'vlans' && <div className="table-wrapper"><VLANView /></div>}
+        {activeView === 'vlans' && <div className="table-wrapper"><VLANView searchTerm={searchTerm} selectedRole={selectedVlanRole} /></div>}
         {activeView === 'topology' && <div className="table-wrapper"><TopologyView /></div>}
         {activeView === 'services' && <div className="table-wrapper"><ServicesView searchTerm={searchTerm} /></div>}
         {activeView === 'changelog' && <div className="table-wrapper"><ChangelogView searchTerm={searchTerm} /></div>}
