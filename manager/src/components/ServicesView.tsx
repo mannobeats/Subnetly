@@ -20,7 +20,7 @@ const protocolIcons: Record<string, React.ElementType> = {
 
 const emptyForm = { name: '', protocol: 'tcp', ports: '', description: '', deviceId: '' }
 
-const ServicesView = ({ searchTerm }: { searchTerm: string }) => {
+const ServicesView = ({ searchTerm, selectedProtocol = null }: { searchTerm: string; selectedProtocol?: string | null }) => {
   const [services, setServices] = useState<ServiceData[]>([])
   const [devices, setDevices] = useState<Device[]>([])
   const [loading, setLoading] = useState(true)
@@ -69,11 +69,19 @@ const ServicesView = ({ searchTerm }: { searchTerm: string }) => {
     if (res.ok) { setDeleteModalOpen(false); setDeleteTarget(null); fetchData() }
   }
 
-  const filtered = services.filter(s =>
-    s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    s.device?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    s.ports.includes(searchTerm)
-  )
+  const filtered = services.filter(s => {
+    const matchesSearch = !searchTerm ||
+      s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      s.device?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      s.ports.includes(searchTerm)
+    const matchesProtocol = !selectedProtocol || s.protocol === selectedProtocol
+    return matchesSearch && matchesProtocol
+  })
+
+  const tcpCount = services.filter(s => s.protocol === 'tcp').length
+  const udpCount = services.filter(s => s.protocol === 'udp').length
+  const uniqueDevices = new Set(services.map(s => s.device?.id)).size
+  const uniquePorts = new Set(services.flatMap(s => s.ports.split(',').map(p => p.trim()))).size
 
   const grouped = filtered.reduce((acc: Record<string, { device: ServiceData['device']; services: ServiceData[] }>, s) => {
     if (!s.device) return acc
@@ -86,9 +94,28 @@ const ServicesView = ({ searchTerm }: { searchTerm: string }) => {
 
   return (
     <div className="services-view animate-fade-in">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-        <span style={{ fontSize: '12px', color: 'var(--unifi-text-muted)' }}>{services.length} service{services.length !== 1 ? 's' : ''} registered</span>
-        <button className="btn btn-primary" onClick={openCreate} disabled={devices.length === 0}><Plus size={14} /> Add Service</button>
+      {/* Stats Cards */}
+      <div className="dash-stat-grid" style={{ marginBottom: '1.5rem', gridTemplateColumns: 'repeat(5, 1fr)' }}>
+        <div className="dash-stat-card">
+          <div className="dash-stat-label">Total Services</div>
+          <div className="dash-stat-value" style={{ color: '#0055ff' }}>{services.length}</div>
+        </div>
+        <div className="dash-stat-card">
+          <div className="dash-stat-label">TCP Services</div>
+          <div className="dash-stat-value" style={{ color: '#10b981' }}>{tcpCount}</div>
+        </div>
+        <div className="dash-stat-card">
+          <div className="dash-stat-label">UDP Services</div>
+          <div className="dash-stat-value" style={{ color: '#f59e0b' }}>{udpCount}</div>
+        </div>
+        <div className="dash-stat-card">
+          <div className="dash-stat-label">Devices</div>
+          <div className="dash-stat-value" style={{ color: '#7c3aed' }}>{uniqueDevices}</div>
+        </div>
+        <div className="dash-stat-card">
+          <div className="dash-stat-label">Unique Ports</div>
+          <div className="dash-stat-value" style={{ color: '#06b6d4' }}>{uniquePorts}</div>
+        </div>
       </div>
 
       {services.length === 0 ? (

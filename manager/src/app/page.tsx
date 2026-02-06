@@ -45,6 +45,7 @@ export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [selectedVlanRole, setSelectedVlanRole] = useState<string | null>(null)
   const [selectedIpFilter, setSelectedIpFilter] = useState<string | null>(null)
+  const [selectedServiceFilter, setSelectedServiceFilter] = useState<string | null>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const [subnets, setSubnets] = useState<SubnetOption[]>([])
   const [selectedSubnetId, setSelectedSubnetId] = useState<string>('')
@@ -404,6 +405,8 @@ export default function Home() {
         setSelectedVlanRole={setSelectedVlanRole}
         selectedIpFilter={selectedIpFilter}
         setSelectedIpFilter={setSelectedIpFilter}
+        selectedServiceFilter={selectedServiceFilter}
+        setSelectedServiceFilter={setSelectedServiceFilter}
         searchInputRef={searchInputRef}
       />
 
@@ -431,7 +434,7 @@ export default function Home() {
         {activeView === 'ipam' && <div className="table-wrapper"><IPPlannerView searchTerm={searchTerm} selectedIpFilter={selectedIpFilter} /></div>}
         {activeView === 'vlans' && <div className="table-wrapper"><VLANView searchTerm={searchTerm} selectedRole={selectedVlanRole} /></div>}
         {activeView === 'topology' && <div className="table-wrapper"><TopologyView selectedCategory={selectedCategory} /></div>}
-        {activeView === 'services' && <div className="table-wrapper"><ServicesView searchTerm={searchTerm} /></div>}
+        {activeView === 'services' && <div className="table-wrapper"><ServicesView searchTerm={searchTerm} selectedProtocol={selectedServiceFilter} /></div>}
         {activeView === 'changelog' && <div className="table-wrapper"><ChangelogView searchTerm={searchTerm} /></div>}
       </div>
 

@@ -20,6 +20,8 @@ interface SidebarProps {
   setSelectedVlanRole: (role: string | null) => void
   selectedIpFilter: string | null
   setSelectedIpFilter: (filter: string | null) => void
+  selectedServiceFilter: string | null
+  setSelectedServiceFilter: (filter: string | null) => void
   searchInputRef?: RefObject<HTMLInputElement | null>
 }
 
@@ -33,7 +35,7 @@ const navItems: { id: ViewType; icon: React.ElementType; label: string }[] = [
   { id: 'changelog', icon: History, label: 'Changelog' },
 ]
 
-const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selectedCategory, setSelectedCategory, selectedVlanRole, setSelectedVlanRole, selectedIpFilter, setSelectedIpFilter, searchInputRef }: SidebarProps) => {
+const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selectedCategory, setSelectedCategory, selectedVlanRole, setSelectedVlanRole, selectedIpFilter, setSelectedIpFilter, selectedServiceFilter, setSelectedServiceFilter, searchInputRef }: SidebarProps) => {
   return (
     <>
       {/* Primary Sidebar - Icons Only */}
@@ -166,6 +168,30 @@ const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selecte
           </>
         )}
 
+        {activeView === 'services' && (
+          <>
+            <h3>Filters</h3>
+            <div className="filter-list" style={{ marginBottom: '1.5rem' }}>
+              <div className={`filter-item ${selectedServiceFilter === null ? 'active-filter' : ''}`} onClick={() => setSelectedServiceFilter(null)}>
+                <Wifi size={14} color={selectedServiceFilter === null ? '#0055ff' : '#5e6670'} /> <span>All Services</span>
+              </div>
+            </div>
+            <h3>Protocol</h3>
+            <div className="filter-list" style={{ marginBottom: '1.5rem' }}>
+              <div className={`filter-item ${selectedServiceFilter === 'tcp' ? 'active-filter' : ''}`} onClick={() => setSelectedServiceFilter(selectedServiceFilter === 'tcp' ? null : 'tcp')}><Globe size={14} color={selectedServiceFilter === 'tcp' ? '#0055ff' : '#5e6670'} /> <span>TCP</span></div>
+              <div className={`filter-item ${selectedServiceFilter === 'udp' ? 'active-filter' : ''}`} onClick={() => setSelectedServiceFilter(selectedServiceFilter === 'udp' ? null : 'udp')}><Globe size={14} color={selectedServiceFilter === 'udp' ? '#0055ff' : '#5e6670'} /> <span>UDP</span></div>
+            </div>
+            <h3>Common Ports</h3>
+            <div className="filter-list">
+              <div className="filter-item" style={{ fontSize: '11px', color: '#5e6670' }}><span style={{ fontFamily: 'monospace', background: '#f1f3f5', padding: '1px 5px', borderRadius: '3px', marginRight: '6px' }}>80/443</span> <span>HTTP/HTTPS</span></div>
+              <div className="filter-item" style={{ fontSize: '11px', color: '#5e6670' }}><span style={{ fontFamily: 'monospace', background: '#f1f3f5', padding: '1px 5px', borderRadius: '3px', marginRight: '6px' }}>22</span> <span>SSH</span></div>
+              <div className="filter-item" style={{ fontSize: '11px', color: '#5e6670' }}><span style={{ fontFamily: 'monospace', background: '#f1f3f5', padding: '1px 5px', borderRadius: '3px', marginRight: '6px' }}>53</span> <span>DNS</span></div>
+              <div className="filter-item" style={{ fontSize: '11px', color: '#5e6670' }}><span style={{ fontFamily: 'monospace', background: '#f1f3f5', padding: '1px 5px', borderRadius: '3px', marginRight: '6px' }}>3306</span> <span>MySQL</span></div>
+              <div className="filter-item" style={{ fontSize: '11px', color: '#5e6670' }}><span style={{ fontFamily: 'monospace', background: '#f1f3f5', padding: '1px 5px', borderRadius: '3px', marginRight: '6px' }}>5432</span> <span>PostgreSQL</span></div>
+            </div>
+          </>
+        )}
+
         {activeView === 'vlans' && (
           <>
             <h3>Filters</h3>
@@ -180,6 +206,25 @@ const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selecte
               <div className={`filter-item ${selectedVlanRole === 'production' ? 'active-filter' : ''}`} onClick={() => setSelectedVlanRole(selectedVlanRole === 'production' ? null : 'production')}><div className="legend-dot" style={{ background: '#10b981' }} /> <span>Production</span></div>
               <div className={`filter-item ${selectedVlanRole === 'iot' ? 'active-filter' : ''}`} onClick={() => setSelectedVlanRole(selectedVlanRole === 'iot' ? null : 'iot')}><div className="legend-dot" style={{ background: '#f97316' }} /> <span>IoT</span></div>
               <div className={`filter-item ${selectedVlanRole === 'guest' ? 'active-filter' : ''}`} onClick={() => setSelectedVlanRole(selectedVlanRole === 'guest' ? null : 'guest')}><div className="legend-dot" style={{ background: '#8b5cf6' }} /> <span>Guest</span></div>
+            </div>
+          </>
+        )}
+        {activeView === 'changelog' && (
+          <>
+            <h3>Info</h3>
+            <div className="filter-list">
+              <div className="filter-item" style={{ fontSize: '11px', color: '#5e6670' }}><div className="legend-dot" style={{ background: '#10b981' }} /> <span>Created</span></div>
+              <div className="filter-item" style={{ fontSize: '11px', color: '#5e6670' }}><div className="legend-dot" style={{ background: '#0055ff' }} /> <span>Updated</span></div>
+              <div className="filter-item" style={{ fontSize: '11px', color: '#5e6670' }}><div className="legend-dot" style={{ background: '#ef4444' }} /> <span>Deleted</span></div>
+            </div>
+            <h3 style={{ marginTop: '1.5rem' }}>Object Types</h3>
+            <div className="filter-list">
+              <div className="filter-item" style={{ fontSize: '11px', color: '#5e6670' }}><Server size={12} color="#5e6670" /> <span>Device</span></div>
+              <div className="filter-item" style={{ fontSize: '11px', color: '#5e6670' }}><Globe size={12} color="#5e6670" /> <span>Subnet</span></div>
+              <div className="filter-item" style={{ fontSize: '11px', color: '#5e6670' }}><Globe size={12} color="#5e6670" /> <span>IP Address</span></div>
+              <div className="filter-item" style={{ fontSize: '11px', color: '#5e6670' }}><Network size={12} color="#5e6670" /> <span>VLAN</span></div>
+              <div className="filter-item" style={{ fontSize: '11px', color: '#5e6670' }}><Box size={12} color="#5e6670" /> <span>Service</span></div>
+              <div className="filter-item" style={{ fontSize: '11px', color: '#5e6670' }}><Globe size={12} color="#5e6670" /> <span>IP Range</span></div>
             </div>
           </>
         )}
