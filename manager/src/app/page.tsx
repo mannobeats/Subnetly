@@ -44,6 +44,7 @@ export default function Home() {
   const [editingDevice, setEditingDevice] = useState<Device | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [selectedVlanRole, setSelectedVlanRole] = useState<string | null>(null)
+  const [selectedIpFilter, setSelectedIpFilter] = useState<string | null>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const [subnets, setSubnets] = useState<SubnetOption[]>([])
   const [selectedSubnetId, setSelectedSubnetId] = useState<string>('')
@@ -401,6 +402,8 @@ export default function Home() {
         setSelectedCategory={setSelectedCategory}
         selectedVlanRole={selectedVlanRole}
         setSelectedVlanRole={setSelectedVlanRole}
+        selectedIpFilter={selectedIpFilter}
+        setSelectedIpFilter={setSelectedIpFilter}
         searchInputRef={searchInputRef}
       />
 
@@ -425,7 +428,7 @@ export default function Home() {
 
         {activeView === 'dashboard' && <div className="table-wrapper"><DashboardView /></div>}
         {activeView === 'devices' && renderDevicesView()}
-        {activeView === 'ipam' && <div className="table-wrapper"><IPPlannerView searchTerm={searchTerm} /></div>}
+        {activeView === 'ipam' && <div className="table-wrapper"><IPPlannerView searchTerm={searchTerm} selectedIpFilter={selectedIpFilter} /></div>}
         {activeView === 'vlans' && <div className="table-wrapper"><VLANView searchTerm={searchTerm} selectedRole={selectedVlanRole} /></div>}
         {activeView === 'topology' && <div className="table-wrapper"><TopologyView selectedCategory={selectedCategory} /></div>}
         {activeView === 'services' && <div className="table-wrapper"><ServicesView searchTerm={searchTerm} /></div>}

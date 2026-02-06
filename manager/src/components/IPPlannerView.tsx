@@ -19,6 +19,7 @@ interface SubnetWithRelations {
 
 interface IPPlannerProps {
   searchTerm: string
+  selectedIpFilter?: string | null
 }
 
 const rangeColors: Record<string, { bg: string; border: string; label: string }> = {
@@ -32,7 +33,7 @@ const emptySubnetForm = { prefix: '', mask: '24', description: '', gateway: '', 
 const emptyRangeForm = { startOctet: '', endOctet: '', role: 'dhcp', description: '' }
 const emptyIpForm = { address: '', dnsName: '', description: '', status: 'active', deviceId: '' }
 
-const IPPlannerView = ({ searchTerm }: IPPlannerProps) => {
+const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) => {
   const [subnets, setSubnets] = useState<SubnetWithRelations[]>([])
   const [selectedSubnet, setSelectedSubnet] = useState<string | null>(null)
   const [hoveredCell, setHoveredCell] = useState<number | null>(null)
@@ -49,6 +50,7 @@ const IPPlannerView = ({ searchTerm }: IPPlannerProps) => {
   const [subnetForm, setSubnetForm] = useState(emptySubnetForm)
   const [editingSubnetId, setEditingSubnetId] = useState<string | null>(null)
   const [rangeForm, setRangeForm] = useState(emptyRangeForm)
+  const [editingRangeId, setEditingRangeId] = useState<string | null>(null)
   const [ipForm, setIpForm] = useState(emptyIpForm)
 
   const fetchData = useCallback(() => {
@@ -193,12 +195,14 @@ const IPPlannerView = ({ searchTerm }: IPPlannerProps) => {
   }
 
   // IP Range CRUD
-  const handleCreateRange = async (e: React.FormEvent) => {
+  const handleSaveRange = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!subnet) return
     const base = subnet.prefix.split('.').slice(0, 3).join('.')
-    const res = await fetch('/api/ranges', {
-      method: 'POST',
+    const method = editingRangeId ? 'PATCH' : 'POST'
+    const url = editingRangeId ? `/api/ranges/${editingRangeId}` : '/api/ranges'
+    const res = await fetch(url, {
+      method,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         startAddr: `${base}.${rangeForm.startOctet}`,
@@ -211,8 +215,31 @@ const IPPlannerView = ({ searchTerm }: IPPlannerProps) => {
     if (res.ok) {
       setRangeModalOpen(false)
       setRangeForm(emptyRangeForm)
+      setEditingRangeId(null)
       fetchData()
-    } else { alert('Failed to create IP range') }
+    } else { alert(editingRangeId ? 'Failed to update range' : 'Failed to create range') }
+  }
+
+  const handleDeleteRange = async (rangeId: string) => {
+    const res = await fetch(`/api/ranges/${rangeId}`, { method: 'DELETE' })
+    if (res.ok) fetchData()
+  }
+
+  const openEditRange = (range: IPRange) => {
+    setEditingRangeId(range.id)
+    setRangeForm({
+      startOctet: range.startAddr.split('.').pop() || '',
+      endOctet: range.endAddr.split('.').pop() || '',
+      role: range.role,
+      description: range.description || '',
+    })
+    setRangeModalOpen(true)
+  }
+
+  const openCreateRange = () => {
+    setEditingRangeId(null)
+    setRangeForm(emptyRangeForm)
+    setRangeModalOpen(true)
   }
 
   // IP Address assign — now also optionally links to a device by updating the device's IP
@@ -388,7 +415,7 @@ const IPPlannerView = ({ searchTerm }: IPPlannerProps) => {
           <div style={{ width: '1px', height: '24px', background: '#e2e8f0', margin: '0 0.25rem' }} />
           <button className="btn btn-primary" onClick={openCreateSubnet}><Plus size={14} /> Subnet</button>
           {subnet && <button className="btn" onClick={openEditSubnet} title="Edit Subnet"><Edit2 size={14} /></button>}
-          {subnet && <button className="btn" onClick={() => { setRangeForm(emptyRangeForm); setRangeModalOpen(true) }}><Plus size={14} /> Range</button>}
+          {subnet && <button className="btn" onClick={openCreateRange}><Plus size={14} /> Range</button>}
           {subnet && <button className="btn" onClick={() => setDeleteSubnetModal(true)} style={{ color: '#ef4444' }}><Trash2 size={14} /></button>}
         </div>
       </div>
@@ -403,6 +430,8 @@ const IPPlannerView = ({ searchTerm }: IPPlannerProps) => {
                 <div className="ipam-range-dot" style={{ background: rc.border }} />
                 <span>{rc.label}: .{r.startAddr.split('.').pop()} — .{r.endAddr.split('.').pop()}</span>
                 {r.description && <span className="ipam-range-desc">{r.description}</span>}
+                <button className="btn" style={{ padding: '0 4px', border: 'none', background: 'transparent', color: rc.border, marginLeft: '4px' }} onClick={() => openEditRange(r)} title="Edit Range"><Edit2 size={11} /></button>
+                <button className="btn" style={{ padding: '0 4px', border: 'none', background: 'transparent', color: '#ef4444' }} onClick={() => handleDeleteRange(r.id)} title="Delete Range"><Trash2 size={11} /></button>
               </div>
             )
           })}
@@ -417,7 +446,8 @@ const IPPlannerView = ({ searchTerm }: IPPlannerProps) => {
               {filteredCells.map((cell) => {
                 const colors = getCellColor(cell.status)
                 const isHighlighted = 'highlighted' in cell && cell.highlighted
-                const dimmed = searchTerm && !isHighlighted && cell.status !== 'gateway'
+                const ipFilterDimmed = selectedIpFilter ? cell.status !== selectedIpFilter : false
+                const dimmed = (searchTerm && !isHighlighted && cell.status !== 'gateway') || ipFilterDimmed
                 const label = cell.device?.name || cell.ip?.dnsName || cell.ip?.assignedTo
                 return (
                   <div
@@ -720,8 +750,8 @@ const IPPlannerView = ({ searchTerm }: IPPlannerProps) => {
       {rangeModalOpen && subnet && (
         <div className="modal-overlay">
           <div className="modal-content animate-fade-in">
-            <h2 style={{ marginBottom: '1.5rem', fontSize: '16px', fontWeight: 600 }}>Add IP Range to {subnet.prefix}/{subnet.mask}</h2>
-            <form onSubmit={handleCreateRange}>
+            <h2 style={{ marginBottom: '1.5rem', fontSize: '16px', fontWeight: 600 }}>{editingRangeId ? 'Edit' : 'Add'} IP Range {editingRangeId ? '' : `to ${subnet.prefix}/${subnet.mask}`}</h2>
+            <form onSubmit={handleSaveRange}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
                 <div className="input-group">
                   <label className="input-label">Start Octet (.x)</label>
@@ -747,8 +777,8 @@ const IPPlannerView = ({ searchTerm }: IPPlannerProps) => {
                 </div>
               </div>
               <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem', justifyContent: 'flex-end' }}>
-                <button type="button" className="btn" onClick={() => setRangeModalOpen(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary">Add Range</button>
+                <button type="button" className="btn" onClick={() => { setRangeModalOpen(false); setEditingRangeId(null) }}>Cancel</button>
+                <button type="submit" className="btn btn-primary">{editingRangeId ? 'Save Changes' : 'Add Range'}</button>
               </div>
             </form>
           </div>

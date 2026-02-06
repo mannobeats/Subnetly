@@ -18,6 +18,8 @@ interface SidebarProps {
   setSelectedCategory: (category: string | null) => void
   selectedVlanRole: string | null
   setSelectedVlanRole: (role: string | null) => void
+  selectedIpFilter: string | null
+  setSelectedIpFilter: (filter: string | null) => void
   searchInputRef?: RefObject<HTMLInputElement | null>
 }
 
@@ -31,7 +33,7 @@ const navItems: { id: ViewType; icon: React.ElementType; label: string }[] = [
   { id: 'changelog', icon: History, label: 'Changelog' },
 ]
 
-const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selectedCategory, setSelectedCategory, selectedVlanRole, setSelectedVlanRole, searchInputRef }: SidebarProps) => {
+const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selectedCategory, setSelectedCategory, selectedVlanRole, setSelectedVlanRole, selectedIpFilter, setSelectedIpFilter, searchInputRef }: SidebarProps) => {
   return (
     <>
       {/* Primary Sidebar - Icons Only */}
@@ -120,14 +122,20 @@ const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selecte
 
         {activeView === 'ipam' && (
           <>
-            <h3>Legend</h3>
+            <h3>Filters</h3>
+            <div className="filter-list" style={{ marginBottom: '1.5rem' }}>
+              <div className={`filter-item ${selectedIpFilter === null ? 'active-filter' : ''}`} onClick={() => setSelectedIpFilter(null)}>
+                <Globe size={14} color={selectedIpFilter === null ? '#0055ff' : '#5e6670'} /> <span>All Addresses</span>
+              </div>
+            </div>
+            <h3>Address Types</h3>
             <div className="filter-list">
-              <div className="filter-item"><div className="legend-dot" style={{ background: '#10b981' }} /> <span>Gateway</span></div>
-              <div className="filter-item"><div className="legend-dot" style={{ background: '#0055ff' }} /> <span>Assigned</span></div>
-              <div className="filter-item"><div className="legend-dot" style={{ background: '#f59e0b' }} /> <span>DHCP Pool</span></div>
-              <div className="filter-item"><div className="legend-dot" style={{ background: '#8b5cf6' }} /> <span>Reserved</span></div>
-              <div className="filter-item"><div className="legend-dot" style={{ background: '#06b6d4' }} /> <span>Infrastructure</span></div>
-              <div className="filter-item"><div className="legend-dot" style={{ background: '#f1f3f5', border: '1px solid #dee2e6' }} /> <span>Available</span></div>
+              <div className={`filter-item ${selectedIpFilter === 'gateway' ? 'active-filter' : ''}`} onClick={() => setSelectedIpFilter(selectedIpFilter === 'gateway' ? null : 'gateway')}><div className="legend-dot" style={{ background: '#10b981' }} /> <span>Gateway</span></div>
+              <div className={`filter-item ${selectedIpFilter === 'assigned' ? 'active-filter' : ''}`} onClick={() => setSelectedIpFilter(selectedIpFilter === 'assigned' ? null : 'assigned')}><div className="legend-dot" style={{ background: '#0055ff' }} /> <span>Assigned</span></div>
+              <div className={`filter-item ${selectedIpFilter === 'dhcp' ? 'active-filter' : ''}`} onClick={() => setSelectedIpFilter(selectedIpFilter === 'dhcp' ? null : 'dhcp')}><div className="legend-dot" style={{ background: '#f59e0b' }} /> <span>DHCP Pool</span></div>
+              <div className={`filter-item ${selectedIpFilter === 'reserved' ? 'active-filter' : ''}`} onClick={() => setSelectedIpFilter(selectedIpFilter === 'reserved' ? null : 'reserved')}><div className="legend-dot" style={{ background: '#8b5cf6' }} /> <span>Reserved</span></div>
+              <div className={`filter-item ${selectedIpFilter === 'infrastructure' ? 'active-filter' : ''}`} onClick={() => setSelectedIpFilter(selectedIpFilter === 'infrastructure' ? null : 'infrastructure')}><div className="legend-dot" style={{ background: '#06b6d4' }} /> <span>Infrastructure</span></div>
+              <div className={`filter-item ${selectedIpFilter === 'available' ? 'active-filter' : ''}`} onClick={() => setSelectedIpFilter(selectedIpFilter === 'available' ? null : 'available')}><div className="legend-dot" style={{ background: '#f1f3f5', border: '1px solid #dee2e6' }} /> <span>Available</span></div>
             </div>
           </>
         )}
