@@ -477,11 +477,14 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
                       if (cell.status === 'available' || cell.status === 'dhcp' || cell.status === 'reserved' || cell.status === 'infrastructure') {
                         openAssignFromGrid(cell.fullIp)
                       } else if (cell.ip) {
+                        const linkedDev = cell.device || devices.find(d => d.ipAddress === cell.ip!.address)
                         setEditingIpId(cell.ip.id)
-                        setIpForm({ address: cell.ip.address, dnsName: cell.ip.dnsName || '', description: cell.ip.description || '', status: cell.ip.status, deviceId: '' })
+                        setIpForm({ address: cell.ip.address, dnsName: cell.ip.dnsName || '', description: cell.ip.description || '', status: cell.ip.status, deviceId: linkedDev?.id || '' })
                         setIpModalOpen(true)
                       } else if (cell.device && !cell.ip) {
-                        openAssignFromGrid(cell.fullIp)
+                        setEditingIpId(null)
+                        setIpForm({ address: cell.fullIp, dnsName: cell.device.name, description: `Assigned to ${cell.device.name}`, status: 'active', deviceId: cell.device.id })
+                        setIpModalOpen(true)
                       }
                     }}
                   >
@@ -767,7 +770,7 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
                           <td style={{ color: 'var(--unifi-text-muted)' }}>{ip.description || '—'}</td>
                           <td style={{ textAlign: 'right', paddingRight: '0.5rem' }}>
                             <div style={{ display: 'flex', gap: '2px', justifyContent: 'flex-end' }}>
-                              <button className="btn" style={{ padding: '0 6px', border: 'none', background: 'transparent', color: '#0055ff' }} onClick={() => { setEditingIpId(ip.id); setIpForm({ address: ip.address, dnsName: ip.dnsName || '', description: ip.description || '', status: ip.status, deviceId: '' }); setIpModalOpen(true) }} title="Edit"><Edit2 size={12} /></button>
+                              <button className="btn" style={{ padding: '0 6px', border: 'none', background: 'transparent', color: '#0055ff' }} onClick={() => { setEditingIpId(ip.id); const dev = linkedDevice || devices.find(d => d.ipAddress === ip.address); setIpForm({ address: ip.address, dnsName: ip.dnsName || '', description: ip.description || '', status: ip.status, deviceId: dev?.id || '' }); setIpModalOpen(true) }} title="Edit"><Edit2 size={12} /></button>
                               <button className="btn" style={{ padding: '0 6px', border: 'none', background: 'transparent', color: '#ef4444' }} onClick={() => handleDeleteIp(ip.id)} title="Delete"><Trash2 size={12} /></button>
                             </div>
                           </td>

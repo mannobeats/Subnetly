@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
-import { Wifi, Server, Cpu, Database, Monitor, Network, Share2, ZoomIn, ZoomOut, Maximize2, Layers } from 'lucide-react'
+import { Wifi, Server, Cpu, Database, Monitor, Network, Share2, ZoomIn, ZoomOut, Maximize2, Layers, RotateCcw } from 'lucide-react'
 
 interface TopoDevice {
   id: string
@@ -352,7 +352,38 @@ const TopologyView = ({ selectedCategory = null }: TopologyViewProps) => {
     setZoom(z => Math.max(0.3, Math.min(3, z + delta)))
   }, [])
 
-  const resetView = () => { setZoom(1); setPan({ x: 0, y: 0 }) }
+  // Center the canvas on the content
+  const centerCanvas = useCallback(() => {
+    if (!svgRef.current || positions.size === 0) return
+    const rect = svgRef.current.getBoundingClientRect()
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+    positions.forEach(pos => {
+      minX = Math.min(minX, pos.x)
+      minY = Math.min(minY, pos.y)
+      maxX = Math.max(maxX, pos.x + NODE_W)
+      maxY = Math.max(maxY, pos.y + NODE_H)
+    })
+    if (minX === Infinity) return
+    const contentW = maxX - minX
+    const contentH = maxY - minY
+    const centerX = minX + contentW / 2
+    const centerY = minY + contentH / 2
+    const newZoom = Math.min(1, Math.min((rect.width - 80) / contentW, (rect.height - 80) / contentH))
+    setPan({ x: rect.width / 2 - centerX * newZoom, y: rect.height / 2 - centerY * newZoom })
+    setZoom(newZoom)
+  }, [positions])
+
+  // Auto-center on first load
+  const hasCentered = useRef(false)
+  useEffect(() => {
+    if (!hasCentered.current && positions.size > 0 && svgRef.current) {
+      hasCentered.current = true
+      // Small delay to ensure SVG has rendered with correct dimensions
+      requestAnimationFrame(() => centerCanvas())
+    }
+  }, [positions, centerCanvas])
+
+  const resetView = () => { centerCanvas() }
   const resetLayout = () => { setPosOverrides(new Map()); localStorage.removeItem(STORAGE_KEY) }
 
   if (loading) return <div className="view-loading">Loading topology...</div>
@@ -384,8 +415,8 @@ const TopologyView = ({ selectedCategory = null }: TopologyViewProps) => {
           <div style={{ width: 1, height: 16, background: '#e2e8f0' }} />
           <button className="topo-ctrl-btn" onClick={() => setZoom(z => Math.min(3, z + 0.2))} title="Zoom In"><ZoomIn size={14} /></button>
           <button className="topo-ctrl-btn" onClick={() => setZoom(z => Math.max(0.3, z - 0.2))} title="Zoom Out"><ZoomOut size={14} /></button>
-          <button className="topo-ctrl-btn" onClick={resetView} title="Reset View"><Maximize2 size={14} /></button>
-          <button className="topo-ctrl-btn" onClick={resetLayout} title="Reset Layout" style={{ fontSize: '10px', fontWeight: 600, padding: '4px 8px' }}>↺</button>
+          <button className="topo-ctrl-btn" onClick={resetView} title="Center View"><Maximize2 size={14} /></button>
+          <button className="topo-ctrl-btn" onClick={resetLayout} title="Reset Layout"><RotateCcw size={14} /></button>
           <span className="topo-zoom-label">{Math.round(zoom * 100)}%</span>
         </div>
 

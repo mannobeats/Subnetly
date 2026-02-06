@@ -138,6 +138,9 @@ const ServicesView = ({ searchTerm, selectedProtocol = null }: { searchTerm: str
         </div>
       ) : (
         <>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
+            <button className="btn btn-primary" onClick={openCreate}><Plus size={14} /> Add Service</button>
+          </div>
           <div className="services-device-grid">
             {Object.values(grouped).map(({ device, services: svcList }) => (
               <div key={device.id} className="services-device-card">
