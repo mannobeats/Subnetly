@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { IPAddress, IPRange } from '@/types'
-import { ChevronDown, Info, Plus, Trash2, Globe } from 'lucide-react'
+import { IPAddress, IPRange, Device } from '@/types'
+import { Info, Plus, Trash2, Globe, Server } from 'lucide-react'
 
 interface SubnetWithRelations {
   id: string
@@ -19,7 +19,6 @@ interface SubnetWithRelations {
 
 interface IPPlannerProps {
   searchTerm: string
-  onAddDevice?: (ip: string) => void
 }
 
 const rangeColors: Record<string, { bg: string; border: string; label: string }> = {
@@ -31,14 +30,15 @@ const rangeColors: Record<string, { bg: string; border: string; label: string }>
 
 const emptySubnetForm = { prefix: '', mask: '24', description: '', gateway: '', vlanId: '', role: '' }
 const emptyRangeForm = { startOctet: '', endOctet: '', role: 'dhcp', description: '' }
-const emptyIpForm = { address: '', dnsName: '', description: '', status: 'active' }
+const emptyIpForm = { address: '', dnsName: '', description: '', status: 'active', deviceId: '' }
 
-const IPPlannerView = ({ searchTerm, onAddDevice }: IPPlannerProps) => {
+const IPPlannerView = ({ searchTerm }: IPPlannerProps) => {
   const [subnets, setSubnets] = useState<SubnetWithRelations[]>([])
   const [selectedSubnet, setSelectedSubnet] = useState<string | null>(null)
   const [hoveredCell, setHoveredCell] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
   const [vlans, setVlans] = useState<{ id: string; vid: number; name: string }[]>([])
+  const [devices, setDevices] = useState<Device[]>([])
 
   // Modals
   const [subnetModalOpen, setSubnetModalOpen] = useState(false)
@@ -53,9 +53,11 @@ const IPPlannerView = ({ searchTerm, onAddDevice }: IPPlannerProps) => {
     Promise.all([
       fetch('/api/subnets').then(r => r.json()),
       fetch('/api/vlans').then(r => r.json()),
-    ]).then(([subnetData, vlanData]) => {
+      fetch('/api/devices').then(r => r.json()),
+    ]).then(([subnetData, vlanData, deviceData]) => {
       setSubnets(subnetData)
       setVlans(vlanData)
+      setDevices(deviceData)
       if (subnetData.length > 0 && !selectedSubnet) setSelectedSubnet(subnetData[0].id)
     }).finally(() => setLoading(false))
   }
@@ -63,6 +65,15 @@ const IPPlannerView = ({ searchTerm, onAddDevice }: IPPlannerProps) => {
   useEffect(() => { fetchData() }, [])
 
   const subnet = useMemo(() => subnets.find(s => s.id === selectedSubnet), [subnets, selectedSubnet])
+
+  // Build a map of IP address -> device for quick lookup
+  const ipToDevice = useMemo(() => {
+    const map = new Map<string, Device>()
+    devices.forEach(d => {
+      if (d.ipAddress) map.set(d.ipAddress, d)
+    })
+    return map
+  }, [devices])
 
   const cellData = useMemo(() => {
     if (!subnet) return []
@@ -82,6 +93,8 @@ const IPPlannerView = ({ searchTerm, onAddDevice }: IPPlannerProps) => {
     for (let i = 0; i < 256; i++) {
       const ip = ipMap.get(i)
       const range = rangeMap.get(i)
+      const fullIp = `${subnet.prefix.split('.').slice(0, 3).join('.')}.${i}`
+      const device = ipToDevice.get(fullIp)
       const isGateway = i === gatewayOctet && subnet.gateway
       const isNetwork = i === 0
       const isBroadcast = i === 255
@@ -90,12 +103,13 @@ const IPPlannerView = ({ searchTerm, onAddDevice }: IPPlannerProps) => {
       else if (isBroadcast) status = 'broadcast'
       else if (isGateway) status = 'gateway'
       else if (ip) status = 'assigned'
+      else if (device) status = 'assigned'
       else if (range) status = range.role
       else status = 'available'
-      cells.push({ octet: i, fullIp: `${subnet.prefix.split('.').slice(0, 3).join('.')}.${i}`, status, ip, range, isGateway: !!isGateway })
+      cells.push({ octet: i, fullIp, status, ip, range, device, isGateway: !!isGateway })
     }
     return cells
-  }, [subnet])
+  }, [subnet, ipToDevice])
 
   const filteredCells = useMemo(() => {
     if (!searchTerm) return cellData
@@ -103,15 +117,16 @@ const IPPlannerView = ({ searchTerm, onAddDevice }: IPPlannerProps) => {
       ...c,
       highlighted: c.ip?.dnsName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         c.fullIp.includes(searchTerm) ||
-        c.ip?.description?.toLowerCase().includes(searchTerm.toLowerCase()),
+        c.ip?.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        c.device?.name?.toLowerCase().includes(searchTerm.toLowerCase()),
     }))
   }, [cellData, searchTerm])
 
   const utilization = useMemo(() => {
     if (!subnet) return { used: 0, total: 254, pct: 0 }
-    const used = subnet.ipAddresses.length
-    return { used, total: 254, pct: Math.round((used / 254) * 100) }
-  }, [subnet])
+    const assignedCount = cellData.filter(c => c.status === 'assigned' || c.status === 'gateway').length
+    return { used: assignedCount, total: 254, pct: Math.round((assignedCount / 254) * 100) }
+  }, [subnet, cellData])
 
   // Subnet CRUD
   const handleCreateSubnet = async (e: React.FormEvent) => {
@@ -171,10 +186,14 @@ const IPPlannerView = ({ searchTerm, onAddDevice }: IPPlannerProps) => {
     } else { alert('Failed to create IP range') }
   }
 
-  // IP Address assign
+  // IP Address assign — now also optionally links to a device by updating the device's IP
   const handleAssignIp = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!subnet) return
+
+    // If a device is selected, update the device's IP address to this one
+    const selectedDevice = ipForm.deviceId ? devices.find(d => d.id === ipForm.deviceId) : null
+
     const res = await fetch('/api/ipam', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -183,11 +202,21 @@ const IPPlannerView = ({ searchTerm, onAddDevice }: IPPlannerProps) => {
         mask: subnet.mask,
         subnetId: subnet.id,
         status: ipForm.status,
-        dnsName: ipForm.dnsName || null,
+        dnsName: ipForm.dnsName || (selectedDevice ? selectedDevice.name : null),
         description: ipForm.description || null,
+        assignedTo: selectedDevice ? selectedDevice.name : null,
       }),
     })
+
     if (res.ok) {
+      // If device selected, also update the device's ipAddress to match
+      if (selectedDevice) {
+        await fetch(`/api/devices/${selectedDevice.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ipAddress: ipForm.address }),
+        })
+      }
       setIpModalOpen(false)
       setIpForm(emptyIpForm)
       fetchData()
@@ -200,7 +229,7 @@ const IPPlannerView = ({ searchTerm, onAddDevice }: IPPlannerProps) => {
   }
 
   const openAssignFromGrid = (fullIp: string) => {
-    setIpForm({ address: fullIp, dnsName: '', description: '', status: 'active' })
+    setIpForm({ address: fullIp, dnsName: '', description: '', status: 'active', deviceId: '' })
     setIpModalOpen(true)
   }
 
@@ -303,14 +332,11 @@ const IPPlannerView = ({ searchTerm, onAddDevice }: IPPlannerProps) => {
       <div className="ipam-toolbar">
         <div className="ipam-subnet-selector">
           <label className="input-label" style={{ marginBottom: '0' }}>Subnet</label>
-          <div className="ipam-select-wrap">
-            <select className="unifi-input" value={selectedSubnet || ''} onChange={e => setSelectedSubnet(e.target.value)} style={{ paddingRight: '2rem' }}>
-              {subnets.map(s => (
-                <option key={s.id} value={s.id}>{s.prefix}/{s.mask} — {s.description || 'Unnamed'} {s.vlan ? `(VLAN ${s.vlan.vid})` : ''}</option>
-              ))}
-            </select>
-            <ChevronDown size={14} className="ipam-select-chevron" />
-          </div>
+          <select className="unifi-input" value={selectedSubnet || ''} onChange={e => setSelectedSubnet(e.target.value)}>
+            {subnets.map(s => (
+              <option key={s.id} value={s.id}>{s.prefix}/{s.mask} — {s.description || 'Unnamed'} {s.vlan ? `(VLAN ${s.vlan.vid})` : ''}</option>
+            ))}
+          </select>
         </div>
         <div className="ipam-util-section">
           <div className="ipam-util-header">
@@ -353,6 +379,7 @@ const IPPlannerView = ({ searchTerm, onAddDevice }: IPPlannerProps) => {
               const colors = getCellColor(cell.status)
               const isHighlighted = 'highlighted' in cell && cell.highlighted
               const dimmed = searchTerm && !isHighlighted && cell.status !== 'gateway'
+              const label = cell.device?.name || cell.ip?.dnsName || cell.ip?.assignedTo
               return (
                 <div
                   key={cell.octet}
@@ -362,14 +389,13 @@ const IPPlannerView = ({ searchTerm, onAddDevice }: IPPlannerProps) => {
                   onMouseLeave={() => setHoveredCell(null)}
                   onClick={() => {
                     if (cell.status === 'available' || cell.status === 'dhcp' || cell.status === 'reserved' || cell.status === 'infrastructure') {
-                      if (onAddDevice) onAddDevice(cell.fullIp)
-                      else openAssignFromGrid(cell.fullIp)
+                      openAssignFromGrid(cell.fullIp)
                     }
                   }}
                 >
                   <span className="ipam-cell-num">{cell.octet}</span>
-                  {cell.ip?.dnsName && (
-                    <span className="ipam-cell-label">{cell.ip.dnsName.length > 6 ? cell.ip.dnsName.slice(0, 6) + '…' : cell.ip.dnsName}</span>
+                  {label && (
+                    <span className="ipam-cell-label">{label.length > 6 ? label.slice(0, 6) + '…' : label}</span>
                   )}
                 </div>
               )
@@ -388,10 +414,11 @@ const IPPlannerView = ({ searchTerm, onAddDevice }: IPPlannerProps) => {
             <div className="ipam-tooltip-content">
               <strong>{cell.fullIp}</strong>
               {cell.isGateway && <span className="badge badge-green">Gateway</span>}
-              {cell.ip && <span>{cell.ip.dnsName || 'Unnamed'}</span>}
+              {cell.device && <span><Server size={10} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />{cell.device.name}</span>}
+              {cell.ip && !cell.device && <span>{cell.ip.dnsName || cell.ip.assignedTo || 'Unnamed'}</span>}
               {cell.ip?.description && <span className="ipam-tooltip-desc">{cell.ip.description}</span>}
-              {!cell.ip && cell.range && <span className={`badge badge-${cell.range.role === 'dhcp' ? 'orange' : cell.range.role === 'reserved' ? 'purple' : 'blue'}`}>{cell.range.role} range</span>}
-              {(cell.status === 'available' || cell.status === 'dhcp' || cell.status === 'reserved' || cell.status === 'infrastructure') && !cell.ip && <span className="ipam-tooltip-action">Click to assign</span>}
+              {!cell.ip && !cell.device && cell.range && <span className={`badge badge-${cell.range.role === 'dhcp' ? 'orange' : cell.range.role === 'reserved' ? 'purple' : 'blue'}`}>{cell.range.role} range</span>}
+              {(cell.status === 'available' || cell.status === 'dhcp' || cell.status === 'reserved' || cell.status === 'infrastructure') && !cell.ip && !cell.device && <span className="ipam-tooltip-action">Click to assign</span>}
             </div>
           </div>
         )
@@ -404,7 +431,7 @@ const IPPlannerView = ({ searchTerm, onAddDevice }: IPPlannerProps) => {
             <h2>Assigned Addresses</h2>
             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
               <span className="dash-section-badge">{subnet.ipAddresses.length} addresses</span>
-              <button className="btn btn-primary" style={{ padding: '4px 10px', fontSize: '11px' }} onClick={() => { setIpForm({ address: `${subnet.prefix.split('.').slice(0, 3).join('.')}.`, dnsName: '', description: '', status: 'active' }); setIpModalOpen(true) }}><Plus size={12} /> Assign IP</button>
+              <button className="btn btn-primary" style={{ padding: '4px 10px', fontSize: '11px' }} onClick={() => { setIpForm({ address: `${subnet.prefix.split('.').slice(0, 3).join('.')}.`, dnsName: '', description: '', status: 'active', deviceId: '' }); setIpModalOpen(true) }}><Plus size={12} /> Assign IP</button>
             </div>
           </div>
           {subnet.ipAddresses.length === 0 ? (
@@ -414,7 +441,7 @@ const IPPlannerView = ({ searchTerm, onAddDevice }: IPPlannerProps) => {
               <thead>
                 <tr>
                   <th style={{ width: '140px' }}>Address</th>
-                  <th style={{ width: '180px' }}>DNS Name</th>
+                  <th style={{ width: '160px' }}>Device / DNS</th>
                   <th style={{ width: '100px' }}>Status</th>
                   <th>Description</th>
                   <th style={{ width: '60px', textAlign: 'right', paddingRight: '1rem' }}></th>
@@ -423,17 +450,29 @@ const IPPlannerView = ({ searchTerm, onAddDevice }: IPPlannerProps) => {
               <tbody>
                 {subnet.ipAddresses
                   .sort((a, b) => parseInt(a.address.split('.').pop() || '0') - parseInt(b.address.split('.').pop() || '0'))
-                  .map(ip => (
-                    <tr key={ip.id}>
-                      <td><code style={{ fontSize: '11px', background: '#f1f3f5', padding: '2px 6px', borderRadius: '3px' }}>{ip.address}/{ip.mask}</code></td>
-                      <td style={{ fontWeight: 500 }}>{ip.dnsName || '—'}</td>
-                      <td><span className="badge badge-green">{ip.status}</span></td>
-                      <td style={{ color: 'var(--unifi-text-muted)' }}>{ip.description || '—'}</td>
-                      <td style={{ textAlign: 'right', paddingRight: '0.5rem' }}>
-                        <button className="btn" style={{ padding: '0 6px', border: 'none', background: 'transparent', color: '#ef4444' }} onClick={() => handleDeleteIp(ip.id)}><Trash2 size={12} /></button>
-                      </td>
-                    </tr>
-                  ))}
+                  .map(ip => {
+                    const linkedDevice = ipToDevice.get(ip.address)
+                    return (
+                      <tr key={ip.id}>
+                        <td><code style={{ fontSize: '11px', background: '#f1f3f5', padding: '2px 6px', borderRadius: '3px' }}>{ip.address}/{ip.mask}</code></td>
+                        <td style={{ fontWeight: 500 }}>
+                          {linkedDevice ? (
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <Server size={11} color="#0055ff" />
+                              {linkedDevice.name}
+                            </span>
+                          ) : (
+                            ip.dnsName || ip.assignedTo || '—'
+                          )}
+                        </td>
+                        <td><span className="badge badge-green">{ip.status}</span></td>
+                        <td style={{ color: 'var(--unifi-text-muted)' }}>{ip.description || '—'}</td>
+                        <td style={{ textAlign: 'right', paddingRight: '0.5rem' }}>
+                          <button className="btn" style={{ padding: '0 6px', border: 'none', background: 'transparent', color: '#ef4444' }} onClick={() => handleDeleteIp(ip.id)}><Trash2 size={12} /></button>
+                        </td>
+                      </tr>
+                    )
+                  })}
               </tbody>
             </table>
           )}
@@ -482,12 +521,27 @@ const IPPlannerView = ({ searchTerm, onAddDevice }: IPPlannerProps) => {
         </div>
       )}
 
-      {/* IP Assign Modal */}
+      {/* IP Assign Modal — now with device linking */}
       {ipModalOpen && subnet && (
         <div className="modal-overlay">
           <div className="modal-content animate-fade-in">
             <h2 style={{ marginBottom: '1.5rem', fontSize: '16px', fontWeight: 600 }}>Assign IP Address</h2>
             <form onSubmit={handleAssignIp}>
+              <div className="input-group">
+                <label className="input-label">Link to Device (Optional)</label>
+                <select className="unifi-input" value={ipForm.deviceId} onChange={e => {
+                  const dev = devices.find(d => d.id === e.target.value)
+                  setIpForm({
+                    ...ipForm,
+                    deviceId: e.target.value,
+                    dnsName: dev ? dev.name : ipForm.dnsName,
+                    description: dev ? `Assigned to ${dev.name}` : ipForm.description,
+                  })
+                }}>
+                  <option value="">No device — manual assignment</option>
+                  {devices.map(d => <option key={d.id} value={d.id}>{d.name} ({d.ipAddress}) — {d.category}</option>)}
+                </select>
+              </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
                 <div className="input-group">
                   <label className="input-label">IP Address</label>

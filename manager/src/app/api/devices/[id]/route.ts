@@ -12,6 +12,9 @@ export async function PATCH(
       where: { id },
       data: body,
     })
+    await prisma.changeLog.create({
+      data: { objectType: 'Device', objectId: id, action: 'update', changes: JSON.stringify(body) },
+    })
     return NextResponse.json(device)
   } catch (error) {
     console.error('PATCH Error:', error)
@@ -25,8 +28,12 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params
+    const device = await prisma.device.findUnique({ where: { id } })
     await prisma.device.delete({
       where: { id },
+    })
+    await prisma.changeLog.create({
+      data: { objectType: 'Device', objectId: id, action: 'delete', changes: JSON.stringify({ name: device?.name, ipAddress: device?.ipAddress }) },
     })
     return NextResponse.json({ message: 'Device deleted' })
   } catch (error) {

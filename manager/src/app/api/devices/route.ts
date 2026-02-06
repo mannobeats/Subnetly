@@ -7,7 +7,7 @@ export async function GET() {
       orderBy: { ipAddress: 'asc' },
     })
     return NextResponse.json(devices)
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to fetch devices' }, { status: 500 })
   }
 }
@@ -21,11 +21,16 @@ export async function POST(request: Request) {
         macAddress: body.macAddress,
         ipAddress: body.ipAddress,
         category: body.category,
-        notes: body.notes,
+        status: body.status || 'active',
+        platform: body.platform || null,
+        notes: body.notes || null,
       },
     })
+    await prisma.changeLog.create({
+      data: { objectType: 'Device', objectId: device.id, action: 'create', changes: JSON.stringify({ name: body.name, ipAddress: body.ipAddress, category: body.category, status: body.status }) },
+    })
     return NextResponse.json(device)
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to create device' }, { status: 500 })
   }
 }

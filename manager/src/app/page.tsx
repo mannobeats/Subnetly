@@ -11,6 +11,16 @@ import ChangelogView from '@/components/ChangelogView'
 import { Plus, Download, Trash2, Edit2, Network as NetIcon, ChevronRight, Laptop, Server, Cpu, Database } from 'lucide-react'
 import { Device } from '@/types'
 
+interface SubnetOption {
+  id: string
+  prefix: string
+  mask: number
+  description?: string | null
+  gateway?: string | null
+  vlan?: { vid: number; name: string } | null
+  ipAddresses: { address: string }[]
+}
+
 export default function Home() {
   const [activeView, setActiveView] = useState<ViewType>('dashboard')
   const [devices, setDevices] = useState<Device[]>([])
@@ -21,6 +31,9 @@ export default function Home() {
   const [deviceToDelete, setDeviceToDelete] = useState<string | null>(null)
   const [editingDevice, setEditingDevice] = useState<Device | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const [subnets, setSubnets] = useState<SubnetOption[]>([])
+  const [selectedSubnetId, setSelectedSubnetId] = useState<string>('')
+  const [availableIps, setAvailableIps] = useState<string[]>([])
 
   const [formData, setFormData] = useState({
     name: '',
@@ -34,6 +47,7 @@ export default function Home() {
 
   useEffect(() => {
     fetchDevices()
+    fetchSubnets()
   }, [])
 
   const fetchDevices = async () => {
@@ -46,6 +60,42 @@ export default function Home() {
       console.error(err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchSubnets = async () => {
+    try {
+      const res = await fetch('/api/subnets')
+      const data = await res.json()
+      setSubnets(data)
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  const computeAvailableIps = (subnetId: string) => {
+    const sub = subnets.find(s => s.id === subnetId)
+    if (!sub) { setAvailableIps([]); return }
+    const base = sub.prefix.split('.').slice(0, 3).join('.')
+    const usedSet = new Set(sub.ipAddresses.map(ip => ip.address))
+    // Also exclude IPs already used by devices
+    devices.forEach(d => { if (d.ipAddress) usedSet.add(d.ipAddress) })
+    const gatewayOctet = sub.gateway ? parseInt(sub.gateway.split('.').pop() || '1') : -1
+    const ips: string[] = []
+    for (let i = 1; i <= 254; i++) {
+      if (i === gatewayOctet) continue
+      const addr = `${base}.${i}`
+      if (!usedSet.has(addr)) ips.push(addr)
+    }
+    setAvailableIps(ips)
+  }
+
+  const handleSubnetChange = (subnetId: string) => {
+    setSelectedSubnetId(subnetId)
+    if (subnetId) {
+      computeAvailableIps(subnetId)
+    } else {
+      setAvailableIps([])
     }
   }
 
@@ -68,8 +118,11 @@ export default function Home() {
       if (res.ok) {
         setIsModalOpen(false)
         setEditingDevice(null)
+        setSelectedSubnetId('')
+        setAvailableIps([])
         setFormData({ name: '', macAddress: '', ipAddress: '', category: 'Server', notes: '', platform: '', status: 'active' })
         await fetchDevices()
+        await fetchSubnets()
       } else {
         const err = await res.json()
         alert(err.error || 'Operation failed')
@@ -112,12 +165,6 @@ export default function Home() {
     setIsModalOpen(true)
   }
 
-  const openAddWithIp = (ip: string) => {
-    setEditingDevice(null)
-    setFormData({ name: '', macAddress: '', ipAddress: ip, category: 'Server', notes: '', platform: '', status: 'active' })
-    setIsModalOpen(true)
-  }
-
   const exportData = () => {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(devices, null, 2))
     const a = document.createElement('a')
@@ -157,7 +204,7 @@ export default function Home() {
             <Server size={40} color="#cbd5e1" />
             <h3>No devices yet</h3>
             <p>Add your first device to start managing your homelab infrastructure.</p>
-            <button className="btn btn-primary" onClick={() => { setEditingDevice(null); setFormData({ name: '', macAddress: '', ipAddress: '', category: 'Server', notes: '', platform: '', status: 'active' }); setIsModalOpen(true); }}>
+            <button className="btn btn-primary" onClick={() => { setEditingDevice(null); setFormData({ name: '', macAddress: '', ipAddress: '', category: 'Server', notes: '', platform: '', status: 'active' }); setSelectedSubnetId(''); setAvailableIps([]); fetchSubnets(); setIsModalOpen(true); }}>
               <Plus size={14} /> Add Device
             </button>
           </div>
@@ -266,7 +313,7 @@ export default function Home() {
             {activeView === 'devices' && (
               <>
                 <button className="btn" onClick={exportData}><Download size={14} /> Export</button>
-                <button className="btn btn-primary" onClick={() => { setEditingDevice(null); setFormData({ name: '', macAddress: '', ipAddress: '', category: 'Server', notes: '', platform: '', status: 'active' }); setIsModalOpen(true); }}>
+                <button className="btn btn-primary" onClick={() => { setEditingDevice(null); setFormData({ name: '', macAddress: '', ipAddress: '', category: 'Server', notes: '', platform: '', status: 'active' }); setSelectedSubnetId(''); setAvailableIps([]); fetchSubnets(); setIsModalOpen(true); }}>
                   <Plus size={14} /> Add Device
                 </button>
               </>
@@ -276,7 +323,7 @@ export default function Home() {
 
         {activeView === 'dashboard' && <div className="table-wrapper"><DashboardView /></div>}
         {activeView === 'devices' && renderDevicesView()}
-        {activeView === 'ipam' && <div className="table-wrapper"><IPPlannerView searchTerm={searchTerm} onAddDevice={openAddWithIp} /></div>}
+        {activeView === 'ipam' && <div className="table-wrapper"><IPPlannerView searchTerm={searchTerm} /></div>}
         {activeView === 'vlans' && <div className="table-wrapper"><VLANView /></div>}
         {activeView === 'topology' && <div className="table-wrapper"><TopologyView /></div>}
         {activeView === 'services' && <div className="table-wrapper"><ServicesView searchTerm={searchTerm} /></div>}
@@ -293,21 +340,44 @@ export default function Home() {
                 <label className="input-label">Device Name</label>
                 <input required className="unifi-input" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="e.g. Proxmox-Node-01" />
               </div>
+              <div className="input-group">
+                <label className="input-label">Category</label>
+                <select className="unifi-input" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})}>
+                  <option value="Networking">Networking</option>
+                  <option value="Server">Server</option>
+                  <option value="VM">VM</option>
+                  <option value="LXC">LXC</option>
+                  <option value="Client">Client</option>
+                  <option value="IoT">IoT</option>
+                </select>
+              </div>
+              {subnets.length > 0 && !editingDevice && (
+                <div className="input-group">
+                  <label className="input-label">Assign from Subnet (Optional)</label>
+                  <select className="unifi-input" value={selectedSubnetId} onChange={e => handleSubnetChange(e.target.value)}>
+                    <option value="">Manual IP entry</option>
+                    {subnets.map(s => (
+                      <option key={s.id} value={s.id}>{s.prefix}/{s.mask} — {s.description || 'Unnamed'} {s.vlan ? `(VLAN ${s.vlan.vid})` : ''}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
                 <div className="input-group">
                   <label className="input-label">IP Address</label>
-                  <input required className="unifi-input" value={formData.ipAddress} onChange={e => setFormData({...formData, ipAddress: e.target.value})} placeholder="10.0.10.x" />
+                  {selectedSubnetId && availableIps.length > 0 ? (
+                    <select required className="unifi-input" value={formData.ipAddress} onChange={e => setFormData({...formData, ipAddress: e.target.value})}>
+                      <option value="">Select available IP...</option>
+                      {availableIps.slice(0, 50).map(ip => <option key={ip} value={ip}>{ip}</option>)}
+                      {availableIps.length > 50 && <option disabled>...and {availableIps.length - 50} more</option>}
+                    </select>
+                  ) : (
+                    <input required className="unifi-input" value={formData.ipAddress} onChange={e => setFormData({...formData, ipAddress: e.target.value})} placeholder="10.0.10.x" />
+                  )}
                 </div>
                 <div className="input-group">
-                  <label className="input-label">Category</label>
-                  <select className="unifi-input" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})}>
-                    <option value="Networking">Networking</option>
-                    <option value="Server">Server</option>
-                    <option value="VM">VM</option>
-                    <option value="LXC">LXC</option>
-                    <option value="Client">Client</option>
-                    <option value="IoT">IoT</option>
-                  </select>
+                  <label className="input-label">Platform</label>
+                  <input className="unifi-input" value={formData.platform} onChange={e => setFormData({...formData, platform: e.target.value})} placeholder="e.g. Ubuntu 22.04" />
                 </div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
@@ -316,19 +386,15 @@ export default function Home() {
                   <input required className="unifi-input" value={formData.macAddress} onChange={e => setFormData({...formData, macAddress: e.target.value.toUpperCase()})} placeholder="XX:XX:XX:XX:XX:XX" />
                 </div>
                 <div className="input-group">
-                  <label className="input-label">Platform</label>
-                  <input className="unifi-input" value={formData.platform} onChange={e => setFormData({...formData, platform: e.target.value})} placeholder="e.g. Ubuntu 22.04" />
+                  <label className="input-label">Status</label>
+                  <select className="unifi-input" value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})}>
+                    <option value="active">Active</option>
+                    <option value="planned">Planned</option>
+                    <option value="staged">Staged</option>
+                    <option value="offline">Offline</option>
+                    <option value="decommissioned">Decommissioned</option>
+                  </select>
                 </div>
-              </div>
-              <div className="input-group">
-                <label className="input-label">Status</label>
-                <select className="unifi-input" value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})}>
-                  <option value="active">Active</option>
-                  <option value="planned">Planned</option>
-                  <option value="staged">Staged</option>
-                  <option value="offline">Offline</option>
-                  <option value="decommissioned">Decommissioned</option>
-                </select>
               </div>
               <div className="input-group">
                 <label className="input-label">Notes (Optional)</label>

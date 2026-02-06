@@ -14,6 +14,9 @@ export async function POST(request: Request) {
         status: body.status || 'active',
       },
     })
+    await prisma.changeLog.create({
+      data: { objectType: 'IPRange', objectId: range.id, action: 'create', changes: JSON.stringify({ startAddr: body.startAddr, endAddr: body.endAddr, role: body.role }) },
+    })
     return NextResponse.json(range)
   } catch {
     return NextResponse.json({ error: 'Failed to create IP range' }, { status: 500 })

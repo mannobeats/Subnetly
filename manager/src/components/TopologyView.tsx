@@ -268,12 +268,17 @@ const TopologyView = () => {
                     width={NODE_W}
                     height={NODE_H}
                     rx={10}
-                    fill={isSelected ? '#ffffff' : '#ffffff'}
+                    fill="#ffffff"
                     stroke={isSelected ? color : '#e2e8f0'}
                     strokeWidth={isSelected ? 2.5 : 1}
                   />
-                  {/* Color accent bar */}
-                  <rect x={0} y={0} width={4} height={NODE_H} rx={2} fill={color} />
+                  {/* Top color strip (clipped to card shape) */}
+                  <defs>
+                    <clipPath id={`clip-${device.id}`}>
+                      <rect width={NODE_W} height={NODE_H} rx={10} />
+                    </clipPath>
+                  </defs>
+                  <rect x={0} y={0} width={NODE_W} height={4} fill={color} clipPath={`url(#clip-${device.id})`} />
                   {/* Status indicator */}
                   <circle cx={NODE_W - 14} cy={14} r={4} fill={device.status === 'active' ? '#10b981' : '#94a3b8'} />
                   {/* Text */}

@@ -26,6 +26,9 @@ export async function POST(request: Request) {
       },
       include: { device: true },
     })
+    await prisma.changeLog.create({
+      data: { objectType: 'Service', objectId: service.id, action: 'create', changes: JSON.stringify({ name: body.name, ports: body.ports, protocol: body.protocol }) },
+    })
     return NextResponse.json(service)
   } catch {
     return NextResponse.json({ error: 'Failed to create service' }, { status: 500 })

@@ -18,6 +18,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       },
       include: { subnet: true },
     })
+    await prisma.changeLog.create({
+      data: { objectType: 'IPAddress', objectId: id, action: 'update', changes: JSON.stringify(body) },
+    })
     return NextResponse.json(ip)
   } catch {
     return NextResponse.json({ error: 'Failed to update IP address' }, { status: 500 })
@@ -27,7 +30,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
+    const ip = await prisma.iPAddress.findUnique({ where: { id } })
     await prisma.iPAddress.delete({ where: { id } })
+    await prisma.changeLog.create({
+      data: { objectType: 'IPAddress', objectId: id, action: 'delete', changes: JSON.stringify({ address: ip?.address, dnsName: ip?.dnsName }) },
+    })
     return NextResponse.json({ success: true })
   } catch {
     return NextResponse.json({ error: 'Failed to delete IP address' }, { status: 500 })
