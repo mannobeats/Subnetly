@@ -53,6 +53,8 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
   const [editingRangeId, setEditingRangeId] = useState<string | null>(null)
   const [ipForm, setIpForm] = useState(emptyIpForm)
 
+  const [editingIpId, setEditingIpId] = useState<string | null>(null)
+
   const fetchData = useCallback(() => {
     Promise.all([
       fetch('/api/subnets').then(r => r.json()),
@@ -70,6 +72,20 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
   }, [])
 
   useEffect(() => { fetchData() }, [fetchData])
+
+  // Escape key handler for all modals
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (ipModalOpen) { setIpModalOpen(false); e.stopPropagation(); return }
+        if (rangeModalOpen) { setRangeModalOpen(false); setEditingRangeId(null); e.stopPropagation(); return }
+        if (subnetModalOpen) { setSubnetModalOpen(false); setEditingSubnetId(null); e.stopPropagation(); return }
+        if (deleteSubnetModal) { setDeleteSubnetModal(false); e.stopPropagation(); return }
+      }
+    }
+    window.addEventListener('keydown', handleEsc)
+    return () => window.removeEventListener('keydown', handleEsc)
+  }, [ipModalOpen, rangeModalOpen, subnetModalOpen, deleteSubnetModal])
 
   const subnet = useMemo(() => subnets.find(s => s.id === selectedSubnet), [subnets, selectedSubnet])
 
@@ -242,16 +258,17 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
     setRangeModalOpen(true)
   }
 
-  // IP Address assign — now also optionally links to a device by updating the device's IP
+  // IP Address assign/edit — supports both create (POST) and edit (PATCH)
   const handleAssignIp = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!subnet) return
 
-    // If a device is selected, update the device's IP address to this one
     const selectedDevice = ipForm.deviceId ? devices.find(d => d.id === ipForm.deviceId) : null
 
-    const res = await fetch('/api/ipam', {
-      method: 'POST',
+    const method = editingIpId ? 'PATCH' : 'POST'
+    const url = editingIpId ? `/api/ipam/${editingIpId}` : '/api/ipam'
+    const res = await fetch(url, {
+      method,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         address: ipForm.address,
@@ -265,7 +282,6 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
     })
 
     if (res.ok) {
-      // If device selected, also update the device's ipAddress to match
       if (selectedDevice) {
         await fetch(`/api/devices/${selectedDevice.id}`, {
           method: 'PATCH',
@@ -275,8 +291,9 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
       }
       setIpModalOpen(false)
       setIpForm(emptyIpForm)
+      setEditingIpId(null)
       fetchData()
-    } else { alert('Failed to assign IP') }
+    } else { alert(editingIpId ? 'Failed to update IP' : 'Failed to assign IP') }
   }
 
   const handleDeleteIp = async (ipId: string) => {
@@ -321,8 +338,8 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
 
   function renderSubnetModal() {
     return (
-      <div className="modal-overlay">
-        <div className="modal-content animate-fade-in">
+      <div className="modal-overlay" onClick={() => { setSubnetModalOpen(false); setEditingSubnetId(null) }}>
+        <div className="modal-content animate-fade-in" onClick={e => e.stopPropagation()}>
           <h2 style={{ marginBottom: '1.5rem', fontSize: '16px', fontWeight: 600 }}>{editingSubnetId ? 'Edit Subnet' : 'Create Subnet'}</h2>
           <form onSubmit={handleSaveSubnet}>
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.25rem' }}>
@@ -453,11 +470,17 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
                   <div
                     key={cell.octet}
                     className={`ipam-cell ${cell.status} ${isHighlighted ? 'highlighted' : ''} ${dimmed ? 'dimmed' : ''}`}
-                    style={{ background: colors.bg, color: colors.color, opacity: dimmed ? 0.25 : 1 }}
+                    style={{ background: colors.bg, color: colors.color, opacity: dimmed ? 0.25 : 1, cursor: (cell.status !== 'network' && cell.status !== 'broadcast') ? 'pointer' : 'default' }}
                     onMouseEnter={() => setHoveredCell(cell.octet)}
                     onMouseLeave={() => setHoveredCell(null)}
                     onClick={() => {
                       if (cell.status === 'available' || cell.status === 'dhcp' || cell.status === 'reserved' || cell.status === 'infrastructure') {
+                        openAssignFromGrid(cell.fullIp)
+                      } else if (cell.ip) {
+                        setEditingIpId(cell.ip.id)
+                        setIpForm({ address: cell.ip.address, dnsName: cell.ip.dnsName || '', description: cell.ip.description || '', status: cell.ip.status, deviceId: '' })
+                        setIpModalOpen(true)
+                      } else if (cell.device && !cell.ip) {
                         openAssignFromGrid(cell.fullIp)
                       }
                     }}
@@ -689,67 +712,96 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
       })()}
 
       {/* Address Table (shown in grid mode only) */}
-      {viewMode === 'grid' && subnet && (
-        <div className="ipam-table-section">
-          <div className="dash-section-header">
-            <h2>Assigned Addresses</h2>
-            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-              <span className="dash-section-badge">{subnet.ipAddresses.length} addresses</span>
-              <button className="btn btn-primary" style={{ padding: '4px 10px', fontSize: '11px' }} onClick={() => { setIpForm({ address: `${subnet.prefix.split('.').slice(0, 3).join('.')}.`, dnsName: '', description: '', status: 'active', deviceId: '' }); setIpModalOpen(true) }}><Plus size={12} /> Assign IP</button>
+      {viewMode === 'grid' && subnet && (() => {
+        // Build combined assigned list: IPAM records + device-only IPs on this subnet
+        const ipamAddresses = new Set(subnet.ipAddresses.map(ip => ip.address))
+        const base = subnet.prefix.split('.').slice(0, 3).join('.')
+        const deviceOnlyEntries = devices.filter(d => {
+          if (!d.ipAddress) return false
+          if (ipamAddresses.has(d.ipAddress)) return false
+          const parts = d.ipAddress.split('.')
+          return parts.slice(0, 3).join('.') === base
+        })
+        const totalAssigned = subnet.ipAddresses.length + deviceOnlyEntries.length
+        return (
+          <div className="ipam-table-section">
+            <div className="dash-section-header">
+              <h2>Assigned Addresses</h2>
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                <span className="dash-section-badge">{totalAssigned} addresses</span>
+                <button className="btn btn-primary" style={{ padding: '4px 10px', fontSize: '11px' }} onClick={() => { setEditingIpId(null); setIpForm({ address: `${base}.`, dnsName: '', description: '', status: 'active', deviceId: '' }); setIpModalOpen(true) }}><Plus size={12} /> Assign IP</button>
+              </div>
             </div>
+            {totalAssigned === 0 ? (
+              <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--unifi-text-muted)', fontSize: '13px' }}>No IP addresses assigned yet. Click a cell in the grid or use the button above.</div>
+            ) : (
+              <table className="unifi-table">
+                <thead>
+                  <tr>
+                    <th style={{ width: '140px' }}>Address</th>
+                    <th style={{ width: '160px' }}>Device / DNS</th>
+                    <th style={{ width: '100px' }}>Status</th>
+                    <th>Description</th>
+                    <th style={{ width: '80px', textAlign: 'right', paddingRight: '1rem' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {subnet.ipAddresses
+                    .sort((a, b) => parseInt(a.address.split('.').pop() || '0') - parseInt(b.address.split('.').pop() || '0'))
+                    .map(ip => {
+                      const linkedDevice = ipToDevice.get(ip.address)
+                      return (
+                        <tr key={ip.id}>
+                          <td><code style={{ fontSize: '11px', background: '#f1f3f5', padding: '2px 6px', borderRadius: '3px' }}>{ip.address}/{ip.mask}</code></td>
+                          <td style={{ fontWeight: 500 }}>
+                            {linkedDevice ? (
+                              <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <Server size={11} color="#0055ff" />
+                                {linkedDevice.name}
+                              </span>
+                            ) : (
+                              ip.dnsName || ip.assignedTo || '—'
+                            )}
+                          </td>
+                          <td><span className="badge badge-green">{ip.status}</span></td>
+                          <td style={{ color: 'var(--unifi-text-muted)' }}>{ip.description || '—'}</td>
+                          <td style={{ textAlign: 'right', paddingRight: '0.5rem' }}>
+                            <div style={{ display: 'flex', gap: '2px', justifyContent: 'flex-end' }}>
+                              <button className="btn" style={{ padding: '0 6px', border: 'none', background: 'transparent', color: '#0055ff' }} onClick={() => { setEditingIpId(ip.id); setIpForm({ address: ip.address, dnsName: ip.dnsName || '', description: ip.description || '', status: ip.status, deviceId: '' }); setIpModalOpen(true) }} title="Edit"><Edit2 size={12} /></button>
+                              <button className="btn" style={{ padding: '0 6px', border: 'none', background: 'transparent', color: '#ef4444' }} onClick={() => handleDeleteIp(ip.id)} title="Delete"><Trash2 size={12} /></button>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  {deviceOnlyEntries.map(d => (
+                    <tr key={`dev-${d.id}`}>
+                      <td><code style={{ fontSize: '11px', background: '#f1f3f5', padding: '2px 6px', borderRadius: '3px' }}>{d.ipAddress}/{subnet.mask}</code></td>
+                      <td style={{ fontWeight: 500 }}>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <Server size={11} color="#0055ff" />
+                          {d.name}
+                        </span>
+                      </td>
+                      <td><span className={`badge badge-${d.status === 'active' ? 'green' : 'orange'}`}>{d.status}</span></td>
+                      <td style={{ color: 'var(--unifi-text-muted)' }}>{d.category} — {d.platform || 'No platform'}</td>
+                      <td style={{ textAlign: 'right', paddingRight: '0.5rem', fontSize: '10px', color: '#94a3b8' }}>device</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
-          {subnet.ipAddresses.length === 0 ? (
-            <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--unifi-text-muted)', fontSize: '13px' }}>No IP addresses assigned yet. Click a cell in the grid or use the button above.</div>
-          ) : (
-            <table className="unifi-table">
-              <thead>
-                <tr>
-                  <th style={{ width: '140px' }}>Address</th>
-                  <th style={{ width: '160px' }}>Device / DNS</th>
-                  <th style={{ width: '100px' }}>Status</th>
-                  <th>Description</th>
-                  <th style={{ width: '60px', textAlign: 'right', paddingRight: '1rem' }}></th>
-                </tr>
-              </thead>
-              <tbody>
-                {subnet.ipAddresses
-                  .sort((a, b) => parseInt(a.address.split('.').pop() || '0') - parseInt(b.address.split('.').pop() || '0'))
-                  .map(ip => {
-                    const linkedDevice = ipToDevice.get(ip.address)
-                    return (
-                      <tr key={ip.id}>
-                        <td><code style={{ fontSize: '11px', background: '#f1f3f5', padding: '2px 6px', borderRadius: '3px' }}>{ip.address}/{ip.mask}</code></td>
-                        <td style={{ fontWeight: 500 }}>
-                          {linkedDevice ? (
-                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                              <Server size={11} color="#0055ff" />
-                              {linkedDevice.name}
-                            </span>
-                          ) : (
-                            ip.dnsName || ip.assignedTo || '—'
-                          )}
-                        </td>
-                        <td><span className="badge badge-green">{ip.status}</span></td>
-                        <td style={{ color: 'var(--unifi-text-muted)' }}>{ip.description || '—'}</td>
-                        <td style={{ textAlign: 'right', paddingRight: '0.5rem' }}>
-                          <button className="btn" style={{ padding: '0 6px', border: 'none', background: 'transparent', color: '#ef4444' }} onClick={() => handleDeleteIp(ip.id)}><Trash2 size={12} /></button>
-                        </td>
-                      </tr>
-                    )
-                  })}
-              </tbody>
-            </table>
-          )}
-        </div>
-      )}
+        )
+      })()}
 
       {/* Subnet Create Modal */}
       {subnetModalOpen && renderSubnetModal()}
 
       {/* Range Create Modal */}
       {rangeModalOpen && subnet && (
-        <div className="modal-overlay">
-          <div className="modal-content animate-fade-in">
+        <div className="modal-overlay" onClick={() => { setRangeModalOpen(false); setEditingRangeId(null) }}>
+          <div className="modal-content animate-fade-in" onClick={e => e.stopPropagation()}>
             <h2 style={{ marginBottom: '1.5rem', fontSize: '16px', fontWeight: 600 }}>{editingRangeId ? 'Edit' : 'Add'} IP Range {editingRangeId ? '' : `to ${subnet.prefix}/${subnet.mask}`}</h2>
             <form onSubmit={handleSaveRange}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
@@ -785,11 +837,11 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
         </div>
       )}
 
-      {/* IP Assign Modal — now with device linking */}
+      {/* IP Assign/Edit Modal — with device linking */}
       {ipModalOpen && subnet && (
-        <div className="modal-overlay">
-          <div className="modal-content animate-fade-in">
-            <h2 style={{ marginBottom: '1.5rem', fontSize: '16px', fontWeight: 600 }}>Assign IP Address</h2>
+        <div className="modal-overlay" onClick={() => { setIpModalOpen(false); setEditingIpId(null) }}>
+          <div className="modal-content animate-fade-in" onClick={e => e.stopPropagation()}>
+            <h2 style={{ marginBottom: '1.5rem', fontSize: '16px', fontWeight: 600 }}>{editingIpId ? 'Edit IP Address' : 'Assign IP Address'}</h2>
             <form onSubmit={handleAssignIp}>
               <div className="input-group">
                 <label className="input-label">Link to Device (Optional)</label>
@@ -821,8 +873,8 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
                 <input className="unifi-input" value={ipForm.description} onChange={e => setIpForm({ ...ipForm, description: e.target.value })} placeholder="Optional" />
               </div>
               <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem', justifyContent: 'flex-end' }}>
-                <button type="button" className="btn" onClick={() => setIpModalOpen(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary">Assign IP</button>
+                <button type="button" className="btn" onClick={() => { setIpModalOpen(false); setEditingIpId(null) }}>Cancel</button>
+                <button type="submit" className="btn btn-primary">{editingIpId ? 'Save Changes' : 'Assign IP'}</button>
               </div>
             </form>
           </div>
@@ -831,8 +883,8 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
 
       {/* Delete Subnet Modal */}
       {deleteSubnetModal && (
-        <div className="modal-overlay">
-          <div className="modal-content animate-fade-in" style={{ width: '400px', textAlign: 'center' }}>
+        <div className="modal-overlay" onClick={() => setDeleteSubnetModal(false)}>
+          <div className="modal-content animate-fade-in" style={{ width: '400px', textAlign: 'center' }} onClick={e => e.stopPropagation()}>
             <div style={{ background: '#fee2e2', width: '48px', height: '48px', borderRadius: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem', color: '#dc2626' }}><Trash2 size={24} /></div>
             <h2 style={{ marginBottom: '0.5rem', fontSize: '18px', fontWeight: 600 }}>Delete Subnet?</h2>
             <p style={{ color: 'var(--unifi-text-muted)', marginBottom: '2rem' }}>This will remove the subnet and all associated IP addresses and ranges.</p>

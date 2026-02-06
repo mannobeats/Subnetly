@@ -34,6 +34,7 @@ export default function Home() {
   const [activeSiteId, setActiveSiteId] = useState<string | null>(null)
   const [categories, setCategories] = useState<CustomCategory[]>([])
   const [vlanRoles, setVlanRoles] = useState<CustomCategory[]>([])
+  const [siteKey, setSiteKey] = useState(0)
 
   const fetchSitesAndCategories = useCallback(async () => {
     try {
@@ -58,6 +59,8 @@ export default function Home() {
     // Refresh all data for new site
     await fetchDevices()
     await fetchSubnets()
+    // Force re-mount all child views so they re-fetch their own data
+    setSiteKey(k => k + 1)
   }, [fetchSitesAndCategories])
 
   const handleCreateSite = useCallback(async (name: string) => {
@@ -540,20 +543,20 @@ export default function Home() {
           </div>
         </header>
 
-        {activeView === 'dashboard' && <div className="table-wrapper"><DashboardView categories={categories} /></div>}
+        {activeView === 'dashboard' && <div className="table-wrapper" key={`dash-${siteKey}`}><DashboardView categories={categories} /></div>}
         {activeView === 'devices' && renderDevicesView()}
-        {activeView === 'ipam' && <div className="table-wrapper"><IPPlannerView searchTerm={searchTerm} selectedIpFilter={selectedIpFilter} /></div>}
-        {activeView === 'vlans' && <div className="table-wrapper"><VLANView searchTerm={searchTerm} selectedRole={selectedVlanRole} vlanRoles={vlanRoles} /></div>}
-        {activeView === 'topology' && <div className="table-wrapper"><TopologyView selectedCategory={selectedCategory} /></div>}
-        {activeView === 'services' && <div className="table-wrapper"><ServicesView searchTerm={searchTerm} selectedProtocol={selectedServiceFilter} /></div>}
-        {activeView === 'changelog' && <div className="table-wrapper"><ChangelogView searchTerm={searchTerm} selectedFilter={selectedChangelogFilter} /></div>}
+        {activeView === 'ipam' && <div className="table-wrapper" key={`ipam-${siteKey}`}><IPPlannerView searchTerm={searchTerm} selectedIpFilter={selectedIpFilter} /></div>}
+        {activeView === 'vlans' && <div className="table-wrapper" key={`vlans-${siteKey}`}><VLANView searchTerm={searchTerm} selectedRole={selectedVlanRole} vlanRoles={vlanRoles} /></div>}
+        {activeView === 'topology' && <div className="table-wrapper" key={`topo-${siteKey}`}><TopologyView selectedCategory={selectedCategory} /></div>}
+        {activeView === 'services' && <div className="table-wrapper" key={`svc-${siteKey}`}><ServicesView searchTerm={searchTerm} selectedProtocol={selectedServiceFilter} /></div>}
+        {activeView === 'changelog' && <div className="table-wrapper" key={`log-${siteKey}`}><ChangelogView searchTerm={searchTerm} selectedFilter={selectedChangelogFilter} /></div>}
         {activeView === 'settings' && <div className="table-wrapper"><SettingsView activeTab={settingsTab as 'profile' | 'security' | 'notifications' | 'application' | 'data' | 'about' | 'categories' | 'sites' | 'vlan-roles'} categories={categories} vlanRoles={vlanRoles} onCategoriesChange={fetchSitesAndCategories} sites={sites} activeSiteId={activeSiteId} onSitesChange={fetchSitesAndCategories} /></div>}
       </div>
 
       {/* Add/Edit Device Modal */}
       {isModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-content animate-fade-in">
+        <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
+          <div className="modal-content animate-fade-in" onClick={e => e.stopPropagation()}>
             <h2 style={{ marginBottom: '1.5rem', fontSize: '16px', fontWeight: 600 }}>{editingDevice ? 'Edit Device' : 'Add New Device'}</h2>
             <form onSubmit={handleSubmit}>
               <div className="input-group">
@@ -640,8 +643,8 @@ export default function Home() {
 
       {/* Delete Confirmation Modal */}
       {isDeleteModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-content animate-fade-in" style={{ width: '400px', textAlign: 'center' }}>
+        <div className="modal-overlay" onClick={() => setIsDeleteModalOpen(false)}>
+          <div className="modal-content animate-fade-in" style={{ width: '400px', textAlign: 'center' }} onClick={e => e.stopPropagation()}>
             <div style={{ background: '#fee2e2', width: '48px', height: '48px', borderRadius: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem', color: '#dc2626' }}>
               <Trash2 size={24} />
             </div>

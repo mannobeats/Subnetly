@@ -48,6 +48,18 @@ const VLANView = ({ searchTerm = '', selectedRole = null, vlanRoles = [] }: VLAN
 
   useEffect(() => { fetchVlans() }, [])
 
+  // Escape key handler
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (modalOpen) { setModalOpen(false); setEditingId(null); return }
+        if (deleteModalOpen) { setDeleteModalOpen(false); return }
+      }
+    }
+    window.addEventListener('keydown', handleEsc)
+    return () => window.removeEventListener('keydown', handleEsc)
+  }, [modalOpen, deleteModalOpen])
+
   const openCreate = () => {
     setEditingId(null)
     setForm(emptyForm)
@@ -193,8 +205,8 @@ const VLANView = ({ searchTerm = '', selectedRole = null, vlanRoles = [] }: VLAN
 
       {/* Create/Edit Modal */}
       {modalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-content animate-fade-in">
+        <div className="modal-overlay" onClick={() => { setModalOpen(false); setEditingId(null) }}>
+          <div className="modal-content animate-fade-in" onClick={e => e.stopPropagation()}>
             <h2 style={{ marginBottom: '1.5rem', fontSize: '16px', fontWeight: 600 }}>{editingId ? 'Edit VLAN' : 'Create VLAN'}</h2>
             <form onSubmit={handleSubmit}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
@@ -248,8 +260,8 @@ const VLANView = ({ searchTerm = '', selectedRole = null, vlanRoles = [] }: VLAN
 
       {/* Delete Modal */}
       {deleteModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-content animate-fade-in" style={{ width: '400px', textAlign: 'center' }}>
+        <div className="modal-overlay" onClick={() => setDeleteModalOpen(false)}>
+          <div className="modal-content animate-fade-in" style={{ width: '400px', textAlign: 'center' }} onClick={e => e.stopPropagation()}>
             <div style={{ background: '#fee2e2', width: '48px', height: '48px', borderRadius: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem', color: '#dc2626' }}>
               <Trash2 size={24} />
             </div>

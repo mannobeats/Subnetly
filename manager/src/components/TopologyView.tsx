@@ -66,13 +66,35 @@ interface TopologyViewProps {
   selectedCategory?: string | null
 }
 
+const STORAGE_KEY = 'topo-positions'
+
+function loadPositions(): Map<string, { x: number; y: number }> {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (raw) {
+      const obj = JSON.parse(raw)
+      return new Map(Object.entries(obj))
+    }
+  } catch { /* ignore */ }
+  return new Map()
+}
+
+function savePositions(map: Map<string, { x: number; y: number }>) {
+  try {
+    const obj: Record<string, { x: number; y: number }> = {}
+    map.forEach((v, k) => { obj[k] = v })
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(obj))
+  } catch { /* ignore */ }
+}
+
 const TopologyView = ({ selectedCategory = null }: TopologyViewProps) => {
   const [devices, setDevices] = useState<TopoDevice[]>([])
   const [subnets, setSubnets] = useState<TopoSubnet[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedNode, setSelectedNode] = useState<string | null>(null)
-  const [posOverrides, setPosOverrides] = useState<Map<string, { x: number; y: number }>>(new Map())
+  const [posOverrides, setPosOverrides] = useState<Map<string, { x: number; y: number }>>(loadPositions)
   const [dragging, setDragging] = useState<string | null>(null)
+  const [draggingSubnet, setDraggingSubnet] = useState<string | null>(null)
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
   const [pan, setPan] = useState({ x: 0, y: 0 })
@@ -125,10 +147,10 @@ const TopologyView = ({ selectedCategory = null }: TopologyViewProps) => {
     const newPos = new Map<string, { x: number; y: number }>()
     if (devices.length === 0) return newPos
 
-    let yOffset = 60
+    let yOffset = 20
     const PADDING = 40
     const GAP_X = 30
-    const GAP_Y = 100
+    const GAP_Y = 60
 
     // Layout grouped devices by subnet
     subnetGroups.groups.forEach((group) => {
@@ -142,10 +164,10 @@ const TopologyView = ({ selectedCategory = null }: TopologyViewProps) => {
         const row = Math.floor(i / cols)
         newPos.set(d.id, {
           x: startX + col * (NODE_W + GAP_X),
-          y: yOffset + row * (NODE_H + 30),
+          y: yOffset + 32 + row * (NODE_H + 20),
         })
       })
-      yOffset += rows * (NODE_H + 30) + GAP_Y
+      yOffset += 32 + rows * (NODE_H + 20) + GAP_Y
     })
 
     // Layout ungrouped devices
@@ -158,7 +180,7 @@ const TopologyView = ({ selectedCategory = null }: TopologyViewProps) => {
         const row = Math.floor(i / cols)
         newPos.set(d.id, {
           x: startX + col * (NODE_W + GAP_X),
-          y: yOffset + row * (NODE_H + 30),
+          y: yOffset + row * (NODE_H + 20),
         })
       })
     }
@@ -234,14 +256,14 @@ const TopologyView = ({ selectedCategory = null }: TopologyViewProps) => {
         maxY = Math.max(maxY, pos.y + NODE_H)
       })
       if (minX !== Infinity) {
-        const pad = 24
+        const pad = 28
         clouds.push({
           id: subId,
           subnet: sub,
           x: minX - pad,
-          y: minY - 36,
+          y: minY - 40,
           w: maxX - minX + pad * 2,
-          h: maxY - minY + pad + 36 + 8,
+          h: maxY - minY + pad + 40 + 16,
           color: subnetColors[subIdx % subnetColors.length],
         })
       }
@@ -270,6 +292,14 @@ const TopologyView = ({ selectedCategory = null }: TopologyViewProps) => {
     setDragOffset({ x: pt.x - pos.x, y: pt.y - pos.y })
   }, [positions, svgPoint])
 
+  // Subnet block drag: drag the cloud header to move all devices in that subnet
+  const handleSubnetMouseDown = useCallback((e: React.MouseEvent, subnetId: string) => {
+    e.stopPropagation()
+    const pt = svgPoint(e.clientX, e.clientY)
+    setDraggingSubnet(subnetId)
+    setDragOffset({ x: pt.x, y: pt.y })
+  }, [svgPoint])
+
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (dragging) {
       const pt = svgPoint(e.clientX, e.clientY)
@@ -278,15 +308,36 @@ const TopologyView = ({ selectedCategory = null }: TopologyViewProps) => {
         next.set(dragging, { x: pt.x - dragOffset.x, y: pt.y - dragOffset.y })
         return next
       })
+    } else if (draggingSubnet) {
+      const pt = svgPoint(e.clientX, e.clientY)
+      const dx = pt.x - dragOffset.x
+      const dy = pt.y - dragOffset.y
+      const group = subnetGroups.groups.get(draggingSubnet)
+      if (group) {
+        setPosOverrides(prev => {
+          const next = new Map(prev)
+          group.forEach(d => {
+            const pos = positions.get(d.id)
+            if (pos) next.set(d.id, { x: pos.x + dx, y: pos.y + dy })
+          })
+          return next
+        })
+        setDragOffset({ x: pt.x, y: pt.y })
+      }
     } else if (isPanning) {
       setPan({ x: e.clientX - panStart.x, y: e.clientY - panStart.y })
     }
-  }, [dragging, dragOffset, svgPoint, isPanning, panStart])
+  }, [dragging, draggingSubnet, dragOffset, svgPoint, isPanning, panStart, subnetGroups, positions])
 
   const handleMouseUp = useCallback(() => {
+    if (dragging || draggingSubnet) {
+      // Persist positions to localStorage
+      setPosOverrides(prev => { savePositions(prev); return prev })
+    }
     setDragging(null)
+    setDraggingSubnet(null)
     setIsPanning(false)
-  }, [])
+  }, [dragging, draggingSubnet])
 
   const handleCanvasMouseDown = useCallback((e: React.MouseEvent) => {
     if (e.target === svgRef.current || (e.target as SVGElement).tagName === 'svg') {
@@ -302,6 +353,7 @@ const TopologyView = ({ selectedCategory = null }: TopologyViewProps) => {
   }, [])
 
   const resetView = () => { setZoom(1); setPan({ x: 0, y: 0 }) }
+  const resetLayout = () => { setPosOverrides(new Map()); localStorage.removeItem(STORAGE_KEY) }
 
   if (loading) return <div className="view-loading">Loading topology...</div>
 
@@ -333,6 +385,7 @@ const TopologyView = ({ selectedCategory = null }: TopologyViewProps) => {
           <button className="topo-ctrl-btn" onClick={() => setZoom(z => Math.min(3, z + 0.2))} title="Zoom In"><ZoomIn size={14} /></button>
           <button className="topo-ctrl-btn" onClick={() => setZoom(z => Math.max(0.3, z - 0.2))} title="Zoom Out"><ZoomOut size={14} /></button>
           <button className="topo-ctrl-btn" onClick={resetView} title="Reset View"><Maximize2 size={14} /></button>
+          <button className="topo-ctrl-btn" onClick={resetLayout} title="Reset Layout" style={{ fontSize: '10px', fontWeight: 600, padding: '4px 8px' }}>↺</button>
           <span className="topo-zoom-label">{Math.round(zoom * 100)}%</span>
         </div>
 
@@ -359,7 +412,7 @@ const TopologyView = ({ selectedCategory = null }: TopologyViewProps) => {
           onMouseLeave={handleMouseUp}
           onMouseDown={handleCanvasMouseDown}
           onWheel={handleWheel}
-          style={{ cursor: isPanning ? 'grabbing' : dragging ? 'grabbing' : 'grab' }}
+          style={{ cursor: isPanning ? 'grabbing' : (dragging || draggingSubnet) ? 'grabbing' : 'grab' }}
         >
           <g transform={`translate(${pan.x}, ${pan.y}) scale(${zoom})`}>
             {/* Grid dots */}
@@ -394,18 +447,41 @@ const TopologyView = ({ selectedCategory = null }: TopologyViewProps) => {
                   strokeOpacity={0.2}
                   strokeDasharray="6 4"
                 />
-                {/* Subnet label */}
+                {/* Draggable subnet label bar */}
+                <rect
+                  x={cloud.x}
+                  y={cloud.y}
+                  width={cloud.w}
+                  height={28}
+                  rx={16}
+                  fill={cloud.color}
+                  fillOpacity={0.08}
+                  style={{ cursor: 'move' }}
+                  onMouseDown={(e) => handleSubnetMouseDown(e, cloud.id)}
+                />
                 <text
                   x={cloud.x + 12}
-                  y={cloud.y + 16}
+                  y={cloud.y + 18}
                   fontSize={10}
                   fontWeight={600}
                   fill={cloud.color}
-                  opacity={0.7}
+                  opacity={0.8}
+                  style={{ pointerEvents: 'none' }}
                 >
                   {cloud.subnet.prefix}/{cloud.subnet.mask}
                   {cloud.subnet.vlan ? ` · VLAN ${cloud.subnet.vlan.vid}` : ''}
                   {cloud.subnet.description ? ` — ${cloud.subnet.description}` : ''}
+                </text>
+                <text
+                  x={cloud.x + cloud.w - 12}
+                  y={cloud.y + 18}
+                  fontSize={8}
+                  fill={cloud.color}
+                  opacity={0.5}
+                  textAnchor="end"
+                  style={{ pointerEvents: 'none' }}
+                >
+                  drag to move
                 </text>
               </g>
             ))}
