@@ -17,9 +17,9 @@ export async function POST(request: Request) {
     const body = await request.json()
     const device = await prisma.device.create({
       data: {
-        name: body.name,
-        macAddress: body.macAddress,
-        ipAddress: body.ipAddress,
+        name: (body.name || '').trim(),
+        macAddress: (body.macAddress || '').trim(),
+        ipAddress: (body.ipAddress || '').trim(),
         category: body.category,
         status: body.status || 'active',
         platform: body.platform || null,

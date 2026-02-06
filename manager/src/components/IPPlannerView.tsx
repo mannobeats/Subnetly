@@ -359,30 +359,33 @@ const IPPlannerView = ({ searchTerm }: IPPlannerProps) => {
     <div className="ipam-view animate-fade-in">
       {/* Toolbar */}
       <div className="ipam-toolbar">
-        <div className="ipam-subnet-selector">
-          <label className="input-label" style={{ marginBottom: '0' }}>Subnet</label>
-          <select className="unifi-input" value={selectedSubnet || ''} onChange={e => setSelectedSubnet(e.target.value)}>
-            {subnets.map(s => (
-              <option key={s.id} value={s.id}>{s.prefix}/{s.mask} — {s.description || 'Unnamed'} {s.vlan ? `(VLAN ${s.vlan.vid})` : ''}</option>
-            ))}
-          </select>
-        </div>
-        <div className="ipam-util-section">
-          <div className="ipam-util-header">
-            <span className="ipam-util-label">Utilization</span>
-            <span className="ipam-util-pct" style={{ color: utilization.pct > 80 ? '#ef4444' : utilization.pct > 50 ? '#f59e0b' : '#10b981' }}>{utilization.pct}%</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flex: 1, minWidth: 0 }}>
+          <div className="ipam-subnet-selector">
+            <label className="input-label" style={{ marginBottom: '0' }}>Subnet</label>
+            <select className="unifi-input" value={selectedSubnet || ''} onChange={e => setSelectedSubnet(e.target.value)}>
+              {subnets.map(s => (
+                <option key={s.id} value={s.id}>{s.prefix}/{s.mask} — {s.description || 'Unnamed'} {s.vlan ? `(VLAN ${s.vlan.vid})` : ''}</option>
+              ))}
+            </select>
           </div>
-          <div className="ipam-util-bar">
-            <div className="ipam-util-fill" style={{ width: `${utilization.pct}%`, background: utilization.pct > 80 ? '#ef4444' : utilization.pct > 50 ? '#f59e0b' : '#10b981' }} />
+          <div className="ipam-util-section">
+            <div className="ipam-util-header">
+              <span className="ipam-util-label">Utilization</span>
+              <span className="ipam-util-pct" style={{ color: utilization.pct > 80 ? '#ef4444' : utilization.pct > 50 ? '#f59e0b' : '#10b981' }}>{utilization.pct}%</span>
+            </div>
+            <div className="ipam-util-bar">
+              <div className="ipam-util-fill" style={{ width: `${utilization.pct}%`, background: utilization.pct > 80 ? '#ef4444' : utilization.pct > 50 ? '#f59e0b' : '#10b981' }} />
+            </div>
+            <span className="ipam-util-detail">{utilization.used} / {utilization.total} addresses used</span>
           </div>
-          <span className="ipam-util-detail">{utilization.used} / {utilization.total} addresses used</span>
         </div>
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexShrink: 0 }}>
           <div className="ipam-view-toggle">
             <button className={`ipam-toggle-btn ${viewMode === 'grid' ? 'active' : ''}`} onClick={() => setViewMode('grid')} title="Grid View"><LayoutGrid size={14} /></button>
             <button className={`ipam-toggle-btn ${viewMode === 'list' ? 'active' : ''}`} onClick={() => setViewMode('list')} title="List View"><List size={14} /></button>
             <button className={`ipam-toggle-btn ${viewMode === 'summary' ? 'active' : ''}`} onClick={() => setViewMode('summary')} title="Summary"><BarChart3 size={14} /></button>
           </div>
+          <div style={{ width: '1px', height: '24px', background: '#e2e8f0', margin: '0 0.25rem' }} />
           <button className="btn btn-primary" onClick={openCreateSubnet}><Plus size={14} /> Subnet</button>
           {subnet && <button className="btn" onClick={openEditSubnet} title="Edit Subnet"><Edit2 size={14} /></button>}
           {subnet && <button className="btn" onClick={() => { setRangeForm(emptyRangeForm); setRangeModalOpen(true) }}><Plus size={14} /> Range</button>}

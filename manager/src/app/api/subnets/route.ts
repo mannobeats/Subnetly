@@ -18,12 +18,12 @@ export async function POST(request: Request) {
     const body = await request.json()
     const subnet = await prisma.subnet.create({
       data: {
-        prefix: body.prefix,
+        prefix: (body.prefix || '').trim(),
         mask: body.mask,
         description: body.description,
         siteId: body.siteId,
         vlanId: body.vlanId,
-        gateway: body.gateway,
+        gateway: body.gateway ? body.gateway.trim() : null,
         status: body.status || 'active',
         role: body.role,
         isPool: body.isPool || false,

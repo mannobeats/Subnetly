@@ -160,14 +160,16 @@ export default function Home() {
     }
   }
 
-  const computeAvailableIps = (subnetId: string) => {
+  const computeAvailableIps = (subnetId: string, autoSelect = false) => {
     const sub = subnets.find(s => s.id === subnetId)
     if (!sub) { setAvailableIps([]); return }
-    const base = sub.prefix.split('.').slice(0, 3).join('.')
-    const usedSet = new Set(sub.ipAddresses.map(ip => ip.address))
+    const prefix = sub.prefix.trim()
+    const base = prefix.split('.').slice(0, 3).join('.')
+    const usedSet = new Set(sub.ipAddresses.map(ip => ip.address.trim()))
     // Also exclude IPs already used by devices
-    devices.forEach(d => { if (d.ipAddress) usedSet.add(d.ipAddress) })
-    const gatewayOctet = sub.gateway ? parseInt(sub.gateway.split('.').pop() || '1') : -1
+    devices.forEach(d => { if (d.ipAddress) usedSet.add(d.ipAddress.trim()) })
+    const gw = sub.gateway ? sub.gateway.trim() : null
+    const gatewayOctet = gw ? parseInt(gw.split('.').pop() || '1') : -1
     const ips: string[] = []
     for (let i = 1; i <= 254; i++) {
       if (i === gatewayOctet) continue
@@ -175,12 +177,16 @@ export default function Home() {
       if (!usedSet.has(addr)) ips.push(addr)
     }
     setAvailableIps(ips)
+    if (autoSelect && ips.length > 0) {
+      setFormData(prev => ({ ...prev, ipAddress: ips[0] }))
+    }
   }
 
   const handleSubnetChange = (subnetId: string) => {
     setSelectedSubnetId(subnetId)
+    setFormData(prev => ({ ...prev, ipAddress: '' }))
     if (subnetId) {
-      computeAvailableIps(subnetId)
+      computeAvailableIps(subnetId, true)
     } else {
       setAvailableIps([])
     }
@@ -188,6 +194,10 @@ export default function Home() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!formData.ipAddress || formData.ipAddress.trim() === '') {
+      alert('Please select or enter an IP address')
+      return
+    }
     if (!formData.ipAddress.match(/^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/)) {
       alert('Invalid IP Address format')
       return
@@ -249,6 +259,18 @@ export default function Home() {
       platform: device.platform || '',
       status: device.status || 'active',
     })
+    // Detect which subnet this device's IP belongs to
+    const matchedSubnet = subnets.find(s => {
+      const base = s.prefix.split('.').slice(0, 3).join('.')
+      return device.ipAddress.startsWith(base + '.')
+    })
+    if (matchedSubnet) {
+      setSelectedSubnetId(matchedSubnet.id)
+      computeAvailableIps(matchedSubnet.id)
+    } else {
+      setSelectedSubnetId('')
+      setAvailableIps([])
+    }
     setIsModalOpen(true)
   }
 
@@ -405,7 +427,7 @@ export default function Home() {
         {activeView === 'devices' && renderDevicesView()}
         {activeView === 'ipam' && <div className="table-wrapper"><IPPlannerView searchTerm={searchTerm} /></div>}
         {activeView === 'vlans' && <div className="table-wrapper"><VLANView searchTerm={searchTerm} selectedRole={selectedVlanRole} /></div>}
-        {activeView === 'topology' && <div className="table-wrapper"><TopologyView /></div>}
+        {activeView === 'topology' && <div className="table-wrapper"><TopologyView selectedCategory={selectedCategory} /></div>}
         {activeView === 'services' && <div className="table-wrapper"><ServicesView searchTerm={searchTerm} /></div>}
         {activeView === 'changelog' && <div className="table-wrapper"><ChangelogView searchTerm={searchTerm} /></div>}
       </div>
@@ -431,9 +453,9 @@ export default function Home() {
                   <option value="IoT">IoT</option>
                 </select>
               </div>
-              {subnets.length > 0 && !editingDevice && (
+              {subnets.length > 0 && (
                 <div className="input-group">
-                  <label className="input-label">Assign from Subnet (Optional)</label>
+                  <label className="input-label">{editingDevice ? 'Subnet' : 'Assign from Subnet (Optional)'}</label>
                   <select className="unifi-input" value={selectedSubnetId} onChange={e => handleSubnetChange(e.target.value)}>
                     <option value="">Manual IP entry</option>
                     {subnets.map(s => (
@@ -448,6 +470,9 @@ export default function Home() {
                   {selectedSubnetId && availableIps.length > 0 ? (
                     <select required className="unifi-input" value={formData.ipAddress} onChange={e => setFormData({...formData, ipAddress: e.target.value})}>
                       <option value="">Select available IP...</option>
+                      {editingDevice && formData.ipAddress && (
+                        <option value={formData.ipAddress}>{formData.ipAddress} (current)</option>
+                      )}
                       {availableIps.slice(0, 50).map(ip => <option key={ip} value={ip}>{ip}</option>)}
                       {availableIps.length > 50 && <option disabled>...and {availableIps.length - 50} more</option>}
                     </select>

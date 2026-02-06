@@ -18,7 +18,7 @@ export async function POST(request: Request) {
     const body = await request.json()
     const ip = await prisma.iPAddress.create({
       data: {
-        address: body.address,
+        address: (body.address || '').trim(),
         mask: body.mask || 24,
         subnetId: body.subnetId,
         status: body.status || 'active',

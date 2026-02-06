@@ -1,7 +1,7 @@
 'use client'
 
 import { 
-  LayoutDashboard, Server, Network, Globe, Share2, 
+  LayoutDashboard, Server, Network, Globe, Share2,
   Box, History, Settings, Search, Cpu, Database, 
   Laptop, Wifi, Command
 } from 'lucide-react'
@@ -128,6 +128,32 @@ const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selecte
               <div className="filter-item"><div className="legend-dot" style={{ background: '#8b5cf6' }} /> <span>Reserved</span></div>
               <div className="filter-item"><div className="legend-dot" style={{ background: '#06b6d4' }} /> <span>Infrastructure</span></div>
               <div className="filter-item"><div className="legend-dot" style={{ background: '#f1f3f5', border: '1px solid #dee2e6' }} /> <span>Available</span></div>
+            </div>
+          </>
+        )}
+
+        {activeView === 'topology' && (
+          <>
+            <h3>Filters</h3>
+            <div className="filter-list" style={{ marginBottom: '1.5rem' }}>
+              <div className={`filter-item ${selectedCategory === null ? 'active-filter' : ''}`} onClick={() => setSelectedCategory(null)}>
+                <Share2 size={14} color={selectedCategory === null ? '#0055ff' : '#5e6670'} /> <span>All Devices</span>
+              </div>
+            </div>
+            <h3>Device Types</h3>
+            <div className="filter-list" style={{ marginBottom: '1.5rem' }}>
+              <div className={`filter-item ${selectedCategory === 'Server' ? 'active-filter' : ''}`} onClick={() => setSelectedCategory(selectedCategory === 'Server' ? null : 'Server')}><div className="legend-dot" style={{ background: '#10b981' }} /> <span>Server</span></div>
+              <div className={`filter-item ${selectedCategory === 'VM' ? 'active-filter' : ''}`} onClick={() => setSelectedCategory(selectedCategory === 'VM' ? null : 'VM')}><div className="legend-dot" style={{ background: '#7c3aed' }} /> <span>VM</span></div>
+              <div className={`filter-item ${selectedCategory === 'LXC' ? 'active-filter' : ''}`} onClick={() => setSelectedCategory(selectedCategory === 'LXC' ? null : 'LXC')}><div className="legend-dot" style={{ background: '#f97316' }} /> <span>LXC Container</span></div>
+              <div className={`filter-item ${selectedCategory === 'Networking' ? 'active-filter' : ''}`} onClick={() => setSelectedCategory(selectedCategory === 'Networking' ? null : 'Networking')}><div className="legend-dot" style={{ background: '#0055ff' }} /> <span>Networking</span></div>
+              <div className={`filter-item ${selectedCategory === 'IoT' ? 'active-filter' : ''}`} onClick={() => setSelectedCategory(selectedCategory === 'IoT' ? null : 'IoT')}><div className="legend-dot" style={{ background: '#06b6d4' }} /> <span>IoT</span></div>
+              <div className={`filter-item ${selectedCategory === 'Client' ? 'active-filter' : ''}`} onClick={() => setSelectedCategory(selectedCategory === 'Client' ? null : 'Client')}><div className="legend-dot" style={{ background: '#5e6670' }} /> <span>Client</span></div>
+            </div>
+            <h3>Controls</h3>
+            <div className="filter-list">
+              <div className="filter-item" style={{ fontSize: '11px', color: '#5e6670' }}><span style={{ fontFamily: 'monospace', background: '#f1f3f5', padding: '1px 5px', borderRadius: '3px', marginRight: '6px' }}>Scroll</span> <span>Zoom in/out</span></div>
+              <div className="filter-item" style={{ fontSize: '11px', color: '#5e6670' }}><span style={{ fontFamily: 'monospace', background: '#f1f3f5', padding: '1px 5px', borderRadius: '3px', marginRight: '6px' }}>Drag</span> <span>Pan canvas</span></div>
+              <div className="filter-item" style={{ fontSize: '11px', color: '#5e6670' }}><span style={{ fontFamily: 'monospace', background: '#f1f3f5', padding: '1px 5px', borderRadius: '3px', marginRight: '6px' }}>Drag node</span> <span>Move device</span></div>
             </div>
           </>
         )}

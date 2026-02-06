@@ -62,7 +62,11 @@ function ipInSubnet(ip: string, prefix: string, mask: number): boolean {
   return (ipNum & maskBits) === (prefixNum & maskBits)
 }
 
-const TopologyView = () => {
+interface TopologyViewProps {
+  selectedCategory?: string | null
+}
+
+const TopologyView = ({ selectedCategory = null }: TopologyViewProps) => {
   const [devices, setDevices] = useState<TopoDevice[]>([])
   const [subnets, setSubnets] = useState<TopoSubnet[]>([])
   const [loading, setLoading] = useState(true)
@@ -481,13 +485,14 @@ const TopologyView = () => {
               const subId = deviceSubnetMap.get(device.id)
               const subIdx = subId ? Array.from(subnetGroups.groups.keys()).indexOf(subId) : -1
               const subColor = subIdx >= 0 ? subnetColors[subIdx % subnetColors.length] : null
+              const dimmed = selectedCategory ? device.category !== selectedCategory : false
               return (
                 <g
                   key={device.id}
                   transform={`translate(${pos.x}, ${pos.y})`}
                   onMouseDown={(e) => handleMouseDown(e, device.id)}
                   onClick={(e) => { e.stopPropagation(); setSelectedNode(isSelected ? null : device.id) }}
-                  style={{ cursor: dragging === device.id ? 'grabbing' : 'pointer' }}
+                  style={{ cursor: dragging === device.id ? 'grabbing' : 'pointer', opacity: dimmed ? 0.15 : 1, transition: 'opacity 0.3s ease' }}
                 >
                   {/* Shadow */}
                   <rect x={2} y={3} width={NODE_W} height={NODE_H} rx={12} fill="rgba(0,0,0,0.06)" />

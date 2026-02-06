@@ -8,9 +8,13 @@ export async function PATCH(
   try {
     const { id } = await params
     const body = await request.json()
+    const cleanBody = { ...body }
+    if (cleanBody.ipAddress) cleanBody.ipAddress = cleanBody.ipAddress.trim()
+    if (cleanBody.name) cleanBody.name = cleanBody.name.trim()
+    if (cleanBody.macAddress) cleanBody.macAddress = cleanBody.macAddress.trim()
     const device = await prisma.device.update({
       where: { id },
-      data: body,
+      data: cleanBody,
     })
     await prisma.changeLog.create({
       data: { objectType: 'Device', objectId: id, action: 'update', changes: JSON.stringify(body) },

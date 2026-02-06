@@ -8,12 +8,12 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const subnet = await prisma.subnet.update({
       where: { id },
       data: {
-        prefix: body.prefix,
+        prefix: body.prefix ? body.prefix.trim() : undefined,
         mask: body.mask,
         description: body.description,
         siteId: body.siteId,
         vlanId: body.vlanId,
-        gateway: body.gateway,
+        gateway: body.gateway ? body.gateway.trim() : body.gateway,
         status: body.status,
         role: body.role,
         isPool: body.isPool,
