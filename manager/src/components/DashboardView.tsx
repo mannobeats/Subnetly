@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Server, Globe, Network, Box, Activity, ArrowUpRight, ArrowDownRight } from 'lucide-react'
+import { CustomCategory } from '@/types'
 
 interface DashboardData {
   counts: { devices: number; subnets: number; vlans: number; ipAddresses: number; services: number }
@@ -12,16 +13,14 @@ interface DashboardData {
   services: { id: string; name: string; protocol: string; ports: string; device: { name: string; ipAddress: string } }[]
 }
 
-const categoryColors: Record<string, string> = {
-  Networking: '#0055ff',
-  Server: '#10b981',
-  VM: '#7c3aed',
-  LXC: '#f97316',
-  Client: '#64748b',
-  IoT: '#06b6d4',
+interface DashboardViewProps {
+  categories?: CustomCategory[]
 }
 
-const DashboardView = () => {
+const DashboardView = ({ categories = [] }: DashboardViewProps) => {
+  const categoryColorMap: Record<string, string> = {}
+  const categoryIconMap: Record<string, string> = {}
+  categories.forEach(c => { categoryColorMap[c.name] = c.color; categoryIconMap[c.name] = c.icon })
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -114,12 +113,12 @@ const DashboardView = () => {
             {Object.entries(data.categoryBreakdown).sort((a, b) => b[1] - a[1]).map(([cat, count]) => (
               <div key={cat} className="dash-category-row">
                 <div className="dash-category-info">
-                  <div className="dash-category-dot" style={{ background: categoryColors[cat] || '#64748b' }} />
+                  <div className="dash-category-dot" style={{ background: categoryColorMap[cat] || '#64748b' }} />
                   <span>{cat}</span>
                 </div>
                 <div className="dash-category-bar-wrap">
                   <div className="dash-category-bar">
-                    <div className="dash-category-fill" style={{ width: `${(count / data.counts.devices) * 100}%`, background: categoryColors[cat] || '#64748b' }} />
+                    <div className="dash-category-fill" style={{ width: `${(count / data.counts.devices) * 100}%`, background: categoryColorMap[cat] || '#64748b' }} />
                   </div>
                   <span className="dash-category-count">{count}</span>
                 </div>

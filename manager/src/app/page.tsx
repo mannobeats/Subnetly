@@ -10,9 +10,10 @@ import ServicesView from '@/components/ServicesView'
 import ChangelogView from '@/components/ChangelogView'
 import SettingsView from '@/components/SettingsView'
 import LoginPage from '@/components/LoginPage'
-import { Plus, Trash2, Edit2, Network as NetIcon, ChevronRight, Laptop, Server, Cpu, Database, Loader2 } from 'lucide-react'
+import { Plus, Trash2, Edit2, ChevronRight, Loader2, Server } from 'lucide-react'
 import { Device, Site, CustomCategory } from '@/types'
 import { authClient } from '@/lib/auth-client'
+import { renderCategoryIcon } from '@/lib/category-icons'
 
 interface SubnetOption {
   id: string
@@ -159,6 +160,13 @@ export default function Home() {
       fetchSubnets()
     }
   }, [isAuthenticated, fetchSitesAndCategories])
+
+  // Re-fetch data when switching views
+  useEffect(() => {
+    if (!isAuthenticated) return
+    if (activeView === 'devices') { fetchDevices(); fetchSubnets() }
+    if (activeView === 'dashboard') { fetchDevices() }
+  }, [activeView, isAuthenticated])
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -449,24 +457,23 @@ export default function Home() {
               ) : filteredDevices.map((device) => (
                 <tr key={device.id}>
                   <td style={{ textAlign: 'center' }}>
-                    {device.category === 'Networking' ? <NetIcon size={14} color="#0055ff" /> :
-                     device.category === 'Server' ? <Server size={14} color="#10b981" /> :
-                     device.category === 'VM' ? <Cpu size={14} color="#7c3aed" /> :
-                     device.category === 'LXC' ? <Database size={14} color="#f97316" /> :
-                     <Laptop size={14} color="#5e6670" />}
+                    {(() => {
+                      const cat = categories.find(c => c.name === device.category)
+                      return cat ? renderCategoryIcon(cat.icon, 14, cat.color) : <Server size={14} color="#5e6670" />
+                    })()}
                   </td>
                   <td style={{ fontWeight: 500 }}>{device.name}</td>
                   <td><code style={{ fontSize: '11px', background: '#f1f3f5', padding: '2px 6px', borderRadius: '3px' }}>{device.ipAddress}</code></td>
                   <td style={{ color: '#5e6670', fontFamily: 'monospace', fontSize: '12px' }}>{device.macAddress}</td>
                   <td>
-                    <span className={`badge ${
-                      device.category === 'Networking' ? 'badge-blue' :
-                      device.category === 'Server' ? 'badge-green' :
-                      device.category === 'VM' ? 'badge-purple' : 'badge-orange'
-                    }`}>{device.category}</span>
+                    {(() => {
+                      const cat = categories.find(c => c.name === device.category)
+                      const color = cat?.color || '#5e6670'
+                      return <span className="badge" style={{ background: color + '18', color }}>{device.category}</span>
+                    })()}
                   </td>
                   <td>
-                    <span className={`status-dot ${device.status === 'active' ? 'status-active' : 'status-inactive'}`} />
+                    <span className={`status-dot status-${device.status || 'inactive'}`} />
                     <span style={{ fontSize: '12px' }}>{device.status}</span>
                   </td>
                   <td style={{ color: '#5e6670', fontSize: '12px' }}>{device.platform || '—'}</td>
@@ -533,7 +540,7 @@ export default function Home() {
           </div>
         </header>
 
-        {activeView === 'dashboard' && <div className="table-wrapper"><DashboardView /></div>}
+        {activeView === 'dashboard' && <div className="table-wrapper"><DashboardView categories={categories} /></div>}
         {activeView === 'devices' && renderDevicesView()}
         {activeView === 'ipam' && <div className="table-wrapper"><IPPlannerView searchTerm={searchTerm} selectedIpFilter={selectedIpFilter} /></div>}
         {activeView === 'vlans' && <div className="table-wrapper"><VLANView searchTerm={searchTerm} selectedRole={selectedVlanRole} vlanRoles={vlanRoles} /></div>}

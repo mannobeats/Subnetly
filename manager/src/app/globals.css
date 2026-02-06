@@ -525,6 +525,10 @@ body {
   vertical-align: middle;
 }
 .status-active { background: var(--green); }
+.status-planned { background: var(--blue); }
+.status-staged { background: #f59e0b; }
+.status-offline { background: var(--red); }
+.status-decommissioned { background: var(--text-light); }
 .status-inactive { background: var(--text-light); }
 
 /* View Loading */
