@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import Sidebar, { ViewType } from '@/components/Sidebar'
 import DashboardView from '@/components/DashboardView'
 import IPPlannerView from '@/components/IPPlannerView'
@@ -22,7 +22,19 @@ interface SubnetOption {
 }
 
 export default function Home() {
-  const [activeView, setActiveView] = useState<ViewType>('dashboard')
+  const [activeView, setActiveViewRaw] = useState<ViewType>(() => {
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash.replace('#', '') as ViewType
+      const valid: ViewType[] = ['dashboard', 'devices', 'ipam', 'vlans', 'topology', 'services', 'changelog']
+      if (valid.includes(hash)) return hash
+    }
+    return 'dashboard'
+  })
+
+  const setActiveView = useCallback((view: ViewType) => {
+    setActiveViewRaw(view)
+    window.location.hash = view
+  }, [])
   const [devices, setDevices] = useState<Device[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { IPAddress, IPRange, Device } from '@/types'
-import { Info, Plus, Trash2, Globe, Server } from 'lucide-react'
+import { Info, Plus, Trash2, Globe, Server, LayoutGrid, List, BarChart3 } from 'lucide-react'
 
 interface SubnetWithRelations {
   id: string
@@ -36,6 +36,7 @@ const IPPlannerView = ({ searchTerm }: IPPlannerProps) => {
   const [subnets, setSubnets] = useState<SubnetWithRelations[]>([])
   const [selectedSubnet, setSelectedSubnet] = useState<string | null>(null)
   const [hoveredCell, setHoveredCell] = useState<number | null>(null)
+  const [viewMode, setViewMode] = useState<'grid' | 'list' | 'summary'>('grid')
   const [loading, setLoading] = useState(true)
   const [vlans, setVlans] = useState<{ id: string; vid: number; name: string }[]>([])
   const [devices, setDevices] = useState<Device[]>([])
@@ -349,6 +350,11 @@ const IPPlannerView = ({ searchTerm }: IPPlannerProps) => {
           <span className="ipam-util-detail">{utilization.used} / {utilization.total} addresses used</span>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end' }}>
+          <div className="ipam-view-toggle">
+            <button className={`ipam-toggle-btn ${viewMode === 'grid' ? 'active' : ''}`} onClick={() => setViewMode('grid')} title="Grid View"><LayoutGrid size={14} /></button>
+            <button className={`ipam-toggle-btn ${viewMode === 'list' ? 'active' : ''}`} onClick={() => setViewMode('list')} title="List View"><List size={14} /></button>
+            <button className={`ipam-toggle-btn ${viewMode === 'summary' ? 'active' : ''}`} onClick={() => setViewMode('summary')} title="Summary"><BarChart3 size={14} /></button>
+          </div>
           <button className="btn btn-primary" onClick={() => { setSubnetForm(emptySubnetForm); setSubnetModalOpen(true) }}><Plus size={14} /> Subnet</button>
           {subnet && <button className="btn" onClick={() => { setRangeForm(emptyRangeForm); setRangeModalOpen(true) }}><Plus size={14} /> Range</button>}
           {subnet && <button className="btn" onClick={() => setDeleteSubnetModal(true)} style={{ color: '#ef4444' }}><Trash2 size={14} /></button>}
@@ -371,61 +377,257 @@ const IPPlannerView = ({ searchTerm }: IPPlannerProps) => {
         </div>
       )}
 
-      {/* IP Grid */}
-      {subnet && (
-        <div className="ipam-grid-container">
-          <div className="ipam-grid">
-            {filteredCells.map((cell) => {
-              const colors = getCellColor(cell.status)
-              const isHighlighted = 'highlighted' in cell && cell.highlighted
-              const dimmed = searchTerm && !isHighlighted && cell.status !== 'gateway'
-              const label = cell.device?.name || cell.ip?.dnsName || cell.ip?.assignedTo
-              return (
-                <div
-                  key={cell.octet}
-                  className={`ipam-cell ${cell.status} ${isHighlighted ? 'highlighted' : ''} ${dimmed ? 'dimmed' : ''}`}
-                  style={{ background: colors.bg, color: colors.color, opacity: dimmed ? 0.25 : 1 }}
-                  onMouseEnter={() => setHoveredCell(cell.octet)}
-                  onMouseLeave={() => setHoveredCell(null)}
-                  onClick={() => {
-                    if (cell.status === 'available' || cell.status === 'dhcp' || cell.status === 'reserved' || cell.status === 'infrastructure') {
-                      openAssignFromGrid(cell.fullIp)
-                    }
-                  }}
-                >
-                  <span className="ipam-cell-num">{cell.octet}</span>
-                  {label && (
-                    <span className="ipam-cell-label">{label.length > 6 ? label.slice(0, 6) + '…' : label}</span>
-                  )}
-                </div>
-              )
-            })}
+      {/* ═══ GRID VIEW ═══ */}
+      {viewMode === 'grid' && subnet && (
+        <>
+          <div className="ipam-grid-container">
+            <div className="ipam-grid">
+              {filteredCells.map((cell) => {
+                const colors = getCellColor(cell.status)
+                const isHighlighted = 'highlighted' in cell && cell.highlighted
+                const dimmed = searchTerm && !isHighlighted && cell.status !== 'gateway'
+                const label = cell.device?.name || cell.ip?.dnsName || cell.ip?.assignedTo
+                return (
+                  <div
+                    key={cell.octet}
+                    className={`ipam-cell ${cell.status} ${isHighlighted ? 'highlighted' : ''} ${dimmed ? 'dimmed' : ''}`}
+                    style={{ background: colors.bg, color: colors.color, opacity: dimmed ? 0.25 : 1 }}
+                    onMouseEnter={() => setHoveredCell(cell.octet)}
+                    onMouseLeave={() => setHoveredCell(null)}
+                    onClick={() => {
+                      if (cell.status === 'available' || cell.status === 'dhcp' || cell.status === 'reserved' || cell.status === 'infrastructure') {
+                        openAssignFromGrid(cell.fullIp)
+                      }
+                    }}
+                  >
+                    <span className="ipam-cell-num">{cell.octet}</span>
+                    {label && (
+                      <span className="ipam-cell-label">{label.length > 6 ? label.slice(0, 6) + '…' : label}</span>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
           </div>
+
+          {/* Hover Tooltip */}
+          {hoveredCell !== null && (() => {
+            const cell = cellData[hoveredCell]
+            if (!cell) return null
+            return (
+              <div className="ipam-tooltip">
+                <Info size={12} />
+                <div className="ipam-tooltip-content">
+                  <strong>{cell.fullIp}</strong>
+                  {cell.isGateway && <span className="badge badge-green">Gateway</span>}
+                  {cell.device && <span><Server size={10} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />{cell.device.name}</span>}
+                  {cell.ip && !cell.device && <span>{cell.ip.dnsName || cell.ip.assignedTo || 'Unnamed'}</span>}
+                  {cell.ip?.description && <span className="ipam-tooltip-desc">{cell.ip.description}</span>}
+                  {!cell.ip && !cell.device && cell.range && <span className={`badge badge-${cell.range.role === 'dhcp' ? 'orange' : cell.range.role === 'reserved' ? 'purple' : 'blue'}`}>{cell.range.role} range</span>}
+                  {(cell.status === 'available' || cell.status === 'dhcp' || cell.status === 'reserved' || cell.status === 'infrastructure') && !cell.ip && !cell.device && <span className="ipam-tooltip-action">Click to assign</span>}
+                </div>
+              </div>
+            )
+          })()}
+        </>
+      )}
+
+      {/* ═══ LIST VIEW ═══ */}
+      {viewMode === 'list' && subnet && (
+        <div className="ipam-list-view">
+          <table className="unifi-table">
+            <thead>
+              <tr>
+                <th style={{ width: '60px' }}>#</th>
+                <th style={{ width: '140px' }}>IP Address</th>
+                <th style={{ width: '100px' }}>Status</th>
+                <th style={{ width: '160px' }}>Device / DNS</th>
+                <th style={{ width: '120px' }}>Range</th>
+                <th>Description</th>
+                <th style={{ width: '60px' }}></th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredCells.filter(c => c.status !== 'available' || searchTerm).slice(0, searchTerm ? undefined : 256).map(cell => {
+                const isHighlighted = 'highlighted' in cell && cell.highlighted
+                const dimmed = searchTerm && !isHighlighted
+                const label = cell.device?.name || cell.ip?.dnsName || cell.ip?.assignedTo
+                const colors = getCellColor(cell.status)
+                return (
+                  <tr key={cell.octet} style={{ opacity: dimmed ? 0.3 : 1 }}>
+                    <td><span style={{ fontWeight: 600, fontSize: '11px', color: '#94a3b8' }}>.{cell.octet}</span></td>
+                    <td><code style={{ fontSize: '11px', background: '#f1f3f5', padding: '2px 6px', borderRadius: '3px' }}>{cell.fullIp}</code></td>
+                    <td>
+                      <span className="ipam-list-status" style={{ background: colors.bg, color: colors.color }}>
+                        {cell.status === 'gateway' ? 'Gateway' : cell.status === 'assigned' ? 'Assigned' : cell.status === 'network' ? 'Network' : cell.status === 'broadcast' ? 'Broadcast' : cell.range ? rangeColors[cell.range.role]?.label || cell.range.role : 'Available'}
+                      </span>
+                    </td>
+                    <td style={{ fontWeight: 500 }}>
+                      {cell.device ? (
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <Server size={11} color="#0055ff" />
+                          {cell.device.name}
+                        </span>
+                      ) : label ? label : '—'}
+                    </td>
+                    <td style={{ fontSize: '11px', color: '#94a3b8' }}>
+                      {cell.range ? `${rangeColors[cell.range.role]?.label || cell.range.role}: .${cell.range.startAddr.split('.').pop()}–.${cell.range.endAddr.split('.').pop()}` : '—'}
+                    </td>
+                    <td style={{ color: 'var(--unifi-text-muted)', fontSize: '12px' }}>{cell.ip?.description || '—'}</td>
+                    <td style={{ textAlign: 'right' }}>
+                      {cell.ip && (
+                        <button className="btn" style={{ padding: '0 6px', border: 'none', background: 'transparent', color: '#ef4444' }} onClick={() => handleDeleteIp(cell.ip!.id)}><Trash2 size={12} /></button>
+                      )}
+                      {!cell.ip && !cell.device && cell.status !== 'network' && cell.status !== 'broadcast' && cell.status !== 'gateway' && (
+                        <button className="btn" style={{ padding: '0 6px', border: 'none', background: 'transparent', color: '#0055ff' }} onClick={() => openAssignFromGrid(cell.fullIp)}><Plus size={12} /></button>
+                      )}
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
         </div>
       )}
 
-      {/* Hover Tooltip */}
-      {hoveredCell !== null && (() => {
-        const cell = cellData[hoveredCell]
-        if (!cell) return null
+      {/* ═══ SUMMARY VIEW ═══ */}
+      {viewMode === 'summary' && subnet && (() => {
+        const statusCounts: Record<string, number> = {}
+        const deviceCount = cellData.filter(c => c.device).length
+        const ipamCount = cellData.filter(c => c.ip && !c.device).length
+        cellData.forEach(c => { statusCounts[c.status] = (statusCounts[c.status] || 0) + 1 })
+        const rangeSummary = subnet.ipRanges.map(r => {
+          const start = parseInt(r.startAddr.split('.').pop() || '0')
+          const end = parseInt(r.endAddr.split('.').pop() || '0')
+          const total = end - start + 1
+          const used = cellData.filter(c => c.octet >= start && c.octet <= end && (c.ip || c.device)).length
+          return { ...r, total, used, pct: Math.round((used / total) * 100) }
+        })
         return (
-          <div className="ipam-tooltip">
-            <Info size={12} />
-            <div className="ipam-tooltip-content">
-              <strong>{cell.fullIp}</strong>
-              {cell.isGateway && <span className="badge badge-green">Gateway</span>}
-              {cell.device && <span><Server size={10} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />{cell.device.name}</span>}
-              {cell.ip && !cell.device && <span>{cell.ip.dnsName || cell.ip.assignedTo || 'Unnamed'}</span>}
-              {cell.ip?.description && <span className="ipam-tooltip-desc">{cell.ip.description}</span>}
-              {!cell.ip && !cell.device && cell.range && <span className={`badge badge-${cell.range.role === 'dhcp' ? 'orange' : cell.range.role === 'reserved' ? 'purple' : 'blue'}`}>{cell.range.role} range</span>}
-              {(cell.status === 'available' || cell.status === 'dhcp' || cell.status === 'reserved' || cell.status === 'infrastructure') && !cell.ip && !cell.device && <span className="ipam-tooltip-action">Click to assign</span>}
+          <div className="ipam-summary-view">
+            {/* Stats Cards */}
+            <div className="ipam-summary-cards">
+              <div className="ipam-summary-card">
+                <div className="ipam-summary-card-value" style={{ color: '#0055ff' }}>{utilization.used}</div>
+                <div className="ipam-summary-card-label">Used Addresses</div>
+                <div className="ipam-summary-card-sub">{utilization.pct}% of {utilization.total}</div>
+              </div>
+              <div className="ipam-summary-card">
+                <div className="ipam-summary-card-value" style={{ color: '#10b981' }}>{statusCounts['available'] || 0}</div>
+                <div className="ipam-summary-card-label">Available</div>
+                <div className="ipam-summary-card-sub">Ready to assign</div>
+              </div>
+              <div className="ipam-summary-card">
+                <div className="ipam-summary-card-value" style={{ color: '#7c3aed' }}>{deviceCount}</div>
+                <div className="ipam-summary-card-label">Devices</div>
+                <div className="ipam-summary-card-sub">Linked to IPs</div>
+              </div>
+              <div className="ipam-summary-card">
+                <div className="ipam-summary-card-value" style={{ color: '#f59e0b' }}>{ipamCount}</div>
+                <div className="ipam-summary-card-label">Manual IPs</div>
+                <div className="ipam-summary-card-sub">No device linked</div>
+              </div>
             </div>
+
+            {/* Subnet Info */}
+            <div className="ipam-summary-section">
+              <h3 className="ipam-summary-section-title">Subnet Details</h3>
+              <div className="ipam-summary-details">
+                <div className="ipam-summary-detail-row">
+                  <span className="ipam-summary-detail-label">Network</span>
+                  <code>{subnet.prefix}/{subnet.mask}</code>
+                </div>
+                {subnet.gateway && (
+                  <div className="ipam-summary-detail-row">
+                    <span className="ipam-summary-detail-label">Gateway</span>
+                    <code>{subnet.gateway}</code>
+                  </div>
+                )}
+                {subnet.vlan && (
+                  <div className="ipam-summary-detail-row">
+                    <span className="ipam-summary-detail-label">VLAN</span>
+                    <span>VLAN {subnet.vlan.vid} — {subnet.vlan.name}</span>
+                  </div>
+                )}
+                {subnet.role && (
+                  <div className="ipam-summary-detail-row">
+                    <span className="ipam-summary-detail-label">Role</span>
+                    <span className="badge" style={{ textTransform: 'capitalize' }}>{subnet.role}</span>
+                  </div>
+                )}
+                {subnet.description && (
+                  <div className="ipam-summary-detail-row">
+                    <span className="ipam-summary-detail-label">Description</span>
+                    <span>{subnet.description}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Address Breakdown Bar */}
+            <div className="ipam-summary-section">
+              <h3 className="ipam-summary-section-title">Address Breakdown</h3>
+              <div className="ipam-breakdown-bar">
+                {statusCounts['gateway'] && <div className="ipam-breakdown-seg" style={{ flex: statusCounts['gateway'], background: '#10b981' }} title={`Gateway: ${statusCounts['gateway']}`} />}
+                {statusCounts['assigned'] && <div className="ipam-breakdown-seg" style={{ flex: statusCounts['assigned'], background: '#0055ff' }} title={`Assigned: ${statusCounts['assigned']}`} />}
+                {statusCounts['dhcp'] && <div className="ipam-breakdown-seg" style={{ flex: statusCounts['dhcp'], background: '#f59e0b' }} title={`DHCP: ${statusCounts['dhcp']}`} />}
+                {statusCounts['reserved'] && <div className="ipam-breakdown-seg" style={{ flex: statusCounts['reserved'], background: '#8b5cf6' }} title={`Reserved: ${statusCounts['reserved']}`} />}
+                {statusCounts['infrastructure'] && <div className="ipam-breakdown-seg" style={{ flex: statusCounts['infrastructure'], background: '#06b6d4' }} title={`Infrastructure: ${statusCounts['infrastructure']}`} />}
+                {statusCounts['available'] && <div className="ipam-breakdown-seg" style={{ flex: statusCounts['available'], background: '#e2e8f0' }} title={`Available: ${statusCounts['available']}`} />}
+              </div>
+              <div className="ipam-breakdown-legend">
+                {statusCounts['gateway'] && <span><span className="ipam-breakdown-dot" style={{ background: '#10b981' }} /> Gateway ({statusCounts['gateway']})</span>}
+                {statusCounts['assigned'] && <span><span className="ipam-breakdown-dot" style={{ background: '#0055ff' }} /> Assigned ({statusCounts['assigned']})</span>}
+                {statusCounts['dhcp'] && <span><span className="ipam-breakdown-dot" style={{ background: '#f59e0b' }} /> DHCP ({statusCounts['dhcp']})</span>}
+                {statusCounts['reserved'] && <span><span className="ipam-breakdown-dot" style={{ background: '#8b5cf6' }} /> Reserved ({statusCounts['reserved']})</span>}
+                {statusCounts['infrastructure'] && <span><span className="ipam-breakdown-dot" style={{ background: '#06b6d4' }} /> Infrastructure ({statusCounts['infrastructure']})</span>}
+                <span><span className="ipam-breakdown-dot" style={{ background: '#e2e8f0' }} /> Available ({statusCounts['available'] || 0})</span>
+              </div>
+            </div>
+
+            {/* Range Utilization */}
+            {rangeSummary.length > 0 && (
+              <div className="ipam-summary-section">
+                <h3 className="ipam-summary-section-title">Range Utilization</h3>
+                {rangeSummary.map((r, i) => {
+                  const rc = rangeColors[r.role] || rangeColors.general
+                  return (
+                    <div key={i} className="ipam-range-summary-row">
+                      <div className="ipam-range-summary-header">
+                        <span style={{ fontWeight: 600, fontSize: '12px' }}>{rc.label}: .{r.startAddr.split('.').pop()} — .{r.endAddr.split('.').pop()}</span>
+                        <span style={{ fontSize: '11px', color: '#94a3b8' }}>{r.used}/{r.total} used ({r.pct}%)</span>
+                      </div>
+                      <div className="ipam-util-bar" style={{ height: '6px' }}>
+                        <div className="ipam-util-fill" style={{ width: `${r.pct}%`, background: rc.border }} />
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+
+            {/* Devices on this subnet */}
+            {deviceCount > 0 && (
+              <div className="ipam-summary-section">
+                <h3 className="ipam-summary-section-title">Devices on this Subnet</h3>
+                <div className="ipam-summary-devices">
+                  {cellData.filter(c => c.device).map(c => (
+                    <div key={c.octet} className="ipam-summary-device-row">
+                      <Server size={13} color="#0055ff" />
+                      <span style={{ fontWeight: 500 }}>{c.device!.name}</span>
+                      <code style={{ fontSize: '10px', color: '#94a3b8', marginLeft: 'auto' }}>{c.fullIp}</code>
+                      <span className={`badge badge-${c.device!.status === 'active' ? 'green' : 'orange'}`} style={{ fontSize: '9px' }}>{c.device!.status}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )
       })()}
 
-      {/* Address Table */}
-      {subnet && (
+      {/* Address Table (shown in grid mode only) */}
+      {viewMode === 'grid' && subnet && (
         <div className="ipam-table-section">
           <div className="dash-section-header">
             <h2>Assigned Addresses</h2>
