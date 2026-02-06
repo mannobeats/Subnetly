@@ -8,8 +8,11 @@ import VLANView from '@/components/VLANView'
 import TopologyView from '@/components/TopologyView'
 import ServicesView from '@/components/ServicesView'
 import ChangelogView from '@/components/ChangelogView'
-import { Plus, Download, Trash2, Edit2, Network as NetIcon, ChevronRight, Laptop, Server, Cpu, Database } from 'lucide-react'
+import SettingsView from '@/components/SettingsView'
+import LoginPage from '@/components/LoginPage'
+import { Plus, Download, Trash2, Edit2, Network as NetIcon, ChevronRight, Laptop, Server, Cpu, Database, Loader2 } from 'lucide-react'
 import { Device } from '@/types'
+import { authClient } from '@/lib/auth-client'
 
 interface SubnetOption {
   id: string
@@ -22,6 +25,39 @@ interface SubnetOption {
 }
 
 export default function Home() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [authLoading, setAuthLoading] = useState(true)
+  const [userName, setUserName] = useState('')
+  const [userEmail, setUserEmail] = useState('')
+
+  const checkSession = useCallback(async () => {
+    try {
+      const res = await authClient.getSession()
+      if (res.data?.user) {
+        setIsAuthenticated(true)
+        setUserName(res.data.user.name || '')
+        setUserEmail(res.data.user.email || '')
+      } else {
+        setIsAuthenticated(false)
+      }
+    } catch {
+      setIsAuthenticated(false)
+    } finally {
+      setAuthLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    checkSession()
+  }, [checkSession])
+
+  const handleLogout = async () => {
+    await authClient.signOut()
+    setIsAuthenticated(false)
+    setUserName('')
+    setUserEmail('')
+  }
+
   const [activeView, setActiveViewRaw] = useState<ViewType>('dashboard')
 
   const setActiveView = useCallback((view: ViewType) => {
@@ -32,7 +68,7 @@ export default function Home() {
   // Restore view from URL hash after hydration
   useEffect(() => {
     const hash = window.location.hash.replace('#', '') as ViewType
-    const valid: ViewType[] = ['dashboard', 'devices', 'ipam', 'vlans', 'topology', 'services', 'changelog']
+    const valid: ViewType[] = ['dashboard', 'devices', 'ipam', 'vlans', 'topology', 'services', 'changelog', 'settings']
     if (valid.includes(hash)) setActiveViewRaw(hash)
   }, [])
   const [devices, setDevices] = useState<Device[]>([])
@@ -296,6 +332,22 @@ export default function Home() {
     topology: 'Network Topology',
     services: 'Services',
     changelog: 'Change Log',
+    settings: 'Settings',
+  }
+
+  // Auth loading state
+  if (authLoading) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', flexDirection: 'column', gap: '1rem', color: 'var(--unifi-text-muted)' }}>
+        <Loader2 size={24} className="spin" />
+        <span style={{ fontSize: '13px' }}>Loading...</span>
+      </div>
+    )
+  }
+
+  // Login gate
+  if (!isAuthenticated) {
+    return <LoginPage onLogin={() => checkSession()} />
   }
 
   const renderDevicesView = () => {
@@ -411,6 +463,9 @@ export default function Home() {
         selectedChangelogFilter={selectedChangelogFilter}
         setSelectedChangelogFilter={setSelectedChangelogFilter}
         searchInputRef={searchInputRef}
+        userName={userName}
+        userEmail={userEmail}
+        onLogout={handleLogout}
       />
 
       <div className="main-content">
@@ -439,6 +494,7 @@ export default function Home() {
         {activeView === 'topology' && <div className="table-wrapper"><TopologyView selectedCategory={selectedCategory} /></div>}
         {activeView === 'services' && <div className="table-wrapper"><ServicesView searchTerm={searchTerm} selectedProtocol={selectedServiceFilter} /></div>}
         {activeView === 'changelog' && <div className="table-wrapper"><ChangelogView searchTerm={searchTerm} selectedFilter={selectedChangelogFilter} /></div>}
+        {activeView === 'settings' && <div className="table-wrapper"><SettingsView /></div>}
       </div>
 
       {/* Add/Edit Device Modal */}

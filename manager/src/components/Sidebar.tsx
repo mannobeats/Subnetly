@@ -3,11 +3,11 @@
 import { 
   LayoutDashboard, Server, Network, Globe, Share2,
   Box, History, Settings, Search, Cpu, Database, 
-  Laptop, Wifi, Command
+  Laptop, Wifi, Command, LogOut, User
 } from 'lucide-react'
-import { RefObject } from 'react'
+import { RefObject, useState, useRef, useEffect } from 'react'
 
-export type ViewType = 'dashboard' | 'devices' | 'ipam' | 'vlans' | 'topology' | 'services' | 'changelog'
+export type ViewType = 'dashboard' | 'devices' | 'ipam' | 'vlans' | 'topology' | 'services' | 'changelog' | 'settings'
 
 interface SidebarProps {
   activeView: ViewType
@@ -25,6 +25,9 @@ interface SidebarProps {
   selectedChangelogFilter: string | null
   setSelectedChangelogFilter: (filter: string | null) => void
   searchInputRef?: RefObject<HTMLInputElement | null>
+  userName?: string
+  userEmail?: string
+  onLogout?: () => void
 }
 
 const navItems: { id: ViewType; icon: React.ElementType; label: string }[] = [
@@ -37,7 +40,21 @@ const navItems: { id: ViewType; icon: React.ElementType; label: string }[] = [
   { id: 'changelog', icon: History, label: 'Changelog' },
 ]
 
-const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selectedCategory, setSelectedCategory, selectedVlanRole, setSelectedVlanRole, selectedIpFilter, setSelectedIpFilter, selectedServiceFilter, setSelectedServiceFilter, selectedChangelogFilter, setSelectedChangelogFilter, searchInputRef }: SidebarProps) => {
+const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selectedCategory, setSelectedCategory, selectedVlanRole, setSelectedVlanRole, selectedIpFilter, setSelectedIpFilter, selectedServiceFilter, setSelectedServiceFilter, selectedChangelogFilter, setSelectedChangelogFilter, searchInputRef, userName, userEmail, onLogout }: SidebarProps) => {
+  const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const userMenuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  const initials = userName ? userName.split(' ').map(n => n[0]).join('').slice(0, 2) : '?'
   return (
     <>
       {/* Primary Sidebar - Icons Only */}
@@ -56,14 +73,45 @@ const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selecte
           </div>
         ))}
         <div style={{ flex: 1 }} />
-        <div className="sidebar-icon" title="Settings">
+        <div
+          className={`sidebar-icon ${activeView === 'settings' ? 'active' : ''}`}
+          title="Settings"
+          onClick={() => setActiveView('settings')}
+        >
           <Settings size={18} />
+        </div>
+        <div style={{ position: 'relative' }} ref={userMenuRef}>
+          <button
+            className="user-menu-trigger"
+            onClick={() => setUserMenuOpen(!userMenuOpen)}
+            title={userName || 'User'}
+          >
+            {initials}
+          </button>
+          {userMenuOpen && (
+            <div className="user-menu-dropdown animate-fade-in">
+              <div className="user-menu-header">
+                <div className="user-menu-name">{userName || 'User'}</div>
+                <div className="user-menu-email">{userEmail || ''}</div>
+              </div>
+              <button className="user-menu-item" onClick={() => { setActiveView('settings'); setUserMenuOpen(false) }}>
+                <User size={14} /> Profile
+              </button>
+              <button className="user-menu-item" onClick={() => { setActiveView('settings'); setUserMenuOpen(false) }}>
+                <Settings size={14} /> Settings
+              </button>
+              <div className="user-menu-divider" />
+              <button className="user-menu-item danger" onClick={() => { setUserMenuOpen(false); onLogout?.() }}>
+                <LogOut size={14} /> Sign Out
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Secondary Sidebar - Context Panel */}
       <div className="sidebar-secondary">
-        <div className="sidebar-section-title">{navItems.find(n => n.id === activeView)?.label}</div>
+        <div className="sidebar-section-title">{activeView === 'settings' ? 'Settings' : navItems.find(n => n.id === activeView)?.label}</div>
         
         <div style={{ position: 'relative', marginBottom: '1.5rem' }}>
           <Search style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--unifi-text-muted)' }} size={14} />
