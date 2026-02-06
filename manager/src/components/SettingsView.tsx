@@ -1,10 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { authClient } from '@/lib/auth-client'
-import { Lock, Database, Save, Check, AlertCircle, Loader2 } from 'lucide-react'
+import { Lock, Database, Save, Check, AlertCircle, Loader2, Plus, Trash2, Edit2, MapPin } from 'lucide-react'
+import { CustomCategory, Site } from '@/types'
+import { getCategoryIcon, ICON_OPTIONS, COLOR_OPTIONS, ICON_MAP } from '@/lib/category-icons'
 
-type SettingsTab = 'profile' | 'security' | 'notifications' | 'application' | 'data' | 'about'
+type SettingsTab = 'profile' | 'security' | 'notifications' | 'application' | 'data' | 'about' | 'categories' | 'sites'
 
 interface UserSession {
   user: {
@@ -17,9 +19,14 @@ interface UserSession {
 
 interface SettingsViewProps {
   activeTab?: SettingsTab
+  categories?: CustomCategory[]
+  onCategoriesChange?: () => void
+  sites?: Site[]
+  activeSiteId?: string | null
+  onSitesChange?: () => void
 }
 
-export default function SettingsView({ activeTab = 'profile' }: SettingsViewProps) {
+export default function SettingsView({ activeTab = 'profile', categories = [], onCategoriesChange, sites = [], activeSiteId, onSitesChange }: SettingsViewProps) {
   const [session, setSession] = useState<UserSession | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -477,6 +484,16 @@ export default function SettingsView({ activeTab = 'profile' }: SettingsViewProp
             </>
           )}
 
+          {/* ── CATEGORIES ── */}
+          {activeTab === 'categories' && (
+            <CategoriesTab categories={categories} onCategoriesChange={onCategoriesChange} />
+          )}
+
+          {/* ── SITES ── */}
+          {activeTab === 'sites' && (
+            <SitesTab sites={sites} activeSiteId={activeSiteId} onSitesChange={onSitesChange} />
+          )}
+
           {/* ── ABOUT ── */}
           {activeTab === 'about' && (
             <>
@@ -520,7 +537,7 @@ export default function SettingsView({ activeTab = 'profile' }: SettingsViewProp
               <div className="settings-section">
                 <h3>Features</h3>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                  {['Device Management', 'IP Planning (IPAM)', 'VLAN Management', 'Network Topology', 'Service Tracking', 'Changelog Audit', 'Multi-Site Support', 'Export/Import', 'Authentication'].map(f => (
+                  {['Device Management', 'IP Planning (IPAM)', 'VLAN Management', 'Network Topology', 'Service Tracking', 'Changelog Audit', 'Multi-Site Support', 'Custom Categories', 'Export/Import', 'Authentication'].map(f => (
                     <span key={f} className="badge badge-blue">{f}</span>
                   ))}
                 </div>
@@ -529,5 +546,261 @@ export default function SettingsView({ activeTab = 'profile' }: SettingsViewProp
           )}
         </div>
     </div>
+  )
+}
+
+function CategoriesTab({ categories, onCategoriesChange }: { categories: CustomCategory[], onCategoriesChange?: () => void }) {
+  const [newName, setNewName] = useState('')
+  const [newIcon, setNewIcon] = useState('server')
+  const [newColor, setNewColor] = useState('#5e6670')
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editName, setEditName] = useState('')
+  const [editIcon, setEditIcon] = useState('')
+  const [editColor, setEditColor] = useState('')
+
+  const handleCreate = async () => {
+    if (!newName.trim()) return
+    await fetch('/api/categories', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: newName.trim(), icon: newIcon, color: newColor }),
+    })
+    setNewName('')
+    setNewIcon('server')
+    setNewColor('#5e6670')
+    onCategoriesChange?.()
+  }
+
+  const handleUpdate = async (id: string) => {
+    await fetch(`/api/categories/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: editName, icon: editIcon, color: editColor }),
+    })
+    setEditingId(null)
+    onCategoriesChange?.()
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Delete this category?')) return
+    await fetch(`/api/categories/${id}`, { method: 'DELETE' })
+    onCategoriesChange?.()
+  }
+
+  const startEdit = (cat: CustomCategory) => {
+    setEditingId(cat.id)
+    setEditName(cat.name)
+    setEditIcon(cat.icon)
+    setEditColor(cat.color)
+  }
+
+  return (
+    <>
+      <h2>Categories</h2>
+      <p className="settings-panel-desc">Manage device categories with custom icons and colors</p>
+
+      <div className="settings-section">
+        <h3>Add New Category</h3>
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+          <div className="input-group" style={{ flex: 1, minWidth: '140px' }}>
+            <label className="input-label">Name</label>
+            <input className="unifi-input" value={newName} onChange={e => setNewName(e.target.value)} placeholder="e.g. Firewall" onKeyDown={e => e.key === 'Enter' && handleCreate()} />
+          </div>
+          <div className="input-group" style={{ width: '120px' }}>
+            <label className="input-label">Icon</label>
+            <select className="unifi-input" value={newIcon} onChange={e => setNewIcon(e.target.value)}>
+              {ICON_OPTIONS.map(i => <option key={i} value={i}>{i}</option>)}
+            </select>
+          </div>
+          <div className="input-group" style={{ width: '60px' }}>
+            <label className="input-label">Color</label>
+            <input type="color" value={newColor} onChange={e => setNewColor(e.target.value)} style={{ width: '100%', height: '34px', padding: '2px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', cursor: 'pointer' }} />
+          </div>
+          <button className="btn btn-primary" style={{ height: '34px' }} onClick={handleCreate} disabled={!newName.trim()}>
+            <Plus size={14} /> Add
+          </button>
+        </div>
+      </div>
+
+      <div className="settings-section">
+        <h3>Current Categories ({categories.length})</h3>
+        {categories.length === 0 ? (
+          <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>No categories yet. Add one above.</p>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            {categories.map(cat => {
+              const Icon = getCategoryIcon(cat.icon)
+              if (editingId === cat.id) {
+                return (
+                  <div key={cat.id} className="settings-row" style={{ padding: '0.75rem' }}>
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flex: 1, flexWrap: 'wrap' }}>
+                      <input className="unifi-input" style={{ width: '140px', height: '30px' }} value={editName} onChange={e => setEditName(e.target.value)} />
+                      <select className="unifi-input" style={{ width: '110px', height: '30px' }} value={editIcon} onChange={e => setEditIcon(e.target.value)}>
+                        {ICON_OPTIONS.map(i => <option key={i} value={i}>{i}</option>)}
+                      </select>
+                      <input type="color" value={editColor} onChange={e => setEditColor(e.target.value)} style={{ width: '36px', height: '30px', padding: '2px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', cursor: 'pointer' }} />
+                      <button className="btn btn-primary" style={{ height: '30px', padding: '0 10px', fontSize: '11px' }} onClick={() => handleUpdate(cat.id)}>
+                        <Check size={12} /> Save
+                      </button>
+                      <button className="btn" style={{ height: '30px', padding: '0 10px', fontSize: '11px' }} onClick={() => setEditingId(null)}>Cancel</button>
+                    </div>
+                  </div>
+                )
+              }
+              return (
+                <div key={cat.id} className="settings-row">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: cat.color + '18', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Icon size={16} color={cat.color} />
+                    </div>
+                    <div>
+                      <div className="settings-row-label">{cat.name}</div>
+                      <div className="settings-row-desc">{cat.icon} · {cat.color}</div>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.25rem' }}>
+                    <button className="btn" style={{ padding: '4px 8px', border: 'none', background: 'transparent' }} onClick={() => startEdit(cat)} title="Edit">
+                      <Edit2 size={13} />
+                    </button>
+                    <button className="btn" style={{ padding: '4px 8px', border: 'none', background: 'transparent', color: 'var(--red)' }} onClick={() => handleDelete(cat.id)} title="Delete">
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      <div className="settings-section">
+        <h3>Icon Preview</h3>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+          {ICON_OPTIONS.map(name => {
+            const Ic = ICON_MAP[name]
+            return (
+              <div key={name} title={name} style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'var(--muted-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                <Ic size={16} color="var(--text-muted)" />
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    </>
+  )
+}
+
+function SitesTab({ sites, activeSiteId, onSitesChange }: { sites: Site[], activeSiteId?: string | null, onSitesChange?: () => void }) {
+  const [newName, setNewName] = useState('')
+  const [newDesc, setNewDesc] = useState('')
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editName, setEditName] = useState('')
+  const [editDesc, setEditDesc] = useState('')
+
+  const handleCreate = async () => {
+    if (!newName.trim()) return
+    await fetch('/api/sites', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: newName.trim(), description: newDesc.trim() || null }),
+    })
+    setNewName('')
+    setNewDesc('')
+    onSitesChange?.()
+  }
+
+  const handleUpdate = async (id: string) => {
+    await fetch(`/api/sites/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: editName, description: editDesc || null }),
+    })
+    setEditingId(null)
+    onSitesChange?.()
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Delete this site and all its data? This cannot be undone.')) return
+    await fetch(`/api/sites/${id}`, { method: 'DELETE' })
+    onSitesChange?.()
+  }
+
+  return (
+    <>
+      <h2>Sites</h2>
+      <p className="settings-panel-desc">Manage your sites (projects/homelabs). Each site has its own devices, subnets, VLANs, and categories.</p>
+
+      <div className="settings-section">
+        <h3>Create New Site</h3>
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+          <div className="input-group" style={{ flex: 1, minWidth: '160px' }}>
+            <label className="input-label">Site Name</label>
+            <input className="unifi-input" value={newName} onChange={e => setNewName(e.target.value)} placeholder="e.g. Home Lab" onKeyDown={e => e.key === 'Enter' && handleCreate()} />
+          </div>
+          <div className="input-group" style={{ flex: 1, minWidth: '160px' }}>
+            <label className="input-label">Description (optional)</label>
+            <input className="unifi-input" value={newDesc} onChange={e => setNewDesc(e.target.value)} placeholder="e.g. Main rack in basement" />
+          </div>
+          <button className="btn btn-primary" style={{ height: '34px' }} onClick={handleCreate} disabled={!newName.trim()}>
+            <Plus size={14} /> Create Site
+          </button>
+        </div>
+      </div>
+
+      <div className="settings-section">
+        <h3>Your Sites ({sites.length})</h3>
+        {sites.length === 0 ? (
+          <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>No sites yet.</p>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            {sites.map(site => {
+              if (editingId === site.id) {
+                return (
+                  <div key={site.id} className="settings-row" style={{ padding: '0.75rem' }}>
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flex: 1, flexWrap: 'wrap' }}>
+                      <input className="unifi-input" style={{ width: '160px', height: '30px' }} value={editName} onChange={e => setEditName(e.target.value)} />
+                      <input className="unifi-input" style={{ width: '200px', height: '30px' }} value={editDesc} onChange={e => setEditDesc(e.target.value)} placeholder="Description" />
+                      <button className="btn btn-primary" style={{ height: '30px', padding: '0 10px', fontSize: '11px' }} onClick={() => handleUpdate(site.id)}>
+                        <Check size={12} /> Save
+                      </button>
+                      <button className="btn" style={{ height: '30px', padding: '0 10px', fontSize: '11px' }} onClick={() => setEditingId(null)}>Cancel</button>
+                    </div>
+                  </div>
+                )
+              }
+              return (
+                <div key={site.id} className="settings-row">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: site.id === activeSiteId ? 'var(--blue-bg)' : 'var(--muted-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <MapPin size={16} color={site.id === activeSiteId ? 'var(--blue)' : 'var(--text-muted)'} />
+                    </div>
+                    <div>
+                      <div className="settings-row-label">
+                        {site.name}
+                        {site.id === activeSiteId && <span className="badge badge-blue" style={{ marginLeft: '0.5rem', fontSize: '9px' }}>Active</span>}
+                      </div>
+                      <div className="settings-row-desc">
+                        {site.description || 'No description'}
+                        {site._count && <span> · {site._count.devices} devices · {site._count.subnets} subnets · {site._count.vlans} VLANs</span>}
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.25rem' }}>
+                    <button className="btn" style={{ padding: '4px 8px', border: 'none', background: 'transparent' }} onClick={() => { setEditingId(site.id); setEditName(site.name); setEditDesc(site.description || '') }} title="Edit">
+                      <Edit2 size={13} />
+                    </button>
+                    {sites.length > 1 && (
+                      <button className="btn" style={{ padding: '4px 8px', border: 'none', background: 'transparent', color: 'var(--red)' }} onClick={() => handleDelete(site.id)} title="Delete">
+                        <Trash2 size={13} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+    </>
   )
 }

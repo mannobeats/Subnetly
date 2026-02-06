@@ -4,12 +4,27 @@ export interface Site {
   slug: string
   description?: string
   address?: string
+  userId: string
   createdAt: string
   updatedAt: string
   racks?: Rack[]
   devices?: Device[]
   subnets?: Subnet[]
   vlans?: VLAN[]
+  categories?: CustomCategory[]
+  _count?: { devices: number; subnets: number; vlans: number }
+}
+
+export interface CustomCategory {
+  id: string
+  name: string
+  slug: string
+  icon: string
+  color: string
+  siteId: string
+  sortOrder: number
+  createdAt: string
+  updatedAt: string
 }
 
 export interface Rack {

@@ -1,16 +1,20 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/db'
+import { getActiveSite } from '@/lib/site-context'
 
 export async function GET() {
   try {
+    const { siteId } = await getActiveSite()
+    if (!siteId) return NextResponse.json({ counts: { devices: 0, subnets: 0, vlans: 0, ipAddresses: 0, services: 0 }, categoryBreakdown: {}, statusBreakdown: {}, subnetStats: [], recentChanges: [], services: [] })
+
     const [devices, subnets, vlans, ipAddresses, ipRanges, services, changelog] = await Promise.all([
-      prisma.device.findMany({ include: { deviceType: { include: { manufacturer: true } }, services: true } }),
-      prisma.subnet.findMany({ include: { vlan: true, ipAddresses: true, ipRanges: true } }),
-      prisma.vLAN.findMany({ include: { subnets: true } }),
-      prisma.iPAddress.findMany(),
-      prisma.iPRange.findMany(),
-      prisma.service.findMany({ include: { device: true } }),
-      prisma.changeLog.findMany({ orderBy: { timestamp: 'desc' }, take: 10 }),
+      prisma.device.findMany({ where: { siteId }, include: { deviceType: { include: { manufacturer: true } }, services: true } }),
+      prisma.subnet.findMany({ where: { siteId }, include: { vlan: true, ipAddresses: true, ipRanges: true } }),
+      prisma.vLAN.findMany({ where: { siteId }, include: { subnets: true } }),
+      prisma.iPAddress.findMany({ where: { subnet: { siteId } } }),
+      prisma.iPRange.findMany({ where: { subnet: { siteId } } }),
+      prisma.service.findMany({ where: { siteId }, include: { device: true } }),
+      prisma.changeLog.findMany({ where: { siteId }, orderBy: { timestamp: 'desc' }, take: 10 }),
     ])
 
     const subnetStats = subnets.map((s) => {

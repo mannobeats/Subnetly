@@ -2,10 +2,13 @@
 
 import { 
   LayoutDashboard, Server, Network, Globe, Share2,
-  Box, History, Settings, Search, Cpu, Database, 
-  Laptop, Wifi, Command, LogOut, User, Lock, Bell, Shield
+  Box, History, Settings, Search, Database, 
+  Wifi, Command, LogOut, User, Lock, Bell, Shield,
+  MapPin, Plus, ChevronDown, Tag
 } from 'lucide-react'
 import { RefObject, useState, useRef, useEffect } from 'react'
+import { Site, CustomCategory } from '@/types'
+import { getCategoryIcon } from '@/lib/category-icons'
 
 export type ViewType = 'dashboard' | 'devices' | 'ipam' | 'vlans' | 'topology' | 'services' | 'changelog' | 'settings'
 
@@ -30,6 +33,11 @@ interface SidebarProps {
   onLogout?: () => void
   settingsTab?: string
   setSettingsTab?: (tab: string) => void
+  sites?: Site[]
+  activeSiteId?: string | null
+  onSwitchSite?: (siteId: string) => void
+  onCreateSite?: (name: string) => void
+  categories?: CustomCategory[]
 }
 
 const navItems: { id: ViewType; icon: React.ElementType; label: string }[] = [
@@ -42,14 +50,22 @@ const navItems: { id: ViewType; icon: React.ElementType; label: string }[] = [
   { id: 'changelog', icon: History, label: 'Changelog' },
 ]
 
-const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selectedCategory, setSelectedCategory, selectedVlanRole, setSelectedVlanRole, selectedIpFilter, setSelectedIpFilter, selectedServiceFilter, setSelectedServiceFilter, selectedChangelogFilter, setSelectedChangelogFilter, searchInputRef, userName, userEmail, onLogout, settingsTab, setSettingsTab }: SidebarProps) => {
+const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selectedCategory, setSelectedCategory, selectedVlanRole, setSelectedVlanRole, selectedIpFilter, setSelectedIpFilter, selectedServiceFilter, setSelectedServiceFilter, selectedChangelogFilter, setSelectedChangelogFilter, searchInputRef, userName, userEmail, onLogout, settingsTab, setSettingsTab, sites = [], activeSiteId, onSwitchSite, onCreateSite, categories = [] }: SidebarProps) => {
   const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const [siteMenuOpen, setSiteMenuOpen] = useState(false)
+  const [newSiteName, setNewSiteName] = useState('')
   const userMenuRef = useRef<HTMLDivElement>(null)
+  const siteMenuRef = useRef<HTMLDivElement>(null)
+
+  const activeSite = sites.find(s => s.id === activeSiteId)
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
         setUserMenuOpen(false)
+      }
+      if (siteMenuRef.current && !siteMenuRef.current.contains(e.target as Node)) {
+        setSiteMenuOpen(false)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
@@ -113,6 +129,71 @@ const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selecte
 
       {/* Secondary Sidebar - Context Panel */}
       <div className="sidebar-secondary">
+        {/* Site Switcher */}
+        {sites.length > 0 && (
+          <div style={{ position: 'relative', marginBottom: '1rem' }} ref={siteMenuRef}>
+            <button
+              className="site-switcher-btn"
+              onClick={() => setSiteMenuOpen(!siteMenuOpen)}
+            >
+              <MapPin size={14} />
+              <span style={{ flex: 1, textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {activeSite?.name || 'Select Site'}
+              </span>
+              <ChevronDown size={12} style={{ opacity: 0.5, transform: siteMenuOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }} />
+            </button>
+            {siteMenuOpen && (
+              <div className="site-switcher-dropdown animate-fade-in">
+                {sites.map(s => (
+                  <button
+                    key={s.id}
+                    className={`site-switcher-item ${s.id === activeSiteId ? 'active' : ''}`}
+                    onClick={() => { onSwitchSite?.(s.id); setSiteMenuOpen(false) }}
+                  >
+                    <MapPin size={12} />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 500 }}>{s.name}</div>
+                      {s._count && <div style={{ fontSize: '10px', color: 'var(--text-light)' }}>{s._count.devices} devices · {s._count.subnets} subnets</div>}
+                    </div>
+                  </button>
+                ))}
+                <div style={{ borderTop: '1px solid var(--border)', margin: '0.25rem 0', padding: '0.25rem' }}>
+                  <div style={{ display: 'flex', gap: '0.25rem' }}>
+                    <input
+                      className="unifi-input"
+                      style={{ height: '28px', fontSize: '11px', flex: 1 }}
+                      placeholder="New site name..."
+                      value={newSiteName}
+                      onChange={e => setNewSiteName(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter' && newSiteName.trim()) {
+                          onCreateSite?.(newSiteName.trim())
+                          setNewSiteName('')
+                          setSiteMenuOpen(false)
+                        }
+                      }}
+                    />
+                    <button
+                      className="btn btn-primary"
+                      style={{ height: '28px', padding: '0 8px', fontSize: '11px' }}
+                      disabled={!newSiteName.trim()}
+                      onClick={() => {
+                        if (newSiteName.trim()) {
+                          onCreateSite?.(newSiteName.trim())
+                          setNewSiteName('')
+                          setSiteMenuOpen(false)
+                        }
+                      }}
+                    >
+                      <Plus size={12} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="sidebar-section-title">{activeView === 'settings' ? 'Settings' : navItems.find(n => n.id === activeView)?.label}</div>
         
         <div style={{ position: 'relative', marginBottom: '1.5rem' }}>
@@ -143,22 +224,31 @@ const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selecte
             </div>
             <h3>Categories</h3>
             <div className="filter-list">
-              <div className={`filter-item ${selectedCategory === 'Server' ? 'active-filter' : ''}`} onClick={() => setSelectedCategory('Server')}>
-                <Server size={14} color={selectedCategory === 'Server' ? '#0055ff' : '#5e6670'} /> <span>Servers</span>
-              </div>
-              <div className={`filter-item ${selectedCategory === 'VM' ? 'active-filter' : ''}`} onClick={() => setSelectedCategory('VM')}>
-                <Cpu size={14} color={selectedCategory === 'VM' ? '#0055ff' : '#5e6670'} /> <span>Virtual Machines</span>
-              </div>
-              <div className={`filter-item ${selectedCategory === 'LXC' ? 'active-filter' : ''}`} onClick={() => setSelectedCategory('LXC')}>
-                <Database size={14} color={selectedCategory === 'LXC' ? '#0055ff' : '#5e6670'} /> <span>LXC Containers</span>
-              </div>
-              <div className={`filter-item ${selectedCategory === 'Networking' ? 'active-filter' : ''}`} onClick={() => setSelectedCategory('Networking')}>
-                <Network size={14} color={selectedCategory === 'Networking' ? '#0055ff' : '#5e6670'} /> <span>Networking</span>
-              </div>
-              <div className={`filter-item ${selectedCategory === 'IoT' ? 'active-filter' : ''}`} onClick={() => setSelectedCategory('IoT')}>
-                <Laptop size={14} color={selectedCategory === 'IoT' ? '#0055ff' : '#5e6670'} /> <span>IoT</span>
-              </div>
+              {categories.length > 0 ? categories.map(cat => {
+                const Icon = getCategoryIcon(cat.icon)
+                return (
+                  <div key={cat.id} className={`filter-item ${selectedCategory === cat.name ? 'active-filter' : ''}`} onClick={() => setSelectedCategory(selectedCategory === cat.name ? null : cat.name)}>
+                    <Icon size={14} color={selectedCategory === cat.name ? '#0055ff' : cat.color} /> <span>{cat.name}</span>
+                  </div>
+                )
+              }) : (
+                <>
+                  <div className={`filter-item ${selectedCategory === 'Server' ? 'active-filter' : ''}`} onClick={() => setSelectedCategory('Server')}>
+                    <Server size={14} color={selectedCategory === 'Server' ? '#0055ff' : '#5e6670'} /> <span>Servers</span>
+                  </div>
+                  <div className={`filter-item ${selectedCategory === 'Networking' ? 'active-filter' : ''}`} onClick={() => setSelectedCategory('Networking')}>
+                    <Network size={14} color={selectedCategory === 'Networking' ? '#0055ff' : '#5e6670'} /> <span>Networking</span>
+                  </div>
+                </>
+              )}
             </div>
+            {categories.length > 0 && (
+              <div style={{ marginTop: '0.75rem' }}>
+                <div className="filter-item" style={{ fontSize: '11px', color: 'var(--text-light)' }} onClick={() => { setSettingsTab?.('categories'); setActiveView('settings') }}>
+                  <Tag size={12} /> <span>Manage Categories</span>
+                </div>
+              </div>
+            )}
           </>
         )}
 
@@ -279,6 +369,15 @@ const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selecte
               </div>
               <div className={`filter-item ${settingsTab === 'application' ? 'active-filter' : ''}`} onClick={() => setSettingsTab?.('application')}>
                 <Globe size={14} color={settingsTab === 'application' ? '#0055ff' : '#5e6670'} /> <span>Application</span>
+              </div>
+            </div>
+            <h3>Customization</h3>
+            <div className="filter-list" style={{ marginBottom: '1.5rem' }}>
+              <div className={`filter-item ${settingsTab === 'categories' ? 'active-filter' : ''}`} onClick={() => setSettingsTab?.('categories')}>
+                <Tag size={14} color={settingsTab === 'categories' ? '#0055ff' : '#5e6670'} /> <span>Categories</span>
+              </div>
+              <div className={`filter-item ${settingsTab === 'sites' ? 'active-filter' : ''}`} onClick={() => setSettingsTab?.('sites')}>
+                <MapPin size={14} color={settingsTab === 'sites' ? '#0055ff' : '#5e6670'} /> <span>Sites</span>
               </div>
             </div>
             <h3>System</h3>

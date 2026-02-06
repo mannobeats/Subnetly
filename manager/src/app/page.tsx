@@ -11,7 +11,7 @@ import ChangelogView from '@/components/ChangelogView'
 import SettingsView from '@/components/SettingsView'
 import LoginPage from '@/components/LoginPage'
 import { Plus, Download, Trash2, Edit2, Network as NetIcon, ChevronRight, Laptop, Server, Cpu, Database, Loader2 } from 'lucide-react'
-import { Device } from '@/types'
+import { Device, Site, CustomCategory } from '@/types'
 import { authClient } from '@/lib/auth-client'
 
 interface SubnetOption {
@@ -29,6 +29,37 @@ export default function Home() {
   const [authLoading, setAuthLoading] = useState(true)
   const [userName, setUserName] = useState('')
   const [userEmail, setUserEmail] = useState('')
+  const [sites, setSites] = useState<Site[]>([])
+  const [activeSiteId, setActiveSiteId] = useState<string | null>(null)
+  const [categories, setCategories] = useState<CustomCategory[]>([])
+
+  const fetchSitesAndCategories = useCallback(async () => {
+    try {
+      const [sitesRes, catsRes] = await Promise.all([
+        fetch('/api/sites').then(r => r.json()),
+        fetch('/api/categories').then(r => r.json()),
+      ])
+      if (sitesRes.sites) {
+        setSites(sitesRes.sites)
+        setActiveSiteId(sitesRes.activeSiteId || null)
+      }
+      if (Array.isArray(catsRes)) setCategories(catsRes)
+    } catch { /* ignore */ }
+  }, [])
+
+  const handleSwitchSite = useCallback(async (siteId: string) => {
+    await fetch('/api/sites/switch', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ siteId }) })
+    setActiveSiteId(siteId)
+    await fetchSitesAndCategories()
+    // Refresh all data for new site
+    await fetchDevices()
+    await fetchSubnets()
+  }, [fetchSitesAndCategories])
+
+  const handleCreateSite = useCallback(async (name: string) => {
+    await fetch('/api/sites', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) })
+    await fetchSitesAndCategories()
+  }, [fetchSitesAndCategories])
 
   const checkSession = useCallback(async () => {
     try {
@@ -110,9 +141,12 @@ export default function Home() {
   }, [devices])
 
   useEffect(() => {
-    fetchDevices()
-    fetchSubnets()
-  }, [])
+    if (isAuthenticated) {
+      fetchSitesAndCategories()
+      fetchDevices()
+      fetchSubnets()
+    }
+  }, [isAuthenticated, fetchSitesAndCategories])
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -469,6 +503,11 @@ export default function Home() {
         onLogout={handleLogout}
         settingsTab={settingsTab}
         setSettingsTab={setSettingsTab}
+        sites={sites}
+        activeSiteId={activeSiteId}
+        onSwitchSite={handleSwitchSite}
+        onCreateSite={handleCreateSite}
+        categories={categories}
       />
 
       <div className="main-content">
@@ -497,7 +536,7 @@ export default function Home() {
         {activeView === 'topology' && <div className="table-wrapper"><TopologyView selectedCategory={selectedCategory} /></div>}
         {activeView === 'services' && <div className="table-wrapper"><ServicesView searchTerm={searchTerm} selectedProtocol={selectedServiceFilter} /></div>}
         {activeView === 'changelog' && <div className="table-wrapper"><ChangelogView searchTerm={searchTerm} selectedFilter={selectedChangelogFilter} /></div>}
-        {activeView === 'settings' && <div className="table-wrapper"><SettingsView activeTab={settingsTab as 'profile' | 'security' | 'notifications' | 'application' | 'data' | 'about'} /></div>}
+        {activeView === 'settings' && <div className="table-wrapper"><SettingsView activeTab={settingsTab as 'profile' | 'security' | 'notifications' | 'application' | 'data' | 'about' | 'categories' | 'sites'} categories={categories} onCategoriesChange={fetchSitesAndCategories} sites={sites} activeSiteId={activeSiteId} onSitesChange={fetchSitesAndCategories} /></div>}
       </div>
 
       {/* Add/Edit Device Modal */}
@@ -513,12 +552,18 @@ export default function Home() {
               <div className="input-group">
                 <label className="input-label">Category</label>
                 <select className="unifi-input" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})}>
-                  <option value="Networking">Networking</option>
-                  <option value="Server">Server</option>
-                  <option value="VM">VM</option>
-                  <option value="LXC">LXC</option>
-                  <option value="Client">Client</option>
-                  <option value="IoT">IoT</option>
+                  {categories.length > 0 ? categories.map(cat => (
+                    <option key={cat.id} value={cat.name}>{cat.name}</option>
+                  )) : (
+                    <>
+                      <option value="Networking">Networking</option>
+                      <option value="Server">Server</option>
+                      <option value="VM">VM</option>
+                      <option value="LXC">LXC</option>
+                      <option value="Client">Client</option>
+                      <option value="IoT">IoT</option>
+                    </>
+                  )}
                 </select>
               </div>
               {subnets.length > 0 && (

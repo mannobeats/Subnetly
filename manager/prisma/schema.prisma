@@ -17,13 +17,35 @@ model Site {
   address     String?
   latitude    Float?
   longitude   Float?
+  userId      String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  racks   Rack[]
-  devices Device[]
-  subnets Subnet[]
-  vlans   VLAN[]
+  racks      Rack[]
+  devices    Device[]
+  subnets    Subnet[]
+  vlans      VLAN[]
+  services   Service[]
+  changeLogs ChangeLog[]
+  categories CustomCategory[]
+
+  @@index([userId])
+}
+
+model CustomCategory {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String
+  icon      String   @default("server")
+  color     String   @default("#5e6670")
+  siteId    String
+  site      Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([siteId, slug])
+  @@index([siteId])
 }
 
 model Rack {
@@ -204,6 +226,8 @@ model Service {
   protocol    String   @default("tcp")
   ports       String
   description String?
+  siteId      String?
+  site        Site?    @relation(fields: [siteId], references: [id], onDelete: SetNull)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -216,6 +240,8 @@ model ChangeLog {
   objectId   String
   action     String
   changes    String?
+  siteId     String?
+  site       Site?    @relation(fields: [siteId], references: [id], onDelete: SetNull)
   timestamp  DateTime @default(now())
 }
 
@@ -225,6 +251,7 @@ model User {
   email         String
   emailVerified Boolean   @default(false)
   image         String?
+  activeSiteId  String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   sessions      Session[]
