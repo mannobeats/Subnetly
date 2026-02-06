@@ -149,7 +149,22 @@ export default function Home() {
     changelog: 'Change Log',
   }
 
-  const renderDevicesView = () => (
+  const renderDevicesView = () => {
+    if (!loading && devices.length === 0) {
+      return (
+        <div className="table-wrapper">
+          <div className="empty-state">
+            <Server size={40} color="#cbd5e1" />
+            <h3>No devices yet</h3>
+            <p>Add your first device to start managing your homelab infrastructure.</p>
+            <button className="btn btn-primary" onClick={() => { setEditingDevice(null); setFormData({ name: '', macAddress: '', ipAddress: '', category: 'Server', notes: '', platform: '', status: 'active' }); setIsModalOpen(true); }}>
+              <Plus size={14} /> Add Device
+            </button>
+          </div>
+        </div>
+      )
+    }
+    return (
     <>
       <div className="stats-ribbon">
         <div className="stat-item">
@@ -188,7 +203,7 @@ export default function Home() {
               {loading ? (
                 <tr><td colSpan={8} style={{ textAlign: 'center', height: '100px', color: 'var(--unifi-text-muted)' }}>Loading...</td></tr>
               ) : filteredDevices.length === 0 ? (
-                <tr><td colSpan={8} style={{ textAlign: 'center', height: '100px', color: 'var(--unifi-text-muted)' }}>No devices found.</td></tr>
+                <tr><td colSpan={8} style={{ textAlign: 'center', height: '100px', color: 'var(--unifi-text-muted)' }}>No devices match your search.</td></tr>
               ) : filteredDevices.map((device) => (
                 <tr key={device.id}>
                   <td style={{ textAlign: 'center' }}>
@@ -227,6 +242,7 @@ export default function Home() {
       </div>
     </>
   )
+  }
 
   return (
     <div className="app-container">
@@ -242,7 +258,7 @@ export default function Home() {
       <div className="main-content">
         <header className="top-nav">
           <div className="breadcrumbs">
-            <span>Portland Homelab</span>
+            <span>Homelab Manager</span>
             <ChevronRight size={14} color="#5e6670" />
             <strong>{viewTitles[activeView]}</strong>
           </div>

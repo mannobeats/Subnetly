@@ -1397,5 +1397,86 @@ body {
   color: #94a3b8;
 }
 
+/* ─── TOPOLOGY CONTROLS ──────────────────────────────────── */
+.topo-controls {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #ffffff;
+  border: 1px solid var(--unifi-border);
+  border-radius: 8px;
+  padding: 4px 8px;
+  z-index: 10;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.topo-ctrl-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #64748b;
+  transition: all 0.15s;
+}
+
+.topo-ctrl-btn:hover {
+  background: #f1f5f9;
+  color: #1a1a1a;
+}
+
+.topo-zoom-label {
+  font-size: 10px;
+  color: #94a3b8;
+  font-weight: 500;
+  min-width: 32px;
+  text-align: center;
+}
+
+/* ─── DESTRUCTIVE BUTTON ─────────────────────────────────── */
+.btn-destructive {
+  background: #dc2626 !important;
+  color: #ffffff !important;
+  border: none !important;
+}
+
+.btn-destructive:hover {
+  background: #b91c1c !important;
+}
+
+/* ─── EMPTY STATES ───────────────────────────────────────── */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+  background: #ffffff;
+  border: 1px solid var(--unifi-border);
+  border-radius: 8px;
+}
+
+.empty-state h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 1rem 0 0.5rem;
+  color: var(--unifi-text);
+}
+
+.empty-state p {
+  font-size: 13px;
+  color: var(--unifi-text-muted);
+  margin-bottom: 1.5rem;
+  max-width: 360px;
+}
+
 /* ─── ADDITIONAL BADGES ──────────────────────────────────── */
 .badge-purple { background: #f5f3ff; color: #7c3aed; }
