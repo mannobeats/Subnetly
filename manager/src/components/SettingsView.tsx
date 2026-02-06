@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react'
 import { authClient } from '@/lib/auth-client'
 import { Lock, Database, Save, Check, AlertCircle, Loader2, Plus, Trash2, Edit2, MapPin } from 'lucide-react'
 import { CustomCategory, Site } from '@/types'
-import { getCategoryIcon, ICON_OPTIONS, ICON_MAP } from '@/lib/category-icons'
+import { renderCategoryIcon } from '@/lib/category-icons'
+import IconPicker from '@/components/IconPicker'
 
 type SettingsTab = 'profile' | 'security' | 'notifications' | 'application' | 'data' | 'about' | 'categories' | 'sites' | 'vlan-roles'
 
@@ -104,6 +105,9 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
       await authClient.updateUser({
         name: profileName,
       })
+      if (profileEmail !== session?.user?.email) {
+        await authClient.changeEmail({ newEmail: profileEmail })
+      }
       setProfileSuccess(true)
       setTimeout(() => setProfileSuccess(false), 3000)
     } catch {
@@ -183,12 +187,8 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
                     type="email"
                     className="unifi-input"
                     value={profileEmail}
-                    disabled
-                    style={{ opacity: 0.6, cursor: 'not-allowed' }}
+                    onChange={e => setProfileEmail(e.target.value)}
                   />
-                  <span style={{ fontSize: '11px', color: 'var(--unifi-text-muted)', marginTop: '4px', display: 'block' }}>
-                    Email cannot be changed for security reasons
-                  </span>
                 </div>
                 <div className="settings-actions">
                   <button className="btn btn-primary" onClick={handleProfileSave} disabled={profileSaving}>
@@ -465,21 +465,23 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
 
               <div className="settings-section settings-danger-zone">
                 <h3>Danger Zone</h3>
-                <div className="settings-row">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                   <div>
                     <div className="settings-row-label">Clear All Data</div>
                     <div className="settings-row-desc">Permanently delete all devices, subnets, VLANs, services, and changelog entries</div>
                   </div>
-                  <button className="btn btn-destructive" onClick={async () => {
-                    if (confirm('Are you sure you want to delete ALL data? This cannot be undone.')) {
-                      if (confirm('This is your last chance. Type OK to confirm.')) {
-                        await fetch('/api/changelog', { method: 'DELETE' })
-                        alert('Data cleared. Refresh the page.')
+                  <div>
+                    <button className="btn btn-destructive" onClick={async () => {
+                      if (confirm('Are you sure you want to delete ALL data? This cannot be undone.')) {
+                        if (confirm('This is your last chance. Type OK to confirm.')) {
+                          await fetch('/api/changelog', { method: 'DELETE' })
+                          alert('Data cleared. Refresh the page.')
+                        }
                       }
-                    }
-                  }}>
-                    Clear All Data
-                  </button>
+                    }}>
+                      Clear All Data
+                    </button>
+                  </div>
                 </div>
               </div>
             </>
@@ -612,11 +614,9 @@ function CategoriesTab({ categories, onCategoriesChange }: { categories: CustomC
             <label className="input-label">Name</label>
             <input className="unifi-input" value={newName} onChange={e => setNewName(e.target.value)} placeholder="e.g. Firewall" onKeyDown={e => e.key === 'Enter' && handleCreate()} />
           </div>
-          <div className="input-group" style={{ width: '120px' }}>
+          <div className="input-group" style={{ width: '140px' }}>
             <label className="input-label">Icon</label>
-            <select className="unifi-input" value={newIcon} onChange={e => setNewIcon(e.target.value)}>
-              {ICON_OPTIONS.map(i => <option key={i} value={i}>{i}</option>)}
-            </select>
+            <IconPicker value={newIcon} onChange={setNewIcon} color={newColor} />
           </div>
           <div className="input-group" style={{ width: '60px' }}>
             <label className="input-label">Color</label>
@@ -637,15 +637,14 @@ function CategoriesTab({ categories, onCategoriesChange }: { categories: CustomC
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {categories.map(cat => {
-              const Icon = getCategoryIcon(cat.icon)
               if (editingId === cat.id) {
                 return (
                   <div key={cat.id} className="settings-row" style={{ padding: '0.75rem' }}>
                     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flex: 1, flexWrap: 'wrap' }}>
                       <input className="unifi-input" style={{ width: '140px', height: '30px' }} value={editName} onChange={e => setEditName(e.target.value)} />
-                      <select className="unifi-input" style={{ width: '110px', height: '30px' }} value={editIcon} onChange={e => setEditIcon(e.target.value)}>
-                        {ICON_OPTIONS.map(i => <option key={i} value={i}>{i}</option>)}
-                      </select>
+                      <div style={{ width: '120px' }}>
+                        <IconPicker value={editIcon} onChange={setEditIcon} color={editColor} />
+                      </div>
                       <input type="color" value={editColor} onChange={e => setEditColor(e.target.value)} style={{ width: '36px', height: '30px', padding: '2px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', cursor: 'pointer' }} />
                       <button className="btn btn-primary" style={{ height: '30px', padding: '0 10px', fontSize: '11px' }} onClick={() => handleUpdate(cat.id)}>
                         <Check size={12} /> Save
@@ -656,45 +655,37 @@ function CategoriesTab({ categories, onCategoriesChange }: { categories: CustomC
                 )
               }
               return (
-                <div key={cat.id} className="settings-row">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: cat.color + '18', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <Icon size={16} color={cat.color} />
-                    </div>
-                    <div>
-                      <div className="settings-row-label">{cat.name}</div>
-                      <div className="settings-row-desc">{cat.icon} · {cat.color}</div>
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', gap: '0.25rem' }}>
-                    <button className="btn" style={{ padding: '4px 8px', border: 'none', background: 'transparent' }} onClick={() => startEdit(cat)} title="Edit">
-                      <Edit2 size={13} />
-                    </button>
-                    <button className="btn" style={{ padding: '4px 8px', border: 'none', background: 'transparent', color: 'var(--red)' }} onClick={() => handleDelete(cat.id)} title="Delete">
-                      <Trash2 size={13} />
-                    </button>
-                  </div>
-                </div>
+                <CatRow key={cat.id} cat={cat} onEdit={startEdit} onDelete={handleDelete} />
               )
             })}
           </div>
         )}
       </div>
+    </>
+  )
+}
 
-      <div className="settings-section">
-        <h3>Icon Preview</h3>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-          {ICON_OPTIONS.map(name => {
-            const Ic = ICON_MAP[name]
-            return (
-              <div key={name} title={name} style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'var(--muted-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                <Ic size={16} color="var(--text-muted)" />
-              </div>
-            )
-          })}
+function CatRow({ cat, onEdit, onDelete }: { cat: CustomCategory, onEdit: (c: CustomCategory) => void, onDelete: (id: string) => void }) {
+  return (
+    <div className="settings-row">
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: cat.color + '18', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {renderCategoryIcon(cat.icon, 16, cat.color)}
+        </div>
+        <div>
+          <div className="settings-row-label">{cat.name}</div>
+          <div className="settings-row-desc">{cat.icon} · {cat.color}</div>
         </div>
       </div>
-    </>
+      <div style={{ display: 'flex', gap: '0.25rem' }}>
+        <button className="btn" style={{ padding: '4px 8px', border: 'none', background: 'transparent' }} onClick={() => onEdit(cat)} title="Edit">
+          <Edit2 size={13} />
+        </button>
+        <button className="btn" style={{ padding: '4px 8px', border: 'none', background: 'transparent', color: 'var(--red)' }} onClick={() => onDelete(cat.id)} title="Delete">
+          <Trash2 size={13} />
+        </button>
+      </div>
+    </div>
   )
 }
 
@@ -865,11 +856,9 @@ function VlanRolesTab({ roles, onRolesChange }: { roles: CustomCategory[], onRol
             <label className="input-label">Name</label>
             <input className="unifi-input" value={newName} onChange={e => setNewName(e.target.value)} placeholder="e.g. DMZ" onKeyDown={e => e.key === 'Enter' && handleCreate()} />
           </div>
-          <div className="input-group" style={{ width: '120px' }}>
+          <div className="input-group" style={{ width: '140px' }}>
             <label className="input-label">Icon</label>
-            <select className="unifi-input" value={newIcon} onChange={e => setNewIcon(e.target.value)}>
-              {ICON_OPTIONS.map(i => <option key={i} value={i}>{i}</option>)}
-            </select>
+            <IconPicker value={newIcon} onChange={setNewIcon} color={newColor} />
           </div>
           <div className="input-group" style={{ width: '60px' }}>
             <label className="input-label">Color</label>
@@ -890,15 +879,14 @@ function VlanRolesTab({ roles, onRolesChange }: { roles: CustomCategory[], onRol
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {roles.map(role => {
-              const Icon = getCategoryIcon(role.icon)
               if (editingId === role.id) {
                 return (
                   <div key={role.id} className="settings-row" style={{ padding: '0.75rem' }}>
                     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flex: 1, flexWrap: 'wrap' }}>
                       <input className="unifi-input" style={{ width: '140px', height: '30px' }} value={editName} onChange={e => setEditName(e.target.value)} />
-                      <select className="unifi-input" style={{ width: '110px', height: '30px' }} value={editIcon} onChange={e => setEditIcon(e.target.value)}>
-                        {ICON_OPTIONS.map(i => <option key={i} value={i}>{i}</option>)}
-                      </select>
+                      <div style={{ width: '120px' }}>
+                        <IconPicker value={editIcon} onChange={setEditIcon} color={editColor} />
+                      </div>
                       <input type="color" value={editColor} onChange={e => setEditColor(e.target.value)} style={{ width: '36px', height: '30px', padding: '2px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', cursor: 'pointer' }} />
                       <button className="btn btn-primary" style={{ height: '30px', padding: '0 10px', fontSize: '11px' }} onClick={() => handleUpdate(role.id)}>
                         <Check size={12} /> Save
@@ -912,7 +900,7 @@ function VlanRolesTab({ roles, onRolesChange }: { roles: CustomCategory[], onRol
                 <div key={role.id} className="settings-row">
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                     <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: role.color + '18', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <Icon size={16} color={role.color} />
+                      {renderCategoryIcon(role.icon, 16, role.color)}
                     </div>
                     <div>
                       <div className="settings-row-label">{role.name}</div>

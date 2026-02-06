@@ -10,7 +10,7 @@ import ServicesView from '@/components/ServicesView'
 import ChangelogView from '@/components/ChangelogView'
 import SettingsView from '@/components/SettingsView'
 import LoginPage from '@/components/LoginPage'
-import { Plus, Download, Trash2, Edit2, Network as NetIcon, ChevronRight, Laptop, Server, Cpu, Database, Loader2 } from 'lucide-react'
+import { Plus, Trash2, Edit2, Network as NetIcon, ChevronRight, Laptop, Server, Cpu, Database, Loader2 } from 'lucide-react'
 import { Device, Site, CustomCategory } from '@/types'
 import { authClient } from '@/lib/auth-client'
 
@@ -93,17 +93,31 @@ export default function Home() {
   }
 
   const [activeView, setActiveViewRaw] = useState<ViewType>('dashboard')
+  const settingsTabRef = useRef('profile')
 
   const setActiveView = useCallback((view: ViewType) => {
     setActiveViewRaw(view)
-    window.location.hash = view
+    if (view === 'settings') {
+      window.location.hash = `settings/${settingsTabRef.current}`
+    } else {
+      window.location.hash = view
+    }
   }, [])
 
   // Restore view from URL hash after hydration
   useEffect(() => {
-    const hash = window.location.hash.replace('#', '') as ViewType
+    const hash = window.location.hash.replace('#', '')
     const valid: ViewType[] = ['dashboard', 'devices', 'ipam', 'vlans', 'topology', 'services', 'changelog', 'settings']
-    if (valid.includes(hash)) setActiveViewRaw(hash)
+    if (hash.startsWith('settings')) {
+      setActiveViewRaw('settings')
+      const sub = hash.split('/')[1]
+      if (sub) {
+        setSettingsTabRaw(sub)
+        settingsTabRef.current = sub
+      }
+    } else if (valid.includes(hash as ViewType)) {
+      setActiveViewRaw(hash as ViewType)
+    }
   }, [])
   const [devices, setDevices] = useState<Device[]>([])
   const [loading, setLoading] = useState(true)
@@ -117,7 +131,12 @@ export default function Home() {
   const [selectedIpFilter, setSelectedIpFilter] = useState<string | null>(null)
   const [selectedServiceFilter, setSelectedServiceFilter] = useState<string | null>(null)
   const [selectedChangelogFilter, setSelectedChangelogFilter] = useState<string | null>(null)
-  const [settingsTab, setSettingsTab] = useState('profile')
+  const [settingsTab, setSettingsTabRaw] = useState('profile')
+  const setSettingsTab = useCallback((tab: string) => {
+    setSettingsTabRaw(tab)
+    settingsTabRef.current = tab
+    window.location.hash = `settings/${tab}`
+  }, [])
   const searchInputRef = useRef<HTMLInputElement>(null)
   const [subnets, setSubnets] = useState<SubnetOption[]>([])
   const [selectedSubnetId, setSelectedSubnetId] = useState<string>('')
@@ -132,16 +151,6 @@ export default function Home() {
     platform: '',
     status: 'active',
   })
-
-  const exportData = useCallback(() => {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(devices, null, 2))
-    const a = document.createElement('a')
-    a.setAttribute("href", dataStr)
-    a.setAttribute("download", `homelab_export_${new Date().toISOString().split('T')[0]}.json`)
-    document.body.appendChild(a)
-    a.click()
-    a.remove()
-  }, [devices])
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -202,17 +211,11 @@ export default function Home() {
         return
       }
 
-      // E: export (devices view)
-      if ((e.key === 'e' || e.key === 'E') && activeView === 'devices') {
-        e.preventDefault()
-        exportData()
-        return
-      }
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [activeView, isModalOpen, isDeleteModalOpen, setActiveView, exportData])
+  }, [activeView, isModalOpen, isDeleteModalOpen, setActiveView])
 
   const fetchDevices = async () => {
     setLoading(true)
@@ -523,12 +526,9 @@ export default function Home() {
           </div>
           <div style={{ display: 'flex', gap: '0.75rem' }}>
             {activeView === 'devices' && (
-              <>
-                <button className="btn" onClick={exportData}><Download size={14} /> Export</button>
-                <button className="btn btn-primary" onClick={() => { setEditingDevice(null); setFormData({ name: '', macAddress: '', ipAddress: '', category: 'Server', notes: '', platform: '', status: 'active' }); setSelectedSubnetId(''); setAvailableIps([]); fetchSubnets(); setIsModalOpen(true); }}>
-                  <Plus size={14} /> Add Device
-                </button>
-              </>
+              <button className="btn btn-primary" onClick={() => { setEditingDevice(null); setFormData({ name: '', macAddress: '', ipAddress: '', category: 'Server', notes: '', platform: '', status: 'active' }); setSelectedSubnetId(''); setAvailableIps([]); fetchSubnets(); setIsModalOpen(true); }}>
+                <Plus size={14} /> Add Device
+              </button>
             )}
           </div>
         </header>

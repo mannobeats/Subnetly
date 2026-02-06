@@ -2226,3 +2226,117 @@ body {
 .settings-danger-zone h3 {
   color: var(--red);
 }
+
+/* ── Responsive ── */
+
+/* Tablet: hide secondary sidebar, stack dashboard */
+@media (max-width: 1024px) {
+  .sidebar-secondary {
+    display: none;
+  }
+  .dash-stat-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .dash-two-col {
+    grid-template-columns: 1fr;
+  }
+  .dash-subnet-grid {
+    grid-template-columns: 1fr;
+  }
+  .dash-services-grid {
+    grid-template-columns: 1fr;
+  }
+  .settings-view {
+    padding: 1.5rem;
+  }
+  .settings-panel {
+    max-width: 100%;
+  }
+  .top-nav {
+    padding: 0 1rem;
+  }
+}
+
+/* Mobile: hide primary sidebar too, full-width content */
+@media (max-width: 768px) {
+  .sidebar-primary {
+    display: none;
+  }
+  .sidebar-secondary {
+    display: none;
+  }
+  .main-content {
+    width: 100%;
+  }
+  .top-nav {
+    padding: 0 0.75rem;
+    height: 48px;
+  }
+  .top-nav .breadcrumbs span:first-child,
+  .top-nav .breadcrumbs svg {
+    display: none;
+  }
+  .dash-stat-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+  .dash-stat-card {
+    padding: 0.75rem;
+  }
+  .dash-stat-value {
+    font-size: 22px;
+  }
+  .table-wrapper {
+    padding: 0.75rem;
+  }
+  .modal-content {
+    width: 95vw !important;
+    max-width: 95vw;
+    margin: 1rem;
+    padding: 1.25rem;
+  }
+  .settings-view {
+    padding: 1rem;
+  }
+}
+
+/* Small mobile */
+@media (max-width: 480px) {
+  .dash-stat-grid {
+    grid-template-columns: 1fr;
+  }
+  .top-nav {
+    flex-direction: column;
+    height: auto;
+    padding: 0.5rem 0.75rem;
+    gap: 0.5rem;
+    align-items: flex-start;
+  }
+}
+
+/* Custom scrollbar for scrollable containers */
+.dash-category-list::-webkit-scrollbar,
+.dash-changelog::-webkit-scrollbar,
+.dash-subnet-grid::-webkit-scrollbar,
+.dash-services-grid::-webkit-scrollbar {
+  width: 4px;
+}
+.dash-category-list::-webkit-scrollbar-track,
+.dash-changelog::-webkit-scrollbar-track,
+.dash-subnet-grid::-webkit-scrollbar-track,
+.dash-services-grid::-webkit-scrollbar-track {
+  background: transparent;
+}
+.dash-category-list::-webkit-scrollbar-thumb,
+.dash-changelog::-webkit-scrollbar-thumb,
+.dash-subnet-grid::-webkit-scrollbar-thumb,
+.dash-services-grid::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 2px;
+}
+.dash-category-list::-webkit-scrollbar-thumb:hover,
+.dash-changelog::-webkit-scrollbar-thumb:hover,
+.dash-subnet-grid::-webkit-scrollbar-thumb:hover,
+.dash-services-grid::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}

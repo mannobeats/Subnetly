@@ -65,7 +65,7 @@ const DashboardView = () => {
           <h2>Subnet Utilization</h2>
           <span className="dash-section-badge">{data.subnetStats.length} subnets</span>
         </div>
-        <div className="dash-subnet-grid">
+        <div className="dash-subnet-grid" style={{ maxHeight: '320px', overflowY: 'auto' }}>
           {data.subnetStats.map((s) => (
             <div key={s.id} className="dash-subnet-card">
               <div className="dash-subnet-header">
@@ -110,7 +110,7 @@ const DashboardView = () => {
           <div className="dash-section-header">
             <h2>Device Categories</h2>
           </div>
-          <div className="dash-category-list">
+          <div className="dash-category-list" style={{ maxHeight: '240px', overflowY: 'auto' }}>
             {Object.entries(data.categoryBreakdown).sort((a, b) => b[1] - a[1]).map(([cat, count]) => (
               <div key={cat} className="dash-category-row">
                 <div className="dash-category-info">
@@ -134,7 +134,7 @@ const DashboardView = () => {
             <h2>Recent Changes</h2>
             <Activity size={14} color="var(--unifi-text-muted)" />
           </div>
-          <div className="dash-changelog">
+          <div className="dash-changelog" style={{ maxHeight: '240px', overflowY: 'auto' }}>
             {data.recentChanges.map((c) => {
               const isCreate = c.action === 'create'
               return (
@@ -159,7 +159,7 @@ const DashboardView = () => {
           <h2>Running Services</h2>
           <span className="dash-section-badge">{data.services.length} services</span>
         </div>
-        <div className="dash-services-grid">
+        <div className="dash-services-grid" style={{ maxHeight: '280px', overflowY: 'auto' }}>
           {data.services.map((s) => (
             <div key={s.id} className="dash-service-card">
               <div className="dash-service-name">{s.name}</div>
