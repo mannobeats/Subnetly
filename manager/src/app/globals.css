@@ -175,9 +175,6 @@ table.table-fixed td {
   vertical-align: middle;
   text-align: left;
   font-size: 13px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 table.table-fixed th {
   font-size: 11px;
@@ -188,6 +185,12 @@ table.table-fixed th {
   background: var(--surface-alt);
   border-bottom: 1px solid var(--border);
   height: 40px;
+  white-space: nowrap;
+}
+table.table-fixed td {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 table.table-fixed tbody tr {
   border-bottom: 1px solid var(--muted-bg-alt);

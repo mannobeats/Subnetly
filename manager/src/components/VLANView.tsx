@@ -161,11 +161,11 @@ const VLANView = ({ searchTerm = '', selectedRole = null, vlanRoles = [], highli
             })}
           </div>
 
-          <div className="bg-card border border-border rounded-lg p-5 mt-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-[13px] font-semibold">VLAN Overview</h2>
+          <div className="bg-card border border-border rounded-lg overflow-hidden mt-6">
+            <div className="flex items-center justify-between px-5 py-4">
+              <h2 className="text-sm font-semibold">VLAN Overview</h2>
             </div>
-            <table className="w-full border-collapse bg-(--surface) rounded-(--radius) border border-border table-fixed">
+            <table className="w-full border-collapse table-fixed">
               <thead>
                 <tr>
                   <th className="w-20">VID</th>

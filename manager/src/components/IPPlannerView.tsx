@@ -506,7 +506,7 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
           <DialogHeader>
             <DialogTitle>{editingSubnetId ? 'Edit Subnet' : 'Create Subnet'}</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSaveSubnet}>
+          <form onSubmit={handleSaveSubnet} className="space-y-4 mt-2">
             <div className="grid grid-cols-[2fr_1fr] gap-5">
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold text-muted-foreground">Network Prefix</Label>
@@ -559,7 +559,7 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
                 <Input value={subnetForm.description} onChange={e => setSubnetForm({ ...subnetForm, description: e.target.value })} placeholder="Optional" className="h-9 text-[13px]" />
               </div>
             </div>
-            <DialogFooter className="mt-8">
+            <DialogFooter className="mt-6">
               <Button type="button" variant="outline" onClick={() => { setSubnetModalOpen(false); setEditingSubnetId(null) }}>Cancel</Button>
               <Button type="submit">{editingSubnetId ? 'Save Changes' : 'Create Subnet'}</Button>
             </DialogFooter>
@@ -740,8 +740,8 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
 
       {/* ═══ LIST VIEW ═══ */}
       {viewMode === 'list' && subnet && (
-        <div className="bg-(--surface) border border-border rounded-lg overflow-hidden">
-          <table className="w-full border-collapse bg-(--surface) rounded-(--radius) border border-border table-fixed">
+        <div className="bg-card border border-border rounded-lg overflow-hidden">
+          <table className="w-full border-collapse table-fixed">
             <thead>
               <tr>
                 <th className="w-[60px]">#</th>
@@ -956,9 +956,9 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
         })
         const totalAssigned = subnet.ipAddresses.length + deviceOnlyEntries.length
         return (
-          <div className="bg-(--surface) border border-border rounded-lg p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h2>Assigned Addresses</h2>
+          <div className="bg-card border border-border rounded-lg overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4">
+              <h2 className="text-sm font-semibold">Assigned Addresses</h2>
               <div className="flex gap-2 items-center">
                 <span className="text-[11px] text-(--text-muted) bg-(--muted-bg) px-2 py-0.5 rounded">{totalAssigned} addresses</span>
                 <Button size="sm" className="h-7 px-2.5 text-[11px]" onClick={() => { setEditingIpId(null); setIpForm({ address: `${base}.`, dnsName: '', description: '', status: 'active', deviceId: '' }); setIpModalOpen(true) }}><Plus size={12} /> Assign IP</Button>
@@ -967,7 +967,7 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
             {totalAssigned === 0 ? (
               <div className="p-8 text-center text-muted-foreground text-[13px]">No IP addresses assigned yet. Click a cell in the grid or use the button above.</div>
             ) : (
-              <table className="w-full border-collapse bg-(--surface) rounded-(--radius) border border-border table-fixed">
+              <table className="w-full border-collapse table-fixed">
                 <thead>
                   <tr>
                     <th className="w-[140px]">Address</th>
@@ -1041,7 +1041,7 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
           <DialogHeader>
             <DialogTitle>{editingRangeId ? 'Edit' : 'Add'} IP Range {editingRangeId ? '' : `to ${subnet?.prefix}/${subnet?.mask}`}</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSaveRange}>
+          <form onSubmit={handleSaveRange} className="space-y-4 mt-2">
             <div className="grid grid-cols-2 gap-5">
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold text-muted-foreground">Start Octet (.x)</Label>
@@ -1066,7 +1066,7 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
                 <Input value={rangeForm.description} onChange={e => setRangeForm({ ...rangeForm, description: e.target.value })} placeholder="Optional" className="h-9 text-[13px]" />
               </div>
             </div>
-            <DialogFooter className="mt-8">
+            <DialogFooter className="mt-6">
               <Button type="button" variant="outline" onClick={() => { setRangeModalOpen(false); setEditingRangeId(null) }}>Cancel</Button>
               <Button type="submit">{editingRangeId ? 'Save Changes' : 'Add Range'}</Button>
             </DialogFooter>
@@ -1080,8 +1080,8 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
           <DialogHeader>
             <DialogTitle>{editingIpId ? 'Edit IP Address' : 'Assign IP Address'}</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleAssignIp}>
-            <div className="space-y-1.5 mb-4">
+          <form onSubmit={handleAssignIp} className="space-y-4 mt-2">
+            <div className="space-y-1.5">
               <Label className="text-xs font-semibold text-muted-foreground">Link to Device (Optional)</Label>
               <select className="w-full h-9 border border-border rounded bg-(--surface-alt) text-(--text) text-[13px] px-3 focus:outline-none focus:border-(--blue) focus:bg-(--surface)" value={ipForm.deviceId} onChange={e => {
                 const dev = devices.find(d => d.id === e.target.value)
@@ -1115,11 +1115,11 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
                 <Input value={ipForm.dnsName} onChange={e => setIpForm({ ...ipForm, dnsName: e.target.value })} placeholder="e.g. my-server" className="h-9 text-[13px]" />
               </div>
             </div>
-            <div className="space-y-1.5 mt-4">
+            <div className="space-y-1.5">
               <Label className="text-xs font-semibold text-muted-foreground">Description</Label>
               <Input value={ipForm.description} onChange={e => setIpForm({ ...ipForm, description: e.target.value })} placeholder="Optional" className="h-9 text-[13px]" />
             </div>
-            <div className="flex gap-4 mt-8 justify-end items-center">
+            <DialogFooter className="mt-6 flex items-center">
               {editingIpId && (
                 <Button type="button" variant="destructive" size="sm" className="mr-auto text-xs" onClick={async () => {
                   const id = editingIpId
@@ -1133,7 +1133,7 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
               )}
               <Button type="button" variant="outline" onClick={() => { setIpModalOpen(false); setEditingIpId(null) }}>Cancel</Button>
               <Button type="submit">{editingIpId ? 'Save Changes' : 'Assign IP'}</Button>
-            </div>
+            </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
