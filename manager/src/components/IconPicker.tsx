@@ -63,7 +63,7 @@ export default function IconPicker({ value, onChange, color = 'var(--text-muted)
               <input
                 ref={searchRef}
                 type="text"
-                className="unifi-input pl-7 h-[30px] text-xs w-full"
+                className="unifi-input pl-7! h-[30px] text-xs w-full"
                 placeholder="Search icons..."
                 value={search}
                 onChange={e => setSearch(e.target.value)}

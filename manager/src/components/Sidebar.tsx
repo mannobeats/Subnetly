@@ -203,7 +203,7 @@ const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selecte
           <input 
             ref={searchInputRef}
             type="text" 
-            className="unifi-input pl-8 pr-10 h-8" 
+            className="unifi-input pl-8! pr-10! h-8" 
             placeholder="Search..." 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}

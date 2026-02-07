@@ -171,6 +171,9 @@ body {
 .sidebar-primary { width: var(--sidebar-w); height: 100%; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; padding: 1rem 0; gap: 1.5rem; z-index: 100; }
 .sidebar-secondary { width: var(--sidebar2-w); height: 100%; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 1.5rem; overflow-y: auto; }
 .sidebar-secondary h3 { font-size: 11px; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em; margin-bottom: 1rem; font-weight: 600; }
+.sidebar-icon { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); cursor: pointer; border-radius: 10px; transition: all 0.2s; }
+.sidebar-icon:hover { background: var(--hover); color: var(--blue); }
+.sidebar-icon.active { color: var(--blue); background: var(--blue-bg); }
 .sidebar-logo { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; color: var(--blue); margin-bottom: 0.5rem; }
 .sidebar-section-title { font-size: 14px; font-weight: 600; margin-bottom: 1.25rem; color: var(--text); }
 
@@ -209,7 +212,7 @@ body {
 .unifi-table td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); color: var(--text); font-size: 13px; vertical-align: middle; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .unifi-table tr:hover td { background: var(--hover); }
 
-.unifi-input { width: 100%; height: 36px; border: 1px solid var(--border); border-radius: 4px; padding: 0 0.75rem; font-size: 13px; background: var(--surface-alt); color: var(--text); }
+.unifi-input { width: 100%; height: 36px; border: 1px solid var(--border); border-radius: 4px; padding-top: 0; padding-bottom: 0; padding-left: 0.75rem; padding-right: 0.75rem; font-size: 13px; background: var(--surface-alt); color: var(--text); }
 .unifi-input:focus { outline: none; border-color: var(--blue); background: var(--surface); }
 
 .input-label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-muted); }
