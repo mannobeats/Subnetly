@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { authClient } from '@/lib/auth-client'
-import { Lock, Database, Save, Check, AlertCircle, Loader2, Plus, Trash2, Edit2, MapPin, Activity } from 'lucide-react'
+import { Lock, Save, Check, AlertCircle, Loader2, Plus, Trash2, Edit2, MapPin, Activity, Upload, Download } from 'lucide-react'
 import { CustomCategory, Site } from '@/types'
 import { renderCategoryIcon } from '@/lib/category-icons'
 import IconPicker from '@/components/IconPicker'
@@ -61,6 +61,13 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
   const [hcTimeout, setHcTimeout] = useState(10)
   const [hcSaving, setHcSaving] = useState(false)
   const [hcSuccess, setHcSuccess] = useState(false)
+
+  // Import/Export state
+  const [exporting, setExporting] = useState(false)
+  const [importing, setImporting] = useState(false)
+  const [importResult, setImportResult] = useState<{ success: boolean; message: string; counts?: Record<string, number> } | null>(null)
+  const [importConfirmOpen, setImportConfirmOpen] = useState(false)
+  const [pendingImportFile, setPendingImportFile] = useState<File | null>(null)
 
   useEffect(() => {
     const fetchSession = async () => {
@@ -511,7 +518,7 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
           {activeTab === 'data' && (
             <>
               <h2>Data & Storage</h2>
-              <p className="settings-panel-desc">Manage your data and database</p>
+              <p className="settings-panel-desc">Manage your data, backups, and database</p>
 
               <div className="settings-section">
                 <h3>Database</h3>
@@ -532,30 +539,85 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
               </div>
 
               <div className="settings-section">
-                <h3>Export</h3>
+                <h3>Backup & Export</h3>
+                <p style={{ fontSize: '12px', color: 'var(--text-light)', marginBottom: '1rem' }}>
+                  Export a full backup of the current site including all devices, subnets, VLANs, IP addresses, services, WiFi networks, categories, and changelog.
+                </p>
                 <div className="settings-row">
                   <div>
-                    <div className="settings-row-label">Export All Data</div>
-                    <div className="settings-row-desc">Download all your data as a JSON file</div>
+                    <div className="settings-row-label">Export Full Backup</div>
+                    <div className="settings-row-desc">Download a complete JSON backup of all site data</div>
                   </div>
-                  <button className="btn" onClick={async () => {
-                    const [devices, subnets, vlans, services] = await Promise.all([
-                      fetch('/api/devices').then(r => r.json()),
-                      fetch('/api/subnets').then(r => r.json()),
-                      fetch('/api/vlans').then(r => r.json()),
-                      fetch('/api/services').then(r => r.json()),
-                    ])
-                    const data = { exportedAt: new Date().toISOString(), devices, subnets, vlans, services }
-                    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
-                    const url = URL.createObjectURL(blob)
-                    const a = document.createElement('a')
-                    a.href = url
-                    a.download = `homelab-export-${new Date().toISOString().split('T')[0]}.json`
-                    a.click()
-                    URL.revokeObjectURL(url)
+                  <button className="btn" disabled={exporting} onClick={async () => {
+                    setExporting(true)
+                    try {
+                      const res = await fetch('/api/backup/export')
+                      if (!res.ok) throw new Error('Export failed')
+                      const blob = await res.blob()
+                      const url = URL.createObjectURL(blob)
+                      const disposition = res.headers.get('Content-Disposition')
+                      const filename = disposition?.match(/filename="(.+)"/)?.[1] || `homelab-backup-${new Date().toISOString().split('T')[0]}.json`
+                      const a = document.createElement('a')
+                      a.href = url
+                      a.download = filename
+                      a.click()
+                      URL.revokeObjectURL(url)
+                    } catch {
+                      alert('Failed to export backup')
+                    } finally {
+                      setExporting(false)
+                    }
                   }}>
-                    <Database size={14} /> Export JSON
+                    {exporting ? <><Loader2 size={14} className="spin" /> Exporting...</> : <><Download size={14} /> Export Backup</>}
                   </button>
+                </div>
+              </div>
+
+              <div className="settings-section">
+                <h3>Restore from Backup</h3>
+                <p style={{ fontSize: '12px', color: 'var(--text-light)', marginBottom: '1rem' }}>
+                  Import a previously exported JSON backup. <strong style={{ color: 'var(--red)' }}>Warning:</strong> This will replace ALL data in the current site.
+                </p>
+                {importResult && (
+                  <div style={{
+                    padding: '0.75rem 1rem',
+                    borderRadius: '6px',
+                    marginBottom: '1rem',
+                    fontSize: '12px',
+                    background: importResult.success ? 'var(--green-bg)' : 'var(--red-bg)',
+                    color: importResult.success ? 'var(--green)' : 'var(--red)',
+                    border: `1px solid ${importResult.success ? 'var(--green)' : 'var(--red-border)'}`,
+                  }}>
+                    <div style={{ fontWeight: 600, marginBottom: importResult.counts ? '0.5rem' : 0 }}>
+                      {importResult.success ? <><Check size={12} style={{ marginRight: '4px' }} />Import successful!</> : <><AlertCircle size={12} style={{ marginRight: '4px' }} />{importResult.message}</>}
+                    </div>
+                    {importResult.counts && (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                        {Object.entries(importResult.counts).filter(([, v]) => v > 0).map(([k, v]) => (
+                          <span key={k} style={{ background: 'rgba(255,255,255,0.5)', padding: '1px 6px', borderRadius: '3px' }}>{v} {k}</span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+                <div className="settings-row">
+                  <div>
+                    <div className="settings-row-label">Import Backup File</div>
+                    <div className="settings-row-desc">Select a .json backup file to restore</div>
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <label className="btn" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Upload size={14} /> Choose File
+                      <input type="file" accept=".json" style={{ display: 'none' }} onChange={e => {
+                        const file = e.target.files?.[0]
+                        if (file) {
+                          setPendingImportFile(file)
+                          setImportConfirmOpen(true)
+                        }
+                        e.target.value = ''
+                      }} />
+                    </label>
+                  </div>
                 </div>
               </div>
 
@@ -569,9 +631,18 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
                   <div>
                     <button className="btn btn-destructive" onClick={async () => {
                       if (confirm('Are you sure you want to delete ALL data? This cannot be undone.')) {
-                        if (confirm('This is your last chance. Type OK to confirm.')) {
-                          await fetch('/api/changelog', { method: 'DELETE' })
-                          alert('Data cleared. Refresh the page.')
+                        if (confirm('This is your last chance. All site data will be permanently deleted.')) {
+                          try {
+                            await fetch('/api/backup/import', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ version: '1.0', site: { name: 'cleared' }, categories: [], vlans: [], subnets: [], devices: [], ipAddresses: [], ipRanges: [], services: [], wifiNetworks: [], changeLogs: [] }),
+                            })
+                            alert('All data cleared. The page will now reload.')
+                            window.location.reload()
+                          } catch {
+                            alert('Failed to clear data')
+                          }
                         }
                       }
                     }}>
@@ -580,6 +651,64 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
                   </div>
                 </div>
               </div>
+
+              {/* Import Confirmation Modal */}
+              {importConfirmOpen && pendingImportFile && (
+                <div className="modal-overlay" onClick={() => { setImportConfirmOpen(false); setPendingImportFile(null) }}>
+                  <div className="modal-content animate-fade-in" style={{ width: '440px', textAlign: 'center' }} onClick={e => e.stopPropagation()}>
+                    <div style={{ background: 'var(--orange-bg, #fff7ed)', width: '48px', height: '48px', borderRadius: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem', color: 'var(--orange)' }}>
+                      <Upload size={24} />
+                    </div>
+                    <h2 style={{ marginBottom: '0.5rem', fontSize: '18px', fontWeight: 600 }}>Restore from Backup?</h2>
+                    <p style={{ color: 'var(--unifi-text-muted)', marginBottom: '0.5rem' }}>
+                      This will <strong>replace all data</strong> in the current site with the contents of:
+                    </p>
+                    <p style={{ fontFamily: 'monospace', fontSize: '12px', background: 'var(--muted-bg)', padding: '6px 12px', borderRadius: '4px', marginBottom: '1.5rem', wordBreak: 'break-all' }}>
+                      {pendingImportFile.name}
+                    </p>
+                    <p style={{ color: 'var(--red)', fontSize: '12px', marginBottom: '1.5rem' }}>
+                      This action cannot be undone. Export a backup first if needed.
+                    </p>
+                    <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+                      <button className="btn" onClick={() => { setImportConfirmOpen(false); setPendingImportFile(null) }}>Cancel</button>
+                      <button className="btn btn-destructive" disabled={importing} onClick={async () => {
+                        setImporting(true)
+                        setImportResult(null)
+                        try {
+                          const text = await pendingImportFile.text()
+                          const data = JSON.parse(text)
+                          const res = await fetch('/api/backup/import', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(data),
+                          })
+                          const result = await res.json()
+                          if (res.ok) {
+                            setImportResult({ success: true, message: 'Import successful', counts: result.counts })
+                            setImportConfirmOpen(false)
+                            setPendingImportFile(null)
+                            // Trigger data refresh in parent
+                            onCategoriesChange?.()
+                            onSitesChange?.()
+                          } else {
+                            setImportResult({ success: false, message: result.error || 'Import failed' })
+                            setImportConfirmOpen(false)
+                            setPendingImportFile(null)
+                          }
+                        } catch (err) {
+                          setImportResult({ success: false, message: err instanceof Error ? err.message : 'Invalid backup file' })
+                          setImportConfirmOpen(false)
+                          setPendingImportFile(null)
+                        } finally {
+                          setImporting(false)
+                        }
+                      }}>
+                        {importing ? <><Loader2 size={14} className="spin" /> Importing...</> : 'Restore Backup'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </>
           )}
 

@@ -98,6 +98,11 @@ export default function Home() {
     setUserEmail('')
   }
 
+  // App settings from localStorage
+  const [compactMode, setCompactMode] = useState(false)
+  const [confirmDeletes, setConfirmDeletes] = useState(true)
+  const [autoRefresh, setAutoRefresh] = useState(true)
+
   const [activeView, setActiveViewRaw] = useState<ViewType>('dashboard')
   const settingsTabRef = useRef('profile')
 
@@ -110,8 +115,19 @@ export default function Home() {
     }
   }, [])
 
-  // Restore view from URL hash after hydration
+  // Restore view from URL hash (or defaultView from settings) after hydration
   useEffect(() => {
+    // Load app settings from localStorage
+    try {
+      const saved = localStorage.getItem('homelab-settings')
+      if (saved) {
+        const s = JSON.parse(saved)
+        if (s.compactMode !== undefined) setCompactMode(s.compactMode)
+        if (s.confirmDeletes !== undefined) setConfirmDeletes(s.confirmDeletes)
+        if (s.autoRefresh !== undefined) setAutoRefresh(s.autoRefresh)
+      }
+    } catch { /* ignore */ }
+
     const hash = window.location.hash.replace('#', '')
     const valid: ViewType[] = ['dashboard', 'devices', 'ipam', 'vlans', 'wifi', 'topology', 'services', 'changelog', 'settings']
     if (hash.startsWith('settings')) {
@@ -123,6 +139,18 @@ export default function Home() {
       }
     } else if (valid.includes(hash as ViewType)) {
       setActiveViewRaw(hash as ViewType)
+    } else {
+      // No hash — use defaultView from settings
+      try {
+        const saved = localStorage.getItem('homelab-settings')
+        if (saved) {
+          const s = JSON.parse(saved)
+          if (s.defaultView && valid.includes(s.defaultView as ViewType)) {
+            setActiveViewRaw(s.defaultView as ViewType)
+            window.location.hash = s.defaultView
+          }
+        }
+      } catch { /* ignore */ }
     }
   }, [])
   const [devices, setDevices] = useState<Device[]>([])
@@ -167,12 +195,32 @@ export default function Home() {
     }
   }, [isAuthenticated, fetchSitesAndCategories])
 
-  // Re-fetch data when switching views
+  // Re-fetch data when switching views (respects autoRefresh setting)
   useEffect(() => {
     if (!isAuthenticated) return
+    if (!autoRefresh) return
     if (activeView === 'devices') { fetchDevices(); fetchSubnets() }
     if (activeView === 'dashboard') { fetchDevices() }
-  }, [activeView, isAuthenticated])
+  }, [activeView, isAuthenticated, autoRefresh])
+
+  // Listen for settings changes from SettingsView (via localStorage)
+  useEffect(() => {
+    const onStorage = () => {
+      try {
+        const saved = localStorage.getItem('homelab-settings')
+        if (saved) {
+          const s = JSON.parse(saved)
+          if (s.compactMode !== undefined) setCompactMode(s.compactMode)
+          if (s.confirmDeletes !== undefined) setConfirmDeletes(s.confirmDeletes)
+          if (s.autoRefresh !== undefined) setAutoRefresh(s.autoRefresh)
+        }
+      } catch { /* ignore */ }
+    }
+    window.addEventListener('storage', onStorage)
+    // Also poll for same-tab changes
+    const interval = setInterval(onStorage, 2000)
+    return () => { window.removeEventListener('storage', onStorage); clearInterval(interval) }
+  }, [])
 
   // Scroll to highlighted item from command palette
   useEffect(() => {
@@ -338,6 +386,14 @@ export default function Home() {
   }
 
   const confirmDelete = (id: string) => {
+    if (!confirmDeletes) {
+      // Skip confirmation, delete directly
+      setDeviceToDelete(id)
+      fetch(`/api/devices/${id}`, { method: 'DELETE' }).then(res => {
+        if (res.ok) { setDeviceToDelete(null); fetchDevices() }
+      })
+      return
+    }
     setDeviceToDelete(id)
     setIsDeleteModalOpen(true)
   }
@@ -515,7 +571,7 @@ export default function Home() {
   }
 
   return (
-    <div className="app-container">
+    <div className={`app-container${compactMode ? ' compact-mode' : ''}`}>
       <Sidebar
         activeView={activeView}
         setActiveView={setActiveView}
