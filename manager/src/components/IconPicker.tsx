@@ -42,76 +42,37 @@ export default function IconPicker({ value, onChange, color = 'var(--text-muted)
     : ICON_NAMES
 
   return (
-    <div ref={containerRef} style={{ position: 'relative' }}>
+    <div ref={containerRef} className="relative">
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="unifi-input"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '6px',
-          cursor: 'pointer',
-          padding: '0 10px',
-          height: '34px',
-          width: '100%',
-          textAlign: 'left',
-          background: 'var(--card-bg, #fff)',
-        }}
+        className="unifi-input flex items-center gap-1.5 cursor-pointer px-2.5 h-[34px] w-full text-left bg-card"
       >
         {renderIcon(value, 14, color)}
-        <span style={{ fontSize: '12px', color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{value}</span>
-        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ flexShrink: 0, opacity: 0.4 }}>
+        <span className="text-xs text-foreground truncate flex-1">{value}</span>
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="shrink-0 opacity-40">
           <path d="M2 4L5 7L8 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
       </button>
 
       {open && (
-        <div
-          style={{
-            position: 'absolute',
-            top: '100%',
-            left: 0,
-            marginTop: '4px',
-            width: '280px',
-            maxHeight: '320px',
-            background: 'var(--card-bg, #fff)',
-            border: '1px solid var(--border)',
-            borderRadius: 'var(--radius, 8px)',
-            boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
-            zIndex: 1000,
-            display: 'flex',
-            flexDirection: 'column',
-            overflow: 'hidden',
-          }}
-        >
-          <div style={{ padding: '8px', borderBottom: '1px solid var(--border)' }}>
-            <div style={{ position: 'relative' }}>
-              <Search size={13} style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
+        <div className="absolute top-full left-0 mt-1 w-[280px] max-h-[320px] bg-card border border-border rounded-lg shadow-[0_8px_30px_rgba(0,0,0,0.12)] z-1000 flex flex-col overflow-hidden">
+          <div className="p-2 border-b border-border">
+            <div className="relative">
+              <Search size={13} className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
               <input
                 ref={searchRef}
                 type="text"
-                className="unifi-input"
+                className="unifi-input pl-7 h-[30px] text-xs w-full"
                 placeholder="Search icons..."
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                style={{ paddingLeft: '28px', height: '30px', fontSize: '12px', width: '100%' }}
               />
             </div>
           </div>
-          <div
-            style={{
-              flex: 1,
-              overflowY: 'auto',
-              padding: '8px',
-              display: 'grid',
-              gridTemplateColumns: 'repeat(7, 1fr)',
-              gap: '2px',
-              alignContent: 'start',
-            }}
-          >
+          <div className="flex-1 overflow-y-auto p-2 grid grid-cols-7 gap-0.5 content-start">
             {filtered.length === 0 && (
-              <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '1rem', color: 'var(--text-muted)', fontSize: '12px' }}>
+              <div className="col-span-full text-center p-4 text-muted-foreground text-xs">
                 No icons found
               </div>
             )}
@@ -123,20 +84,11 @@ export default function IconPicker({ value, onChange, color = 'var(--text-muted)
                   type="button"
                   title={name}
                   onClick={() => { onChange(name); setOpen(false); setSearch('') }}
-                  style={{
-                    width: '34px',
-                    height: '34px',
-                    borderRadius: '6px',
-                    border: isSelected ? '2px solid var(--blue, #0055ff)' : '1px solid transparent',
-                    background: isSelected ? 'var(--blue-bg, #eef5ff)' : 'transparent',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    transition: 'background 0.1s',
-                  }}
-                  onMouseEnter={e => { if (!isSelected) (e.currentTarget.style.background = 'var(--muted-bg, #f1f3f5)') }}
-                  onMouseLeave={e => { if (!isSelected) (e.currentTarget.style.background = 'transparent') }}
+                  className={`w-[34px] h-[34px] rounded-md flex items-center justify-center cursor-pointer transition-colors ${
+                    isSelected
+                      ? 'border-2 border-(--blue) bg-(--blue-bg)'
+                      : 'border border-transparent hover:bg-(--muted-bg)'
+                  }`}
                 >
                   {renderIcon(name, 15, isSelected ? 'var(--blue, #0055ff)' : 'var(--text-muted, #5e6670)')}
                 </button>

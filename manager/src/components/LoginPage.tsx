@@ -3,6 +3,10 @@
 import { useState, useEffect } from 'react'
 import { authClient } from '@/lib/auth-client'
 import { Wifi, Eye, EyeOff, AlertCircle, Loader2 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { cn } from '@/lib/utils'
 
 interface LoginPageProps {
   onLogin: () => void
@@ -64,10 +68,14 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
 
   if (checkingSetup) {
     return (
-      <div className="login-page">
-        <div className="login-card animate-fade-in">
-          <div className="login-loading">
-            <Loader2 size={24} className="spin" />
+      <div className="flex min-h-screen items-center justify-center bg-linear-to-br from-[#f8fafc] via-[#eef2ff] to-[#f0f9ff] p-4">
+        <div className={cn(
+          "w-full max-w-[400px] rounded-xl border border-border bg-card p-10",
+          "shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05),0_20px_25px_-5px_rgba(0,0,0,0.08)]",
+          "animate-in fade-in slide-in-from-bottom-1 duration-300"
+        )}>
+          <div className="flex flex-col items-center gap-4 py-8 text-muted-foreground text-[13px]">
+            <Loader2 size={24} className="animate-spin" />
             <span>Initializing...</span>
           </div>
         </div>
@@ -76,66 +84,72 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
   }
 
   return (
-    <div className="login-page">
-      <div className="login-card animate-fade-in">
-        <div className="login-header">
-          <div className="login-logo">
+    <div className="flex min-h-screen items-center justify-center bg-linear-to-br from-[#f8fafc] via-[#eef2ff] to-[#f0f9ff] p-4">
+      <div className={cn(
+        "w-full max-w-[400px] rounded-xl border border-border bg-card p-10",
+        "shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05),0_20px_25px_-5px_rgba(0,0,0,0.08)]",
+        "animate-in fade-in slide-in-from-bottom-1 duration-300"
+      )}>
+        <div className="mb-8 text-center">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-[14px] bg-linear-to-br from-(--blue) to-(--blue-light) text-white">
             <Wifi size={28} />
           </div>
-          <h1>Homelab Manager</h1>
-          <p>Network & Infrastructure Management</p>
+          <h1 className="text-xl font-bold text-foreground mb-1">Homelab Manager</h1>
+          <p className="text-[13px] text-muted-foreground">Network & Infrastructure Management</p>
         </div>
 
         {setupMessage && (
-          <div className="login-setup-notice">
-            <AlertCircle size={14} />
+          <div className="mb-6 flex gap-3 items-start rounded-md border border-(--info-border) bg-(--blue-bg) p-3 text-xs text-(--info-text)">
+            <AlertCircle size={14} className="mt-0.5 shrink-0" />
             <div>
-              <strong>{setupMessage}</strong>
-              <span className="login-default-creds">
-                Email: <code>{process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'admin@homelab.local'}</code><br />
-                Password: <code>{process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'admin123'}</code>
+              <strong className="block mb-1">{setupMessage}</strong>
+              <span className="block mt-1 text-[11px] text-(--info-accent) leading-relaxed">
+                Email: <code className="rounded bg-(--info-code-bg) px-1.5 py-px text-[11px]">{process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'admin@homelab.local'}</code><br />
+                Password: <code className="rounded bg-(--info-code-bg) px-1.5 py-px text-[11px]">{process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'admin123'}</code>
               </span>
             </div>
           </div>
         )}
 
         {error && (
-          <div className="login-error">
-            <AlertCircle size={14} />
+          <div className="mb-6 flex items-center gap-2 rounded-md border border-(--red-border) bg-(--red-bg) p-3 text-xs text-(--red)">
+            <AlertCircle size={14} className="shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
         <form onSubmit={handleLogin}>
-          <div className="input-group">
-            <label className="input-label">Email</label>
-            <input
+          <div className="mb-5">
+            <Label htmlFor="email" className="mb-2 block text-xs font-semibold text-muted-foreground">Email</Label>
+            <Input
+              id="email"
               type="email"
-              className="unifi-input"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="admin@homelab.local"
               required
               autoFocus
               autoComplete="email"
+              className="h-9 text-[13px] bg-(--surface-alt) border-border focus:border-(--blue) focus:bg-card"
             />
           </div>
 
-          <div className="input-group">
-            <label className="input-label">Password</label>
-            <div className="login-password-wrap">
-              <input
+          <div className="mb-5">
+            <Label htmlFor="password" className="mb-2 block text-xs font-semibold text-muted-foreground">Password</Label>
+            <div className="relative">
+              <Input
+                id="password"
                 type={showPassword ? 'text' : 'password'}
-                className="unifi-input"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
                 required
                 autoComplete="current-password"
+                className="h-9 pr-10 text-[13px] bg-(--surface-alt) border-border focus:border-(--blue) focus:bg-card"
               />
               <button
                 type="button"
-                className="login-password-toggle"
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground transition-colors"
                 onClick={() => setShowPassword(!showPassword)}
                 tabIndex={-1}
               >
@@ -144,16 +158,16 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
             </div>
           </div>
 
-          <button
+          <Button
             type="submit"
-            className="btn btn-primary login-submit"
+            className="mt-2 w-full h-10 text-sm font-semibold"
             disabled={loading || !email || !password}
           >
-            {loading ? <><Loader2 size={14} className="spin" /> Signing in...</> : 'Sign In'}
-          </button>
+            {loading ? <><Loader2 size={14} className="animate-spin" /> Signing in...</> : 'Sign In'}
+          </Button>
         </form>
 
-        <div className="login-footer">
+        <div className="mt-6 text-center text-[11px] text-(--text-light)">
           <span>Self-hosted infrastructure management</span>
         </div>
       </div>

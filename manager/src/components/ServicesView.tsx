@@ -3,6 +3,10 @@
 import { useState, useEffect } from 'react'
 import { Globe, Radio, Plus, Edit2, Trash2, Zap, AlertTriangle, ExternalLink, Container, Server, Activity, RefreshCw } from 'lucide-react'
 import { Device } from '@/types'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 
 interface ServiceData {
   id: string
@@ -238,59 +242,48 @@ const ServicesView = ({ searchTerm, selectedProtocol = null, highlightId = null 
     return acc
   }, {})
 
-  if (loading) return <div className="view-loading">Loading services...</div>
+  if (loading) return <div className="flex items-center justify-center h-[200px] text-muted-foreground text-[13px]">Loading services...</div>
 
   return (
-    <div className="services-view animate-fade-in">
+    <div className="animate-in fade-in duration-300">
       {/* Action buttons */}
       {services.length > 0 && devices.length > 0 && (
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginBottom: '1rem' }}>
-          <button className="btn" onClick={runHealthCheck} disabled={healthChecking} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px' }}>
-            <RefreshCw size={14} className={healthChecking ? 'spin' : ''} /> {healthChecking ? 'Checking...' : 'Run Health Check'}
-          </button>
-          <button className="btn btn-primary" onClick={openCreate}><Plus size={14} /> Add Service</button>
+        <div className="flex justify-end gap-2 mb-4">
+          <Button variant="outline" size="sm" onClick={runHealthCheck} disabled={healthChecking}>
+            <RefreshCw size={14} className={healthChecking ? 'animate-spin' : ''} /> {healthChecking ? 'Checking...' : 'Run Health Check'}
+          </Button>
+          <Button size="sm" onClick={openCreate}><Plus size={14} /> Add Service</Button>
         </div>
       )}
 
       {/* Stats Cards */}
-      <div className="dash-stat-grid" style={{ marginBottom: '1.5rem', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))' }}>
-        <div className="dash-stat-card">
-          <div className="dash-stat-label">Total Services</div>
-          <div className="dash-stat-value" style={{ color: '#0055ff' }}>{services.length}</div>
-        </div>
-        <div className="dash-stat-card">
-          <div className="dash-stat-label">Healthy</div>
-          <div className="dash-stat-value" style={{ color: '#10b981' }}>{healthyCount}</div>
-        </div>
-        <div className="dash-stat-card">
-          <div className="dash-stat-label">Docker</div>
-          <div className="dash-stat-value" style={{ color: '#2563eb' }}>{dockerCount}</div>
-        </div>
-        <div className="dash-stat-card">
-          <div className="dash-stat-label">TCP / UDP</div>
-          <div className="dash-stat-value" style={{ color: '#7c3aed' }}>{tcpCount} / {udpCount}</div>
-        </div>
-        <div className="dash-stat-card">
-          <div className="dash-stat-label">Devices</div>
-          <div className="dash-stat-value" style={{ color: '#f97316' }}>{uniqueDevices}</div>
-        </div>
-        <div className="dash-stat-card">
-          <div className="dash-stat-label">Unique Ports</div>
-          <div className="dash-stat-value" style={{ color: '#06b6d4' }}>{uniquePorts}</div>
-        </div>
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(140px,1fr))] gap-4 mb-6">
+        {[
+          { label: 'Total Services', value: services.length, color: '#0055ff' },
+          { label: 'Healthy', value: healthyCount, color: '#10b981' },
+          { label: 'Docker', value: dockerCount, color: '#2563eb' },
+          { label: 'TCP / UDP', value: `${tcpCount} / ${udpCount}`, color: '#7c3aed' },
+          { label: 'Devices', value: uniqueDevices, color: '#f97316' },
+          { label: 'Unique Ports', value: uniquePorts, color: '#06b6d4' },
+        ].map((s, i) => (
+          <div key={i} className="bg-card border border-border rounded-lg p-5 text-center">
+            <div className="text-xs text-muted-foreground font-medium mb-1">{s.label}</div>
+            <div className="text-2xl font-bold" style={{ color: s.color }}>{s.value}</div>
+          </div>
+        ))}
       </div>
 
       {/* Port Conflict Warnings */}
       {portConflicts.length > 0 && (
-        <div style={{ marginBottom: '1rem', padding: '0.75rem 1rem', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-            <AlertTriangle size={16} color="#dc2626" />
-            <span style={{ fontWeight: 600, fontSize: '13px', color: '#dc2626' }}>Port Conflicts Detected ({portConflicts.length})</span>
+        <div className="mb-4 px-4 py-3 bg-[#fef2f2] border border-[#fecaca] rounded-lg">
+          <div className="flex items-center gap-2 mb-2">
+            <AlertTriangle size={16} className="text-[#dc2626]" />
+            <span className="font-semibold text-[13px] text-[#dc2626]">Port Conflicts Detected ({portConflicts.length})</span>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <div className="flex flex-col gap-1">
             {portConflicts.map((c, i) => (
-              <div key={i} style={{ fontSize: '12px', color: '#991b1b', display: 'flex', gap: '6px', alignItems: 'center' }}>
-                <code style={{ background: '#fee2e2', padding: '1px 5px', borderRadius: '3px', fontSize: '11px' }}>{c.protocol.toUpperCase()}:{c.port}</code>
+              <div key={i} className="text-xs text-[#991b1b] flex gap-1.5 items-center">
+                <code className="bg-[#fee2e2] px-1.5 py-px rounded text-[11px]">{c.protocol.toUpperCase()}:{c.port}</code>
                 <span>on <strong>{c.deviceName}</strong> — used by: {c.services.join(', ')}</span>
               </div>
             ))}
@@ -300,27 +293,27 @@ const ServicesView = ({ searchTerm, selectedProtocol = null, highlightId = null 
 
       {/* Dependency Map */}
       {dependencyEdges.length > 0 && (
-        <div className="dash-section" style={{ marginBottom: '1.5rem' }}>
-          <div className="dash-section-header">
-            <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Zap size={16} /> Service Dependencies</h2>
-            <span className="dash-section-badge">{dependencyEdges.length} connections</span>
+        <div className="bg-card border border-border rounded-lg p-5 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-[13px] font-semibold flex items-center gap-2"><Zap size={16} /> Service Dependencies</h2>
+            <span className="text-[11px] text-muted-foreground bg-(--muted-bg) px-2 py-0.5 rounded">{dependencyEdges.length} connections</span>
           </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', padding: '0.75rem' }}>
+          <div className="flex flex-wrap gap-2 p-3">
             {dependencyEdges.map((edge, i) => {
               const fromSvc = services.find(s => s.id === edge.from)
               const toSvc = services.find(s => s.id === edge.to)
               const fromHealth = healthColors[fromSvc?.healthStatus || 'unknown']
               const toHealth = healthColors[toSvc?.healthStatus || 'unknown']
               return (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 10px', background: 'var(--card-bg, #fff)', border: '1px solid var(--border, #e2e8f0)', borderRadius: '8px', fontSize: '12px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: fromHealth.dot }} />
-                    <span style={{ fontWeight: 600 }}>{edge.fromName}</span>
+                <div key={i} className="flex items-center gap-1.5 px-2.5 py-1.5 bg-card border border-border rounded-lg text-xs">
+                  <div className="flex items-center gap-1">
+                    <div className="w-1.5 h-1.5 rounded-full" style={{ background: fromHealth.dot }} />
+                    <span className="font-semibold">{edge.fromName}</span>
                   </div>
-                  <span style={{ color: '#94a3b8', fontSize: '10px' }}>depends on</span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: toHealth.dot }} />
-                    <span style={{ fontWeight: 600 }}>{edge.toName}</span>
+                  <span className="text-[10px] text-(--text-light)">depends on</span>
+                  <div className="flex items-center gap-1">
+                    <div className="w-1.5 h-1.5 rounded-full" style={{ background: toHealth.dot }} />
+                    <span className="font-semibold">{edge.toName}</span>
                   </div>
                 </div>
               )
@@ -330,40 +323,40 @@ const ServicesView = ({ searchTerm, selectedProtocol = null, highlightId = null 
       )}
 
       {services.length === 0 ? (
-        <div className="empty-state">
-          <Zap size={40} color="#cbd5e1" />
-          <h3>No services registered</h3>
-          <p>{devices.length === 0 ? 'Add devices first, then register services running on them.' : 'Register services running on your devices to track ports and protocols.'}</p>
-          {devices.length > 0 && <button className="btn btn-primary" onClick={openCreate}><Plus size={14} /> Add Service</button>}
+        <div className="flex flex-col items-center justify-center py-16 text-center bg-card border border-border rounded-lg">
+          <Zap size={40} className="text-[#cbd5e1]" />
+          <h3 className="text-base font-semibold mt-4 mb-2">No services registered</h3>
+          <p className="text-[13px] text-muted-foreground mb-6 max-w-[360px]">{devices.length === 0 ? 'Add devices first, then register services running on them.' : 'Register services running on your devices to track ports and protocols.'}</p>
+          {devices.length > 0 && <Button onClick={openCreate}><Plus size={14} /> Add Service</Button>}
         </div>
       ) : (
         <>
           {/* Docker Stacks */}
           {Object.keys(stacks).length > 0 && (
-            <div className="dash-section" style={{ marginBottom: '1.5rem' }}>
-              <div className="dash-section-header">
-                <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Container size={16} /> Docker Stacks</h2>
-                <span className="dash-section-badge">{Object.keys(stacks).length} stacks</span>
+            <div className="bg-card border border-border rounded-lg p-5 mb-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-[13px] font-semibold flex items-center gap-2"><Container size={16} /> Docker Stacks</h2>
+                <span className="text-[11px] text-muted-foreground bg-(--muted-bg) px-2 py-0.5 rounded">{Object.keys(stacks).length} stacks</span>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '0.75rem' }}>
+              <div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-3">
                 {Object.entries(stacks).map(([stackName, stackServices]) => (
-                  <div key={stackName} style={{ background: 'var(--card-bg, #fff)', border: '1px solid var(--border, #e2e8f0)', borderRadius: '10px', padding: '1rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <Container size={16} color="#2563eb" />
-                        <span style={{ fontWeight: 600, fontSize: '13px' }}>{stackName}</span>
+                  <div key={stackName} className="bg-card border border-border rounded-[10px] p-4">
+                    <div className="flex justify-between items-center mb-3">
+                      <div className="flex items-center gap-2">
+                        <Container size={16} className="text-[#2563eb]" />
+                        <span className="font-semibold text-[13px]">{stackName}</span>
                       </div>
-                      <span className="badge badge-blue" style={{ fontSize: '9px' }}>{stackServices.length} containers</span>
+                      <span className="badge badge-blue text-[9px]">{stackServices.length} containers</span>
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <div className="flex flex-col gap-1">
                       {stackServices.map(s => {
                         const hc = healthColors[s.healthStatus || 'unknown']
                         return (
-                          <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '4px 6px', borderRadius: '6px', background: '#f8fafc', fontSize: '12px' }}>
-                            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: hc.dot, flexShrink: 0 }} />
-                            <span style={{ fontWeight: 500, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
-                            {s.dockerImage && <code style={{ fontSize: '9px', color: '#64748b', background: '#e2e8f0', padding: '1px 4px', borderRadius: '3px' }}>{s.dockerImage.split('/').pop()}</code>}
-                            <code style={{ fontSize: '10px', color: '#94a3b8' }}>:{s.ports}</code>
+                          <div key={s.id} className="flex items-center gap-2 px-1.5 py-1 rounded-md bg-(--surface-alt) text-xs">
+                            <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: hc.dot }} />
+                            <span className="font-medium flex-1 min-w-0 truncate">{s.name}</span>
+                            {s.dockerImage && <code className="text-[9px] text-(--text-slate) bg-(--muted-bg) px-1 py-px rounded">{s.dockerImage.split('/').pop()}</code>}
+                            <code className="text-[10px] text-(--text-light)">:{s.ports}</code>
                           </div>
                         )
                       })}
@@ -403,10 +396,10 @@ const ServicesView = ({ searchTerm, selectedProtocol = null, highlightId = null 
                             {s.description && <span className="services-item-desc">{s.description}</span>}
                           </div>
                           <code className="services-item-port">{s.protocol.toUpperCase()}:{s.ports}</code>
-                          <div style={{ display: 'flex', gap: '2px', marginLeft: '0.25rem' }}>
-                            {s.url && <a href={s.url} target="_blank" rel="noopener noreferrer" className="btn" style={{ padding: '2px 4px', border: 'none', background: 'transparent', color: '#0055ff' }} title="Open URL"><ExternalLink size={10} /></a>}
-                            <button className="btn" style={{ padding: '2px 4px', border: 'none', background: 'transparent' }} onClick={() => openEdit(s)}><Edit2 size={10} /></button>
-                            <button className="btn" style={{ padding: '2px 4px', border: 'none', background: 'transparent', color: '#ef4444' }} onClick={() => { setDeleteTarget(s.id); setDeleteModalOpen(true) }}><Trash2 size={10} /></button>
+                          <div className="flex gap-0.5 ml-1">
+                            {s.url && <a href={s.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center h-6 w-6 rounded-md text-[#0055ff] hover:bg-accent" title="Open URL"><ExternalLink size={10} /></a>}
+                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openEdit(s)}><Edit2 size={10} /></Button>
+                            <Button variant="ghost" size="icon" className="h-6 w-6 text-[#ef4444] hover:text-[#ef4444]" onClick={() => { setDeleteTarget(s.id); setDeleteModalOpen(true) }}><Trash2 size={10} /></Button>
                           </div>
                         </div>
                         {/* Tags row */}
@@ -427,26 +420,26 @@ const ServicesView = ({ searchTerm, selectedProtocol = null, highlightId = null 
           </div>
 
           {/* Full Table */}
-          <div className="dash-section" style={{ marginTop: '1.5rem' }}>
-            <div className="dash-section-header">
-              <h2>All Services</h2>
-              <span className="dash-section-badge">{filtered.length} services</span>
+          <div className="bg-card border border-border rounded-lg p-5 mt-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-[13px] font-semibold">All Services</h2>
+              <span className="text-[11px] text-muted-foreground bg-(--muted-bg) px-2 py-0.5 rounded">{filtered.length} services</span>
             </div>
-            <div style={{ overflowX: 'auto' }}>
+            <div className="overflow-x-auto">
               <table className="unifi-table">
                 <thead>
                   <tr>
-                    <th style={{ width: '30px' }}></th>
+                    <th className="w-[30px]"></th>
                     <th>Service</th>
-                    <th style={{ width: '80px' }}>Protocol</th>
-                    <th style={{ width: '80px' }}>Port(s)</th>
+                    <th className="w-20">Protocol</th>
+                    <th className="w-20">Port(s)</th>
                     <th>Device</th>
-                    <th style={{ width: '110px' }}>Env</th>
-                    <th style={{ width: '120px' }}>Health</th>
-                    <th style={{ width: '90px' }}>Uptime</th>
-                    <th style={{ width: '100px' }}>Type</th>
+                    <th className="w-[110px]">Env</th>
+                    <th className="w-[120px]">Health</th>
+                    <th className="w-[90px]">Uptime</th>
+                    <th className="w-[100px]">Type</th>
                     <th>Description</th>
-                    <th style={{ width: '70px', textAlign: 'right', paddingRight: '1rem' }}>Actions</th>
+                    <th className="w-[70px] text-right pr-4">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -455,28 +448,29 @@ const ServicesView = ({ searchTerm, selectedProtocol = null, highlightId = null 
                     const ec = envColors[s.environment || 'production'] || envColors.production
                     return (
                       <tr key={s.id} data-highlight-id={s.id} className={highlightId === s.id ? 'highlight-flash' : ''}>
-                        <td><div style={{ width: '8px', height: '8px', borderRadius: '50%', background: hc.dot }} title={s.healthStatus || 'unknown'} /></td>
-                        <td style={{ fontWeight: 500 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <td><div className="w-2 h-2 rounded-full" style={{ background: hc.dot }} title={s.healthStatus || 'unknown'} /></td>
+                        <td className="font-medium">
+                          <div className="flex items-center gap-1">
                             {s.name}
-                            {s.version && <span style={{ fontSize: '9px', color: '#94a3b8' }}>v{s.version}</span>}
-                            {s.url && <a href={s.url} target="_blank" rel="noopener noreferrer" style={{ color: '#0055ff', display: 'inline-flex' }}><ExternalLink size={10} /></a>}
+                            {s.version && <span className="text-[9px] text-(--text-light)">v{s.version}</span>}
+                            {s.url && <a href={s.url} target="_blank" rel="noopener noreferrer" className="text-[#0055ff] inline-flex"><ExternalLink size={10} /></a>}
                           </div>
                         </td>
                         <td><span className="badge badge-blue">{s.protocol.toUpperCase()}</span></td>
-                        <td><code style={{ fontSize: '11px', background: '#f1f3f5', padding: '2px 6px', borderRadius: '3px' }}>{s.ports}</code></td>
+                        <td><code className="text-[11px] bg-(--muted-bg) px-1.5 py-0.5 rounded">{s.ports}</code></td>
                         <td>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <Server size={11} color="#0055ff" />
-                            <span style={{ fontSize: '12px' }}>{s.device?.name}</span>
+                          <div className="flex items-center gap-1">
+                            <Server size={11} className="text-[#0055ff]" />
+                            <span className="text-xs">{s.device?.name}</span>
                           </div>
                         </td>
-                        <td style={{ overflow: 'visible' }}><span className="badge" style={{ background: ec.bg, color: ec.color, fontSize: '9px', whiteSpace: 'nowrap' }}>{s.environment || 'production'}</span></td>
-                        <td style={{ overflow: 'visible' }}>
+                        <td className="overflow-visible"><span className="px-1.5 py-0.5 rounded text-[9px] font-semibold whitespace-nowrap" style={{ background: ec.bg, color: ec.color }}>{s.environment || 'production'}</span></td>
+                        <td className="overflow-visible">
                           <select
                             value={s.healthStatus || 'unknown'}
                             onChange={e => handleHealthToggle(s, e.target.value)}
-                            style={{ fontSize: '10px', padding: '2px 6px', border: `1px solid ${hc.dot}`, borderRadius: '4px', background: hc.bg, color: hc.color, cursor: 'pointer', outline: 'none', whiteSpace: 'nowrap', width: '100%' }}
+                            className="text-[10px] px-1.5 py-0.5 rounded cursor-pointer outline-none whitespace-nowrap w-full"
+                            style={{ border: `1px solid ${hc.dot}`, background: hc.bg, color: hc.color }}
                           >
                             <option value="healthy">Healthy</option>
                             <option value="degraded">Degraded</option>
@@ -484,34 +478,32 @@ const ServicesView = ({ searchTerm, selectedProtocol = null, highlightId = null 
                             <option value="unknown">Unknown</option>
                           </select>
                         </td>
-                        <td style={{ overflow: 'visible' }}>
+                        <td className="overflow-visible">
                           {s.healthCheckEnabled ? (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                <Activity size={10} color={s.uptimePercent != null && s.uptimePercent >= 99 ? '#22c55e' : s.uptimePercent != null && s.uptimePercent >= 90 ? '#f59e0b' : '#ef4444'} />
-                                <span style={{ fontSize: '11px', fontWeight: 600 }}>{s.uptimePercent != null ? `${s.uptimePercent}%` : '—'}</span>
+                            <div className="flex flex-col gap-px">
+                              <div className="flex items-center gap-1">
+                                <Activity size={10} style={{ color: s.uptimePercent != null && s.uptimePercent >= 99 ? '#22c55e' : s.uptimePercent != null && s.uptimePercent >= 90 ? '#f59e0b' : '#ef4444' }} />
+                                <span className="text-[11px] font-semibold">{s.uptimePercent != null ? `${s.uptimePercent}%` : '—'}</span>
                               </div>
-                              {s.lastResponseTime != null && (
-                                <span style={{ fontSize: '9px', color: '#94a3b8' }}>{s.lastResponseTime}ms</span>
-                              )}
+                              {s.lastResponseTime != null && <span className="text-[9px] text-(--text-light)">{s.lastResponseTime}ms</span>}
                             </div>
                           ) : (
-                            <span style={{ fontSize: '10px', color: '#cbd5e1' }}>—</span>
+                            <span className="text-[10px] text-[#cbd5e1]">—</span>
                           )}
                         </td>
                         <td>
                           {s.isDocker ? (
-                            <span className="badge" style={{ background: '#dbeafe', color: '#1e40af', fontSize: '9px' }}>
-                              Docker{s.stackName ? ` · ${s.stackName}` : ''}
-                            </span>
+                            <span className="px-1.5 py-0.5 rounded text-[9px] font-semibold bg-[#dbeafe] text-[#1e40af]">Docker{s.stackName ? ` · ${s.stackName}` : ''}</span>
                           ) : (
-                            <span style={{ fontSize: '11px', color: '#94a3b8' }}>Native</span>
+                            <span className="text-[11px] text-(--text-light)">Native</span>
                           )}
                         </td>
-                        <td style={{ color: 'var(--unifi-text-muted)', fontSize: '12px' }}>{s.description || '—'}</td>
-                        <td style={{ textAlign: 'right', paddingRight: '0.5rem' }}>
-                          <button className="btn" style={{ padding: '0 6px', border: 'none', background: 'transparent' }} onClick={() => openEdit(s)}><Edit2 size={12} /></button>
-                          <button className="btn" style={{ padding: '0 6px', border: 'none', background: 'transparent', color: '#ef4444' }} onClick={() => { setDeleteTarget(s.id); setDeleteModalOpen(true) }}><Trash2 size={12} /></button>
+                        <td className="text-muted-foreground text-xs">{s.description || '—'}</td>
+                        <td className="text-right pr-2">
+                          <div className="flex gap-1 justify-end">
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(s)}><Edit2 size={12} /></Button>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-[#ef4444] hover:text-[#ef4444]" onClick={() => { setDeleteTarget(s.id); setDeleteModalOpen(true) }}><Trash2 size={12} /></Button>
+                          </div>
                         </td>
                       </tr>
                     )
@@ -524,143 +516,144 @@ const ServicesView = ({ searchTerm, selectedProtocol = null, highlightId = null 
       )}
 
       {/* Create/Edit Modal */}
-      {modalOpen && (
-        <div className="modal-overlay" onClick={() => { setModalOpen(false); setEditingId(null) }}>
-          <div className="modal-content animate-fade-in" style={{ maxWidth: '640px' }} onClick={e => e.stopPropagation()}>
-            <h2 style={{ marginBottom: '1.5rem', fontSize: '16px', fontWeight: 600 }}>{editingId ? 'Edit Service' : 'Add Service'}</h2>
-            <form onSubmit={handleSubmit}>
-              {/* Basic Info */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
-                <div className="input-group">
-                  <label className="input-label">Service Name</label>
-                  <input required className="unifi-input" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="e.g. Nginx Proxy" />
-                </div>
-                <div className="input-group">
-                  <label className="input-label">Device</label>
-                  <select required className="unifi-input" value={form.deviceId} onChange={e => setForm({ ...form, deviceId: e.target.value })}>
-                    <option value="">Select device...</option>
-                    {devices.map(d => <option key={d.id} value={d.id}>{d.name} ({d.ipAddress})</option>)}
-                  </select>
-                </div>
+      <Dialog open={modalOpen} onOpenChange={(open) => { setModalOpen(open); if (!open) setEditingId(null) }}>
+        <DialogContent className="max-w-[640px]">
+          <DialogHeader>
+            <DialogTitle>{editingId ? 'Edit Service' : 'Add Service'}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4 mt-2">
+            <div className="grid grid-cols-2 gap-5">
+              <div>
+                <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Service Name</Label>
+                <Input required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="e.g. Nginx Proxy" className="h-9 text-[13px]" />
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.25rem' }}>
-                <div className="input-group">
-                  <label className="input-label">Protocol</label>
-                  <select className="unifi-input" value={form.protocol} onChange={e => setForm({ ...form, protocol: e.target.value })}>
-                    <option value="tcp">TCP</option>
-                    <option value="udp">UDP</option>
-                  </select>
-                </div>
-                <div className="input-group">
-                  <label className="input-label">Port(s)</label>
-                  <input required className="unifi-input" value={form.ports} onChange={e => setForm({ ...form, ports: e.target.value })} placeholder="80,443" />
-                </div>
-                <div className="input-group">
-                  <label className="input-label">Version</label>
-                  <input className="unifi-input" value={form.version} onChange={e => setForm({ ...form, version: e.target.value })} placeholder="e.g. 2.19.0" />
-                </div>
+              <div>
+                <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Device</Label>
+                <select required className="unifi-input" value={form.deviceId} onChange={e => setForm({ ...form, deviceId: e.target.value })}>
+                  <option value="">Select device...</option>
+                  {devices.map(d => <option key={d.id} value={d.id}>{d.name} ({d.ipAddress})</option>)}
+                </select>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
-                <div className="input-group">
-                  <label className="input-label">Access URL</label>
-                  <input className="unifi-input" value={form.url} onChange={e => setForm({ ...form, url: e.target.value })} placeholder="https://service.local:8080" />
-                </div>
-                <div className="input-group">
-                  <label className="input-label">Environment</label>
-                  <select className="unifi-input" value={form.environment} onChange={e => setForm({ ...form, environment: e.target.value })}>
-                    <option value="production">Production</option>
-                    <option value="staging">Staging</option>
-                    <option value="development">Development</option>
-                    <option value="testing">Testing</option>
-                  </select>
-                </div>
+            </div>
+            <div className="grid grid-cols-3 gap-5">
+              <div>
+                <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Protocol</Label>
+                <select className="unifi-input" value={form.protocol} onChange={e => setForm({ ...form, protocol: e.target.value })}>
+                  <option value="tcp">TCP</option>
+                  <option value="udp">UDP</option>
+                </select>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
-                <div className="input-group">
-                  <label className="input-label">Health Status</label>
-                  <select className="unifi-input" value={form.healthStatus} onChange={e => setForm({ ...form, healthStatus: e.target.value })}>
-                    <option value="healthy">Healthy</option>
-                    <option value="degraded">Degraded</option>
-                    <option value="down">Down</option>
-                    <option value="unknown">Unknown</option>
-                  </select>
-                </div>
-                <div className="input-group">
-                  <label className="input-label">Tags (comma-separated)</label>
-                  <input className="unifi-input" value={form.tags} onChange={e => setForm({ ...form, tags: e.target.value })} placeholder="web, proxy, critical" />
-                </div>
+              <div>
+                <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Port(s)</Label>
+                <Input required value={form.ports} onChange={e => setForm({ ...form, ports: e.target.value })} placeholder="80,443" className="h-9 text-[13px]" />
               </div>
+              <div>
+                <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Version</Label>
+                <Input value={form.version} onChange={e => setForm({ ...form, version: e.target.value })} placeholder="e.g. 2.19.0" className="h-9 text-[13px]" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-5">
+              <div>
+                <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Access URL</Label>
+                <Input value={form.url} onChange={e => setForm({ ...form, url: e.target.value })} placeholder="https://service.local:8080" className="h-9 text-[13px]" />
+              </div>
+              <div>
+                <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Environment</Label>
+                <select className="unifi-input" value={form.environment} onChange={e => setForm({ ...form, environment: e.target.value })}>
+                  <option value="production">Production</option>
+                  <option value="staging">Staging</option>
+                  <option value="development">Development</option>
+                  <option value="testing">Testing</option>
+                </select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-5">
+              <div>
+                <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Health Status</Label>
+                <select className="unifi-input" value={form.healthStatus} onChange={e => setForm({ ...form, healthStatus: e.target.value })}>
+                  <option value="healthy">Healthy</option>
+                  <option value="degraded">Degraded</option>
+                  <option value="down">Down</option>
+                  <option value="unknown">Unknown</option>
+                </select>
+              </div>
+              <div>
+                <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Tags (comma-separated)</Label>
+                <Input value={form.tags} onChange={e => setForm({ ...form, tags: e.target.value })} placeholder="web, proxy, critical" className="h-9 text-[13px]" />
+              </div>
+            </div>
 
-              {/* Docker Section */}
-              <div style={{ marginTop: '1rem', padding: '1rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '13px', fontWeight: 600, marginBottom: form.isDocker ? '1rem' : 0 }}>
-                  <input type="checkbox" checked={form.isDocker} onChange={e => setForm({ ...form, isDocker: e.target.checked })} style={{ accentColor: '#2563eb' }} />
-                  <Container size={14} color="#2563eb" /> Running in Docker
-                </label>
-                {form.isDocker && (
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
-                    <div className="input-group">
-                      <label className="input-label">Docker Image</label>
-                      <input className="unifi-input" value={form.dockerImage} onChange={e => setForm({ ...form, dockerImage: e.target.value })} placeholder="nginx:latest" />
-                    </div>
-                    <div className="input-group">
-                      <label className="input-label">Stack Name</label>
-                      <input className="unifi-input" value={form.stackName} onChange={e => setForm({ ...form, stackName: e.target.value })} placeholder="e.g. media-stack" />
-                    </div>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '12px', gridColumn: 'span 2' }}>
-                      <input type="checkbox" checked={form.dockerCompose} onChange={e => setForm({ ...form, dockerCompose: e.target.checked })} style={{ accentColor: '#2563eb' }} />
-                      Part of Docker Compose stack
-                    </label>
+            {/* Docker Section */}
+            <div className="p-4 bg-(--surface-alt) rounded-lg border border-border">
+              <label className="flex items-center gap-2 cursor-pointer text-[13px] font-semibold" style={{ marginBottom: form.isDocker ? '1rem' : 0 }}>
+                <input type="checkbox" checked={form.isDocker} onChange={e => setForm({ ...form, isDocker: e.target.checked })} className="accent-[#2563eb]" />
+                <Container size={14} className="text-[#2563eb]" /> Running in Docker
+              </label>
+              {form.isDocker && (
+                <div className="grid grid-cols-2 gap-5">
+                  <div>
+                    <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Docker Image</Label>
+                    <Input value={form.dockerImage} onChange={e => setForm({ ...form, dockerImage: e.target.value })} placeholder="nginx:latest" className="h-9 text-[13px]" />
                   </div>
-                )}
-              </div>
-
-              {/* Health Check Section */}
-              {form.url && (
-                <div style={{ marginTop: '1rem', padding: '1rem', background: '#f0fdf4', borderRadius: '8px', border: '1px solid #bbf7d0' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '13px', fontWeight: 600 }}>
-                    <input type="checkbox" checked={form.healthCheckEnabled} onChange={e => setForm({ ...form, healthCheckEnabled: e.target.checked })} style={{ accentColor: '#22c55e' }} />
-                    <Activity size={14} color="#22c55e" /> Enable Auto Health Check
+                  <div>
+                    <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Stack Name</Label>
+                    <Input value={form.stackName} onChange={e => setForm({ ...form, stackName: e.target.value })} placeholder="e.g. media-stack" className="h-9 text-[13px]" />
+                  </div>
+                  <label className="flex items-center gap-2 cursor-pointer text-xs col-span-2">
+                    <input type="checkbox" checked={form.dockerCompose} onChange={e => setForm({ ...form, dockerCompose: e.target.checked })} className="accent-[#2563eb]" />
+                    Part of Docker Compose stack
                   </label>
-                  {form.healthCheckEnabled && (
-                    <p style={{ fontSize: '11px', color: '#64748b', marginTop: '0.5rem', marginBottom: 0 }}>
-                      This service&apos;s URL will be automatically pinged at the interval configured in Settings. Health status will update to healthy, degraded, or down based on response.
-                    </p>
-                  )}
                 </div>
               )}
+            </div>
 
-              <div className="input-group" style={{ marginTop: '1rem' }}>
-                <label className="input-label">Dependencies (comma-separated service names)</label>
-                <input className="unifi-input" value={form.dependencies} onChange={e => setForm({ ...form, dependencies: e.target.value })} placeholder="e.g. PostgreSQL, Redis" />
+            {/* Health Check Section */}
+            {form.url && (
+              <div className="p-4 bg-[#f0fdf4] rounded-lg border border-[#bbf7d0]">
+                <label className="flex items-center gap-2 cursor-pointer text-[13px] font-semibold">
+                  <input type="checkbox" checked={form.healthCheckEnabled} onChange={e => setForm({ ...form, healthCheckEnabled: e.target.checked })} className="accent-[#22c55e]" />
+                  <Activity size={14} className="text-[#22c55e]" /> Enable Auto Health Check
+                </label>
+                {form.healthCheckEnabled && (
+                  <p className="text-[11px] text-(--text-slate) mt-2 mb-0">
+                    This service&apos;s URL will be automatically pinged at the interval configured in Settings. Health status will update to healthy, degraded, or down based on response.
+                  </p>
+                )}
               </div>
-              <div className="input-group">
-                <label className="input-label">Description</label>
-                <input className="unifi-input" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Optional" />
-              </div>
-              <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem', justifyContent: 'flex-end' }}>
-                <button type="button" className="btn" onClick={() => setModalOpen(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary">{editingId ? 'Save Changes' : 'Add Service'}</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+            )}
+
+            <div>
+              <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Dependencies (comma-separated service names)</Label>
+              <Input value={form.dependencies} onChange={e => setForm({ ...form, dependencies: e.target.value })} placeholder="e.g. PostgreSQL, Redis" className="h-9 text-[13px]" />
+            </div>
+            <div>
+              <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Description</Label>
+              <Input value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Optional" className="h-9 text-[13px]" />
+            </div>
+            <DialogFooter className="mt-6">
+              <Button type="button" variant="outline" onClick={() => setModalOpen(false)}>Cancel</Button>
+              <Button type="submit">{editingId ? 'Save Changes' : 'Add Service'}</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Modal */}
-      {deleteModalOpen && (
-        <div className="modal-overlay" onClick={() => setDeleteModalOpen(false)}>
-          <div className="modal-content animate-fade-in" style={{ width: '400px', textAlign: 'center' }} onClick={e => e.stopPropagation()}>
-            <div style={{ background: '#fee2e2', width: '48px', height: '48px', borderRadius: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem', color: '#dc2626' }}><Trash2 size={24} /></div>
-            <h2 style={{ marginBottom: '0.5rem', fontSize: '18px', fontWeight: 600 }}>Delete Service?</h2>
-            <p style={{ color: 'var(--unifi-text-muted)', marginBottom: '2rem' }}>This will permanently remove this service.</p>
-            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
-              <button className="btn" onClick={() => setDeleteModalOpen(false)}>Cancel</button>
-              <button className="btn btn-destructive" onClick={handleDelete}>Delete Service</button>
+      <Dialog open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
+        <DialogContent className="max-w-[400px] text-center">
+          <DialogHeader className="flex flex-col items-center">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-(--red-bg-subtle) text-(--red)">
+              <Trash2 size={24} />
             </div>
-          </div>
-        </div>
-      )}
+            <DialogTitle className="text-lg font-semibold">Delete Service?</DialogTitle>
+            <DialogDescription className="mt-2">This will permanently remove this service.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex justify-center gap-4 sm:justify-center">
+            <Button variant="outline" onClick={() => setDeleteModalOpen(false)}>Cancel</Button>
+            <Button variant="destructive" onClick={handleDelete}>Delete Service</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

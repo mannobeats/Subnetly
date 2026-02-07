@@ -6,6 +6,10 @@ import { Lock, Save, Check, AlertCircle, Loader2, Plus, Trash2, Edit2, MapPin, A
 import { CustomCategory, Site } from '@/types'
 import { renderCategoryIcon } from '@/lib/category-icons'
 import IconPicker from '@/components/IconPicker'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 
 type SettingsTab = 'profile' | 'security' | 'notifications' | 'application' | 'data' | 'about' | 'categories' | 'sites' | 'vlan-roles'
 
@@ -191,7 +195,7 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
   }
 
   if (loading) {
-    return <div className="view-loading"><Loader2 size={20} className="spin" /> Loading settings...</div>
+    return <div className="flex items-center justify-center h-[200px] gap-2 text-muted-foreground text-[13px]"><Loader2 size={20} className="animate-spin" /> Loading settings...</div>
   }
 
   const initials = session?.user?.name
@@ -209,30 +213,30 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
 
               <div className="settings-section">
                 <div className="settings-avatar">{initials}</div>
-                <div className="input-group">
-                  <label className="input-label">Display Name</label>
-                  <input
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold text-muted-foreground">Display Name</Label>
+                  <Input
                     type="text"
-                    className="unifi-input"
                     value={profileName}
                     onChange={e => setProfileName(e.target.value)}
+                    className="h-9 text-[13px]"
                   />
                 </div>
-                <div className="input-group">
-                  <label className="input-label">Email Address</label>
-                  <input
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold text-muted-foreground">Email Address</Label>
+                  <Input
                     type="email"
-                    className="unifi-input"
                     value={profileEmail}
                     onChange={e => setProfileEmail(e.target.value)}
+                    className="h-9 text-[13px]"
                   />
                 </div>
                 <div className="settings-actions">
-                  <button className="btn btn-primary" onClick={handleProfileSave} disabled={profileSaving}>
-                    {profileSaving ? <><Loader2 size={14} className="spin" /> Saving...</> :
+                  <Button onClick={handleProfileSave} disabled={profileSaving}>
+                    {profileSaving ? <><Loader2 size={14} className="animate-spin" /> Saving...</> :
                      profileSuccess ? <><Check size={14} /> Saved!</> :
                      <><Save size={14} /> Save Changes</>}
-                  </button>
+                  </Button>
                 </div>
               </div>
 
@@ -243,7 +247,7 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
                     <div className="settings-row-label">User ID</div>
                     <div className="settings-row-desc">Your unique account identifier</div>
                   </div>
-                  <span className="settings-row-value" style={{ fontFamily: 'monospace', fontSize: '11px' }}>
+                  <span className="settings-row-value font-mono text-[11px]">
                     {session?.user?.id || '—'}
                   </span>
                 </div>
@@ -267,55 +271,54 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
               <div className="settings-section">
                 <h3>Change Password</h3>
                 {passwordError && (
-                  <div className="login-error" style={{ marginBottom: '1rem' }}>
+                  <div className="flex items-center gap-2 mb-4 px-3 py-2 rounded-md bg-[#fef2f2] border border-[#fecaca] text-[#dc2626] text-[13px]">
                     <AlertCircle size={14} />
                     <span>{passwordError}</span>
                   </div>
                 )}
                 {passwordSuccess && (
-                  <div className="login-setup-notice" style={{ marginBottom: '1rem', background: '#ecfdf5', borderColor: '#a7f3d0', color: '#065f46' }}>
+                  <div className="flex items-center gap-2 mb-4 px-3 py-2 rounded-md bg-[#ecfdf5] border border-[#a7f3d0] text-[#065f46] text-[13px]">
                     <Check size={14} />
                     <span>Password changed successfully</span>
                   </div>
                 )}
-                <div className="input-group">
-                  <label className="input-label">Current Password</label>
-                  <input
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold text-muted-foreground">Current Password</Label>
+                  <Input
                     type="password"
-                    className="unifi-input"
                     value={currentPassword}
                     onChange={e => setCurrentPassword(e.target.value)}
                     placeholder="Enter current password"
+                    className="h-9 text-[13px]"
                   />
                 </div>
-                <div className="input-group">
-                  <label className="input-label">New Password</label>
-                  <input
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold text-muted-foreground">New Password</Label>
+                  <Input
                     type="password"
-                    className="unifi-input"
                     value={newPassword}
                     onChange={e => setNewPassword(e.target.value)}
                     placeholder="Enter new password (min 6 characters)"
+                    className="h-9 text-[13px]"
                   />
                 </div>
-                <div className="input-group">
-                  <label className="input-label">Confirm New Password</label>
-                  <input
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold text-muted-foreground">Confirm New Password</Label>
+                  <Input
                     type="password"
-                    className="unifi-input"
                     value={confirmPassword}
                     onChange={e => setConfirmPassword(e.target.value)}
                     placeholder="Confirm new password"
+                    className="h-9 text-[13px]"
                   />
                 </div>
                 <div className="settings-actions">
-                  <button
-                    className="btn btn-primary"
+                  <Button
                     onClick={handlePasswordChange}
                     disabled={passwordSaving || !currentPassword || !newPassword || !confirmPassword}
                   >
-                    {passwordSaving ? <><Loader2 size={14} className="spin" /> Changing...</> : <><Lock size={14} /> Change Password</>}
-                  </button>
+                    {passwordSaving ? <><Loader2 size={14} className="animate-spin" /> Changing...</> : <><Lock size={14} /> Change Password</>}
+                  </Button>
                 </div>
               </div>
 
@@ -368,8 +371,7 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
                     <div className="settings-row-desc">The view shown when you open the app</div>
                   </div>
                   <select
-                    className="unifi-input"
-                    style={{ width: '160px' }}
+                    className="unifi-input w-40"
                     value={defaultView}
                     onChange={e => setDefaultView(e.target.value)}
                   >
@@ -386,8 +388,7 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
                     <div className="settings-row-desc">Number of items shown in tables</div>
                   </div>
                   <select
-                    className="unifi-input"
-                    style={{ width: '100px' }}
+                    className="unifi-input w-[100px]"
                     value={itemsPerPage}
                     onChange={e => setItemsPerPage(e.target.value)}
                   >
@@ -437,8 +438,8 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
               </div>
 
               <div className="settings-section">
-                <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Activity size={16} color="#22c55e" /> Health Checks</h3>
-                <p style={{ fontSize: '12px', color: 'var(--text-light)', marginBottom: '1rem' }}>
+                <h3 className="flex items-center gap-2"><Activity size={16} className="text-[#22c55e]" /> Health Checks</h3>
+                <p className="text-xs text-(--text-light) mb-4">
                   Automatically monitor your services by pinging their URLs at regular intervals. Services must have a URL and health check enabled individually.
                 </p>
                 <div className="settings-row">
@@ -459,8 +460,7 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
                         <div className="settings-row-desc">How often to ping service URLs</div>
                       </div>
                       <select
-                        className="unifi-input"
-                        style={{ width: '160px' }}
+                        className="unifi-input w-40"
                         value={hcInterval}
                         onChange={e => setHcInterval(parseInt(e.target.value))}
                       >
@@ -479,8 +479,7 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
                         <div className="settings-row-desc">Max seconds to wait for a response before marking as down</div>
                       </div>
                       <select
-                        className="unifi-input"
-                        style={{ width: '120px' }}
+                        className="unifi-input w-[120px]"
                         value={hcTimeout}
                         onChange={e => setHcTimeout(parseInt(e.target.value))}
                       >
@@ -492,11 +491,11 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
                     </div>
                   </>
                 )}
-                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
-                  <button className="btn btn-primary" onClick={handleHealthCheckSave} disabled={hcSaving} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    {hcSaving ? <Loader2 size={14} className="spin" /> : hcSuccess ? <Check size={14} /> : <Save size={14} />}
+                <div className="flex justify-end mt-4">
+                  <Button onClick={handleHealthCheckSave} disabled={hcSaving}>
+                    {hcSaving ? <Loader2 size={14} className="animate-spin" /> : hcSuccess ? <Check size={14} /> : <Save size={14} />}
                     {hcSaving ? 'Saving...' : hcSuccess ? 'Saved!' : 'Save Health Check Settings'}
-                  </button>
+                  </Button>
                 </div>
               </div>
             </>
@@ -528,7 +527,7 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
 
               <div className="settings-section">
                 <h3>Backup & Export</h3>
-                <p style={{ fontSize: '12px', color: 'var(--text-light)', marginBottom: '1rem' }}>
+                <p className="text-xs text-(--text-light) mb-4">
                   Export a full backup of the current site including all devices, subnets, VLANs, IP addresses, services, WiFi networks, categories, and changelog.
                 </p>
                 <div className="settings-row">
@@ -536,7 +535,7 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
                     <div className="settings-row-label">Export Full Backup</div>
                     <div className="settings-row-desc">Download a complete JSON backup of all site data</div>
                   </div>
-                  <button className="btn" disabled={exporting} onClick={async () => {
+                  <Button variant="outline" disabled={exporting} onClick={async () => {
                     setExporting(true)
                     try {
                       const res = await fetch('/api/backup/export')
@@ -556,33 +555,29 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
                       setExporting(false)
                     }
                   }}>
-                    {exporting ? <><Loader2 size={14} className="spin" /> Exporting...</> : <><Download size={14} /> Export Backup</>}
-                  </button>
+                    {exporting ? <><Loader2 size={14} className="animate-spin" /> Exporting...</> : <><Download size={14} /> Export Backup</>}
+                  </Button>
                 </div>
               </div>
 
               <div className="settings-section">
                 <h3>Restore from Backup</h3>
-                <p style={{ fontSize: '12px', color: 'var(--text-light)', marginBottom: '1rem' }}>
-                  Import a previously exported JSON backup. <strong style={{ color: 'var(--red)' }}>Warning:</strong> This will replace ALL data in the current site.
+                <p className="text-xs text-(--text-light) mb-4">
+                  Import a previously exported JSON backup. <strong className="text-(--red)">Warning:</strong> This will replace ALL data in the current site.
                 </p>
                 {importResult && (
-                  <div style={{
-                    padding: '0.75rem 1rem',
-                    borderRadius: '6px',
-                    marginBottom: '1rem',
-                    fontSize: '12px',
+                  <div className="px-4 py-3 rounded-md mb-4 text-xs" style={{
                     background: importResult.success ? 'var(--green-bg)' : 'var(--red-bg)',
                     color: importResult.success ? 'var(--green)' : 'var(--red)',
                     border: `1px solid ${importResult.success ? 'var(--green)' : 'var(--red-border)'}`,
                   }}>
-                    <div style={{ fontWeight: 600, marginBottom: importResult.counts ? '0.5rem' : 0 }}>
-                      {importResult.success ? <><Check size={12} style={{ marginRight: '4px' }} />Import successful!</> : <><AlertCircle size={12} style={{ marginRight: '4px' }} />{importResult.message}</>}
+                    <div className="font-semibold" style={{ marginBottom: importResult.counts ? '0.5rem' : 0 }}>
+                      {importResult.success ? <><Check size={12} className="inline mr-1" />Import successful!</> : <><AlertCircle size={12} className="inline mr-1" />{importResult.message}</>}
                     </div>
                     {importResult.counts && (
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                      <div className="flex flex-wrap gap-2">
                         {Object.entries(importResult.counts).filter(([, v]) => v > 0).map(([k, v]) => (
-                          <span key={k} style={{ background: 'rgba(255,255,255,0.5)', padding: '1px 6px', borderRadius: '3px' }}>{v} {k}</span>
+                          <span key={k} className="bg-white/50 px-1.5 py-px rounded">{v} {k}</span>
                         ))}
                       </div>
                     )}
@@ -593,10 +588,10 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
                     <div className="settings-row-label">Import Backup File</div>
                     <div className="settings-row-desc">Select a .json backup file to restore</div>
                   </div>
-                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                    <label className="btn" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <div className="flex gap-2 items-center">
+                    <label className="inline-flex items-center gap-1.5 cursor-pointer px-3 py-1.5 rounded-md border border-border bg-card text-[13px] font-medium hover:bg-accent transition-colors">
                       <Upload size={14} /> Choose File
-                      <input type="file" accept=".json" style={{ display: 'none' }} onChange={e => {
+                      <input type="file" accept=".json" className="hidden" onChange={e => {
                         const file = e.target.files?.[0]
                         if (file) {
                           setPendingImportFile(file)
@@ -611,13 +606,13 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
 
               <div className="settings-section settings-danger-zone">
                 <h3>Danger Zone</h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div className="flex flex-col gap-3">
                   <div>
                     <div className="settings-row-label">Clear All Data</div>
                     <div className="settings-row-desc">Permanently delete all devices, subnets, VLANs, services, and changelog entries</div>
                   </div>
                   <div>
-                    <button className="btn btn-destructive" onClick={async () => {
+                    <Button variant="destructive" onClick={async () => {
                       if (confirm('Are you sure you want to delete ALL data? This cannot be undone.')) {
                         if (confirm('This is your last chance. All site data will be permanently deleted.')) {
                           try {
@@ -635,68 +630,67 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
                       }
                     }}>
                       Clear All Data
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </div>
 
               {/* Import Confirmation Modal */}
-              {importConfirmOpen && pendingImportFile && (
-                <div className="modal-overlay" onClick={() => { setImportConfirmOpen(false); setPendingImportFile(null) }}>
-                  <div className="modal-content animate-fade-in" style={{ width: '440px', textAlign: 'center' }} onClick={e => e.stopPropagation()}>
-                    <div style={{ background: 'var(--orange-bg, #fff7ed)', width: '48px', height: '48px', borderRadius: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem', color: 'var(--orange)' }}>
+              <Dialog open={importConfirmOpen && !!pendingImportFile} onOpenChange={(open) => { if (!open) { setImportConfirmOpen(false); setPendingImportFile(null) } }}>
+                <DialogContent className="max-w-[440px] text-center">
+                  <DialogHeader className="flex flex-col items-center">
+                    <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-(--orange-bg) text-(--orange)">
                       <Upload size={24} />
                     </div>
-                    <h2 style={{ marginBottom: '0.5rem', fontSize: '18px', fontWeight: 600 }}>Restore from Backup?</h2>
-                    <p style={{ color: 'var(--unifi-text-muted)', marginBottom: '0.5rem' }}>
+                    <DialogTitle className="text-lg font-semibold">Restore from Backup?</DialogTitle>
+                    <DialogDescription className="mt-2">
                       This will <strong>replace all data</strong> in the current site with the contents of:
-                    </p>
-                    <p style={{ fontFamily: 'monospace', fontSize: '12px', background: 'var(--muted-bg)', padding: '6px 12px', borderRadius: '4px', marginBottom: '1.5rem', wordBreak: 'break-all' }}>
-                      {pendingImportFile.name}
-                    </p>
-                    <p style={{ color: 'var(--red)', fontSize: '12px', marginBottom: '1.5rem' }}>
-                      This action cannot be undone. Export a backup first if needed.
-                    </p>
-                    <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
-                      <button className="btn" onClick={() => { setImportConfirmOpen(false); setPendingImportFile(null) }}>Cancel</button>
-                      <button className="btn btn-destructive" disabled={importing} onClick={async () => {
-                        setImporting(true)
-                        setImportResult(null)
-                        try {
-                          const text = await pendingImportFile.text()
-                          const data = JSON.parse(text)
-                          const res = await fetch('/api/backup/import', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(data),
-                          })
-                          const result = await res.json()
-                          if (res.ok) {
-                            setImportResult({ success: true, message: 'Import successful', counts: result.counts })
-                            setImportConfirmOpen(false)
-                            setPendingImportFile(null)
-                            // Trigger data refresh in parent
-                            onCategoriesChange?.()
-                            onSitesChange?.()
-                          } else {
-                            setImportResult({ success: false, message: result.error || 'Import failed' })
-                            setImportConfirmOpen(false)
-                            setPendingImportFile(null)
-                          }
-                        } catch (err) {
-                          setImportResult({ success: false, message: err instanceof Error ? err.message : 'Invalid backup file' })
+                    </DialogDescription>
+                  </DialogHeader>
+                  <p className="font-mono text-xs bg-(--muted-bg) px-3 py-1.5 rounded break-all mb-4">
+                    {pendingImportFile?.name}
+                  </p>
+                  <p className="text-(--red) text-xs mb-4">
+                    This action cannot be undone. Export a backup first if needed.
+                  </p>
+                  <DialogFooter className="flex justify-center gap-4 sm:justify-center">
+                    <Button variant="outline" onClick={() => { setImportConfirmOpen(false); setPendingImportFile(null) }}>Cancel</Button>
+                    <Button variant="destructive" disabled={importing} onClick={async () => {
+                      setImporting(true)
+                      setImportResult(null)
+                      try {
+                        const text = await pendingImportFile!.text()
+                        const data = JSON.parse(text)
+                        const res = await fetch('/api/backup/import', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify(data),
+                        })
+                        const result = await res.json()
+                        if (res.ok) {
+                          setImportResult({ success: true, message: 'Import successful', counts: result.counts })
                           setImportConfirmOpen(false)
                           setPendingImportFile(null)
-                        } finally {
-                          setImporting(false)
+                          onCategoriesChange?.()
+                          onSitesChange?.()
+                        } else {
+                          setImportResult({ success: false, message: result.error || 'Import failed' })
+                          setImportConfirmOpen(false)
+                          setPendingImportFile(null)
                         }
-                      }}>
-                        {importing ? <><Loader2 size={14} className="spin" /> Importing...</> : 'Restore Backup'}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
+                      } catch (err) {
+                        setImportResult({ success: false, message: err instanceof Error ? err.message : 'Invalid backup file' })
+                        setImportConfirmOpen(false)
+                        setPendingImportFile(null)
+                      } finally {
+                        setImporting(false)
+                      }
+                    }}>
+                      {importing ? <><Loader2 size={14} className="animate-spin" /> Importing...</> : 'Restore Backup'}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </>
           )}
 
@@ -757,7 +751,7 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
 
               <div className="settings-section">
                 <h3>Features</h3>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                <div className="flex flex-wrap gap-2">
                   {['Device Management', 'IP Planning (IPAM)', 'VLAN Management', 'Network Topology', 'Service Tracking', 'Changelog Audit', 'Multi-Site Support', 'Custom Categories', 'Export/Import', 'Authentication'].map(f => (
                     <span key={f} className="badge badge-blue">{f}</span>
                   ))}
@@ -822,47 +816,47 @@ function CategoriesTab({ categories, onCategoriesChange }: { categories: CustomC
 
       <div className="settings-section">
         <h3>Add New Category</h3>
-        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
-          <div className="input-group" style={{ flex: 1, minWidth: '140px' }}>
-            <label className="input-label">Name</label>
-            <input className="unifi-input" value={newName} onChange={e => setNewName(e.target.value)} placeholder="e.g. Firewall" onKeyDown={e => e.key === 'Enter' && handleCreate()} />
+        <div className="flex gap-3 items-end flex-wrap">
+          <div className="flex-1 min-w-[140px] space-y-1.5">
+            <Label className="text-xs font-semibold text-muted-foreground">Name</Label>
+            <Input value={newName} onChange={e => setNewName(e.target.value)} placeholder="e.g. Firewall" onKeyDown={e => e.key === 'Enter' && handleCreate()} className="h-9 text-[13px]" />
           </div>
-          <div className="input-group" style={{ width: '140px' }}>
-            <label className="input-label">Icon</label>
+          <div className="w-[140px] space-y-1.5">
+            <Label className="text-xs font-semibold text-muted-foreground">Icon</Label>
             <IconPicker value={newIcon} onChange={setNewIcon} color={newColor} />
           </div>
-          <div className="input-group" style={{ width: '60px' }}>
-            <label className="input-label">Color</label>
-            <input type="color" value={newColor} onChange={e => setNewColor(e.target.value)} style={{ width: '100%', height: '34px', padding: '2px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', cursor: 'pointer' }} />
+          <div className="w-[60px] space-y-1.5">
+            <Label className="text-xs font-semibold text-muted-foreground">Color</Label>
+            <input type="color" value={newColor} onChange={e => setNewColor(e.target.value)} className="w-full h-[34px] p-0.5 border border-border rounded cursor-pointer" />
           </div>
         </div>
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
-          <button className="btn btn-primary" onClick={handleCreate} disabled={!newName.trim()}>
+        <div className="flex justify-end mt-4">
+          <Button onClick={handleCreate} disabled={!newName.trim()}>
             <Plus size={14} /> Add Category
-          </button>
+          </Button>
         </div>
       </div>
 
       <div className="settings-section">
         <h3>Current Categories ({categories.length})</h3>
         {categories.length === 0 ? (
-          <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>No categories yet. Add one above.</p>
+          <p className="text-muted-foreground text-[13px]">No categories yet. Add one above.</p>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          <div className="flex flex-col gap-2">
             {categories.map(cat => {
               if (editingId === cat.id) {
                 return (
-                  <div key={cat.id} className="settings-row" style={{ padding: '0.75rem' }}>
-                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flex: 1, flexWrap: 'wrap' }}>
-                      <input className="unifi-input" style={{ width: '140px', height: '30px' }} value={editName} onChange={e => setEditName(e.target.value)} />
-                      <div style={{ width: '120px' }}>
+                  <div key={cat.id} className="settings-row p-3">
+                    <div className="flex gap-2 items-center flex-1 flex-wrap">
+                      <Input className="w-[140px] h-[30px] text-[13px]" value={editName} onChange={e => setEditName(e.target.value)} />
+                      <div className="w-[120px]">
                         <IconPicker value={editIcon} onChange={setEditIcon} color={editColor} />
                       </div>
-                      <input type="color" value={editColor} onChange={e => setEditColor(e.target.value)} style={{ width: '36px', height: '30px', padding: '2px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', cursor: 'pointer' }} />
-                      <button className="btn btn-primary" style={{ height: '30px', padding: '0 10px', fontSize: '11px' }} onClick={() => handleUpdate(cat.id)}>
+                      <input type="color" value={editColor} onChange={e => setEditColor(e.target.value)} className="w-9 h-[30px] p-0.5 border border-border rounded cursor-pointer" />
+                      <Button size="sm" className="h-[30px] px-2.5 text-[11px]" onClick={() => handleUpdate(cat.id)}>
                         <Check size={12} /> Save
-                      </button>
-                      <button className="btn" style={{ height: '30px', padding: '0 10px', fontSize: '11px' }} onClick={() => setEditingId(null)}>Cancel</button>
+                      </Button>
+                      <Button variant="outline" size="sm" className="h-[30px] px-2.5 text-[11px]" onClick={() => setEditingId(null)}>Cancel</Button>
                     </div>
                   </div>
                 )
@@ -881,8 +875,8 @@ function CategoriesTab({ categories, onCategoriesChange }: { categories: CustomC
 function CatRow({ cat, onEdit, onDelete }: { cat: CustomCategory, onEdit: (c: CustomCategory) => void, onDelete: (id: string) => void }) {
   return (
     <div className="settings-row">
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-        <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: cat.color + '18', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div className="flex items-center gap-3">
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: cat.color + '18' }}>
           {renderCategoryIcon(cat.icon, 16, cat.color)}
         </div>
         <div>
@@ -890,13 +884,13 @@ function CatRow({ cat, onEdit, onDelete }: { cat: CustomCategory, onEdit: (c: Cu
           <div className="settings-row-desc">{cat.icon} · {cat.color}</div>
         </div>
       </div>
-      <div style={{ display: 'flex', gap: '0.25rem' }}>
-        <button className="btn" style={{ padding: '4px 8px', border: 'none', background: 'transparent' }} onClick={() => onEdit(cat)} title="Edit">
+      <div className="flex gap-1">
+        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(cat)} title="Edit">
           <Edit2 size={13} />
-        </button>
-        <button className="btn" style={{ padding: '4px 8px', border: 'none', background: 'transparent', color: 'var(--red)' }} onClick={() => onDelete(cat.id)} title="Delete">
+        </Button>
+        <Button variant="ghost" size="icon" className="h-7 w-7 text-(--red) hover:text-(--red)" onClick={() => onDelete(cat.id)} title="Delete">
           <Trash2 size={13} />
-        </button>
+        </Button>
       </div>
     </div>
   )
@@ -944,54 +938,54 @@ function SitesTab({ sites, activeSiteId, onSitesChange }: { sites: Site[], activ
 
       <div className="settings-section">
         <h3>Create New Site</h3>
-        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
-          <div className="input-group" style={{ flex: 1, minWidth: '160px' }}>
-            <label className="input-label">Site Name</label>
-            <input className="unifi-input" value={newName} onChange={e => setNewName(e.target.value)} placeholder="e.g. Home Lab" onKeyDown={e => e.key === 'Enter' && handleCreate()} />
+        <div className="flex gap-3 items-end flex-wrap">
+          <div className="flex-1 min-w-[160px] space-y-1.5">
+            <Label className="text-xs font-semibold text-muted-foreground">Site Name</Label>
+            <Input value={newName} onChange={e => setNewName(e.target.value)} placeholder="e.g. Home Lab" onKeyDown={e => e.key === 'Enter' && handleCreate()} className="h-9 text-[13px]" />
           </div>
-          <div className="input-group" style={{ flex: 1, minWidth: '160px' }}>
-            <label className="input-label">Description (optional)</label>
-            <input className="unifi-input" value={newDesc} onChange={e => setNewDesc(e.target.value)} placeholder="e.g. Main rack in basement" />
+          <div className="flex-1 min-w-[160px] space-y-1.5">
+            <Label className="text-xs font-semibold text-muted-foreground">Description (optional)</Label>
+            <Input value={newDesc} onChange={e => setNewDesc(e.target.value)} placeholder="e.g. Main rack in basement" className="h-9 text-[13px]" />
           </div>
         </div>
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
-          <button className="btn btn-primary" onClick={handleCreate} disabled={!newName.trim()}>
+        <div className="flex justify-end mt-4">
+          <Button onClick={handleCreate} disabled={!newName.trim()}>
             <Plus size={14} /> Create Site
-          </button>
+          </Button>
         </div>
       </div>
 
       <div className="settings-section">
         <h3>Your Sites ({sites.length})</h3>
         {sites.length === 0 ? (
-          <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>No sites yet.</p>
+          <p className="text-muted-foreground text-[13px]">No sites yet.</p>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          <div className="flex flex-col gap-2">
             {sites.map(site => {
               if (editingId === site.id) {
                 return (
-                  <div key={site.id} className="settings-row" style={{ padding: '0.75rem' }}>
-                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flex: 1, flexWrap: 'wrap' }}>
-                      <input className="unifi-input" style={{ width: '160px', height: '30px' }} value={editName} onChange={e => setEditName(e.target.value)} />
-                      <input className="unifi-input" style={{ width: '200px', height: '30px' }} value={editDesc} onChange={e => setEditDesc(e.target.value)} placeholder="Description" />
-                      <button className="btn btn-primary" style={{ height: '30px', padding: '0 10px', fontSize: '11px' }} onClick={() => handleUpdate(site.id)}>
+                  <div key={site.id} className="settings-row p-3">
+                    <div className="flex gap-2 items-center flex-1 flex-wrap">
+                      <Input className="w-40 h-[30px] text-[13px]" value={editName} onChange={e => setEditName(e.target.value)} />
+                      <Input className="w-[200px] h-[30px] text-[13px]" value={editDesc} onChange={e => setEditDesc(e.target.value)} placeholder="Description" />
+                      <Button size="sm" className="h-[30px] px-2.5 text-[11px]" onClick={() => handleUpdate(site.id)}>
                         <Check size={12} /> Save
-                      </button>
-                      <button className="btn" style={{ height: '30px', padding: '0 10px', fontSize: '11px' }} onClick={() => setEditingId(null)}>Cancel</button>
+                      </Button>
+                      <Button variant="outline" size="sm" className="h-[30px] px-2.5 text-[11px]" onClick={() => setEditingId(null)}>Cancel</Button>
                     </div>
                   </div>
                 )
               }
               return (
                 <div key={site.id} className="settings-row">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: site.id === activeSiteId ? 'var(--blue-bg)' : 'var(--muted-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: site.id === activeSiteId ? 'var(--blue-bg)' : 'var(--muted-bg)' }}>
                       <MapPin size={16} color={site.id === activeSiteId ? 'var(--blue)' : 'var(--text-muted)'} />
                     </div>
                     <div>
                       <div className="settings-row-label">
                         {site.name}
-                        {site.id === activeSiteId && <span className="badge badge-blue" style={{ marginLeft: '0.5rem', fontSize: '9px' }}>Active</span>}
+                        {site.id === activeSiteId && <span className="badge badge-blue ml-2 text-[9px]">Active</span>}
                       </div>
                       <div className="settings-row-desc">
                         {site.description || 'No description'}
@@ -999,14 +993,14 @@ function SitesTab({ sites, activeSiteId, onSitesChange }: { sites: Site[], activ
                       </div>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', gap: '0.25rem' }}>
-                    <button className="btn" style={{ padding: '4px 8px', border: 'none', background: 'transparent' }} onClick={() => { setEditingId(site.id); setEditName(site.name); setEditDesc(site.description || '') }} title="Edit">
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditingId(site.id); setEditName(site.name); setEditDesc(site.description || '') }} title="Edit">
                       <Edit2 size={13} />
-                    </button>
+                    </Button>
                     {sites.length > 1 && (
-                      <button className="btn" style={{ padding: '4px 8px', border: 'none', background: 'transparent', color: 'var(--red)' }} onClick={() => handleDelete(site.id)} title="Delete">
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-(--red) hover:text-(--red)" onClick={() => handleDelete(site.id)} title="Delete">
                         <Trash2 size={13} />
-                      </button>
+                      </Button>
                     )}
                   </div>
                 </div>
@@ -1064,55 +1058,55 @@ function VlanRolesTab({ roles, onRolesChange }: { roles: CustomCategory[], onRol
 
       <div className="settings-section">
         <h3>Add New Role</h3>
-        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
-          <div className="input-group" style={{ flex: 1, minWidth: '140px' }}>
-            <label className="input-label">Name</label>
-            <input className="unifi-input" value={newName} onChange={e => setNewName(e.target.value)} placeholder="e.g. DMZ" onKeyDown={e => e.key === 'Enter' && handleCreate()} />
+        <div className="flex gap-3 items-end flex-wrap">
+          <div className="flex-1 min-w-[140px] space-y-1.5">
+            <Label className="text-xs font-semibold text-muted-foreground">Name</Label>
+            <Input value={newName} onChange={e => setNewName(e.target.value)} placeholder="e.g. DMZ" onKeyDown={e => e.key === 'Enter' && handleCreate()} className="h-9 text-[13px]" />
           </div>
-          <div className="input-group" style={{ width: '140px' }}>
-            <label className="input-label">Icon</label>
+          <div className="w-[140px] space-y-1.5">
+            <Label className="text-xs font-semibold text-muted-foreground">Icon</Label>
             <IconPicker value={newIcon} onChange={setNewIcon} color={newColor} />
           </div>
-          <div className="input-group" style={{ width: '60px' }}>
-            <label className="input-label">Color</label>
-            <input type="color" value={newColor} onChange={e => setNewColor(e.target.value)} style={{ width: '100%', height: '34px', padding: '2px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', cursor: 'pointer' }} />
+          <div className="w-[60px] space-y-1.5">
+            <Label className="text-xs font-semibold text-muted-foreground">Color</Label>
+            <input type="color" value={newColor} onChange={e => setNewColor(e.target.value)} className="w-full h-[34px] p-0.5 border border-border rounded cursor-pointer" />
           </div>
         </div>
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
-          <button className="btn btn-primary" onClick={handleCreate} disabled={!newName.trim()}>
+        <div className="flex justify-end mt-4">
+          <Button onClick={handleCreate} disabled={!newName.trim()}>
             <Plus size={14} /> Add Role
-          </button>
+          </Button>
         </div>
       </div>
 
       <div className="settings-section">
         <h3>Current Roles ({roles.length})</h3>
         {roles.length === 0 ? (
-          <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>No VLAN roles yet. Add one above.</p>
+          <p className="text-muted-foreground text-[13px]">No VLAN roles yet. Add one above.</p>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          <div className="flex flex-col gap-2">
             {roles.map(role => {
               if (editingId === role.id) {
                 return (
-                  <div key={role.id} className="settings-row" style={{ padding: '0.75rem' }}>
-                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flex: 1, flexWrap: 'wrap' }}>
-                      <input className="unifi-input" style={{ width: '140px', height: '30px' }} value={editName} onChange={e => setEditName(e.target.value)} />
-                      <div style={{ width: '120px' }}>
+                  <div key={role.id} className="settings-row p-3">
+                    <div className="flex gap-2 items-center flex-1 flex-wrap">
+                      <Input className="w-[140px] h-[30px] text-[13px]" value={editName} onChange={e => setEditName(e.target.value)} />
+                      <div className="w-[120px]">
                         <IconPicker value={editIcon} onChange={setEditIcon} color={editColor} />
                       </div>
-                      <input type="color" value={editColor} onChange={e => setEditColor(e.target.value)} style={{ width: '36px', height: '30px', padding: '2px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', cursor: 'pointer' }} />
-                      <button className="btn btn-primary" style={{ height: '30px', padding: '0 10px', fontSize: '11px' }} onClick={() => handleUpdate(role.id)}>
+                      <input type="color" value={editColor} onChange={e => setEditColor(e.target.value)} className="w-9 h-[30px] p-0.5 border border-border rounded cursor-pointer" />
+                      <Button size="sm" className="h-[30px] px-2.5 text-[11px]" onClick={() => handleUpdate(role.id)}>
                         <Check size={12} /> Save
-                      </button>
-                      <button className="btn" style={{ height: '30px', padding: '0 10px', fontSize: '11px' }} onClick={() => setEditingId(null)}>Cancel</button>
+                      </Button>
+                      <Button variant="outline" size="sm" className="h-[30px] px-2.5 text-[11px]" onClick={() => setEditingId(null)}>Cancel</Button>
                     </div>
                   </div>
                 )
               }
               return (
                 <div key={role.id} className="settings-row">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: role.color + '18', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: role.color + '18' }}>
                       {renderCategoryIcon(role.icon, 16, role.color)}
                     </div>
                     <div>
@@ -1120,13 +1114,13 @@ function VlanRolesTab({ roles, onRolesChange }: { roles: CustomCategory[], onRol
                       <div className="settings-row-desc">{role.slug} · {role.color}</div>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', gap: '0.25rem' }}>
-                    <button className="btn" style={{ padding: '4px 8px', border: 'none', background: 'transparent' }} onClick={() => { setEditingId(role.id); setEditName(role.name); setEditIcon(role.icon); setEditColor(role.color) }} title="Edit">
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditingId(role.id); setEditName(role.name); setEditIcon(role.icon); setEditColor(role.color) }} title="Edit">
                       <Edit2 size={13} />
-                    </button>
-                    <button className="btn" style={{ padding: '4px 8px', border: 'none', background: 'transparent', color: 'var(--red)' }} onClick={() => handleDelete(role.id)} title="Delete">
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-(--red) hover:text-(--red)" onClick={() => handleDelete(role.id)} title="Delete">
                       <Trash2 size={13} />
-                    </button>
+                    </Button>
                   </div>
                 </div>
               )

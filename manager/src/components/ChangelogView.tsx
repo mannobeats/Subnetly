@@ -3,11 +3,13 @@
 import { useState, useEffect, useCallback } from 'react'
 import { ArrowUpRight, ArrowDownRight, Trash2, Clock } from 'lucide-react'
 import { ChangeLogEntry } from '@/types'
+import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 
 const actionColors: Record<string, { bg: string; color: string; icon: React.ElementType }> = {
-  create: { bg: '#ecfdf5', color: '#10b981', icon: ArrowUpRight },
-  update: { bg: '#eef5ff', color: '#0055ff', icon: ArrowDownRight },
-  delete: { bg: '#fee2e2', color: '#ef4444', icon: Trash2 },
+  create: { bg: 'var(--green-bg)', color: 'var(--green)', icon: ArrowUpRight },
+  update: { bg: 'var(--blue-bg)', color: 'var(--blue)', icon: ArrowDownRight },
+  delete: { bg: 'var(--red-bg-subtle)', color: '#ef4444', icon: Trash2 },
 }
 
 const actionTypes = ['create', 'update', 'delete']
@@ -47,7 +49,7 @@ const ChangelogView = ({ searchTerm, selectedFilter = null }: { searchTerm: stri
     }
   }
 
-  if (loading) return <div className="view-loading">Loading changelog...</div>
+  if (loading) return <div className="flex items-center justify-center h-[200px] text-muted-foreground text-[13px]">Loading changelog...</div>
 
   // Stats
   const createCount = logs.filter(l => l.action === 'create').length
@@ -55,30 +57,30 @@ const ChangelogView = ({ searchTerm, selectedFilter = null }: { searchTerm: stri
   const deleteCount = logs.filter(l => l.action === 'delete').length
 
   return (
-    <div className="changelog-view animate-fade-in">
+    <div className="animate-in fade-in duration-300">
       {/* Stats + Actions Bar */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-        <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
-          <span style={{ fontSize: '12px', color: 'var(--unifi-text-muted)' }}>{logs.length} total entries</span>
-          <div style={{ display: 'flex', gap: '0.75rem' }}>
-            <span style={{ fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />{createCount} created</span>
-            <span style={{ fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#0055ff', display: 'inline-block' }} />{updateCount} updated</span>
-            <span style={{ fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ef4444', display: 'inline-block' }} />{deleteCount} deleted</span>
+      <div className="flex justify-between items-center mb-5">
+        <div className="flex gap-6 items-center">
+          <span className="text-xs text-muted-foreground">{logs.length} total entries</span>
+          <div className="flex gap-3">
+            <span className="text-[11px] flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full bg-(--green)" />{createCount} created</span>
+            <span className="text-[11px] flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full bg-(--blue)" />{updateCount} updated</span>
+            <span className="text-[11px] flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full bg-[#ef4444]" />{deleteCount} deleted</span>
           </div>
           {selectedFilter && (
-            <span style={{ fontSize: '11px', background: '#eef5ff', color: '#0055ff', padding: '2px 8px', borderRadius: '4px' }}>
+            <span className="text-[11px] bg-(--blue-bg) text-(--blue) px-2 py-0.5 rounded">
               Filtered: {actionTypes.includes(selectedFilter) ? selectedFilter : `type:${selectedFilter}`}
             </span>
           )}
         </div>
         {logs.length > 0 && (
-          <button className="btn" style={{ color: '#ef4444', fontSize: '12px' }} onClick={() => setClearModalOpen(true)}>
+          <Button variant="outline" size="sm" className="text-[#ef4444] text-xs" onClick={() => setClearModalOpen(true)}>
             <Trash2 size={12} /> Clear All Logs
-          </button>
+          </Button>
         )}
       </div>
 
-      <div className="changelog-timeline">
+      <div className="flex flex-col">
         {filtered.map((log) => {
           const style = actionColors[log.action] || actionColors.update
           const Icon = style.icon
@@ -86,28 +88,28 @@ const ChangelogView = ({ searchTerm, selectedFilter = null }: { searchTerm: stri
           try { parsedChanges = log.changes ? JSON.parse(log.changes) : null } catch { /* ignore */ }
 
           return (
-            <div key={log.id} className="changelog-entry">
-              <div className="changelog-icon" style={{ background: style.bg, color: style.color }}>
+            <div key={log.id} className="flex gap-4 py-4 border-b border-border last:border-b-0">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: style.bg, color: style.color }}>
                 <Icon size={14} />
               </div>
-              <div className="changelog-content">
-                <div className="changelog-header">
-                  <span className="changelog-action" style={{ color: style.color }}>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs font-semibold" style={{ color: style.color }}>
                     {log.action.charAt(0).toUpperCase() + log.action.slice(1)}
                   </span>
-                  <span className="changelog-type">{log.objectType}</span>
+                  <span className="text-xs text-muted-foreground">{log.objectType}</span>
                 </div>
                 {parsedChanges && (
-                  <div className="changelog-changes">
+                  <div className="bg-(--surface-alt) border border-border rounded-md px-3 py-2 mb-2">
                     {Object.entries(parsedChanges).map(([key, val]) => (
-                      <div key={key} className="changelog-change-row">
-                        <span className="changelog-key">{key}:</span>
-                        <code className="changelog-val">{String(val)}</code>
+                      <div key={key} className="flex gap-2 py-0.5 text-[11px]">
+                        <span className="text-muted-foreground font-medium">{key}:</span>
+                        <code className="text-[11px]">{String(val)}</code>
                       </div>
                     ))}
                   </div>
                 )}
-                <div className="changelog-time">
+                <div className="flex items-center gap-1.5 text-[10px] text-(--text-light)">
                   <Clock size={10} />
                   <span>{new Date(log.timestamp).toLocaleString()}</span>
                 </div>
@@ -116,24 +118,28 @@ const ChangelogView = ({ searchTerm, selectedFilter = null }: { searchTerm: stri
           )
         })}
         {filtered.length === 0 && (
-          <div className="view-loading">{logs.length === 0 ? 'No changelog entries yet.' : 'No entries match the current filter.'}</div>
+          <div className="flex items-center justify-center h-[200px] text-muted-foreground text-[13px]">{logs.length === 0 ? 'No changelog entries yet.' : 'No entries match the current filter.'}</div>
         )}
       </div>
 
       {/* Clear All Confirmation Modal */}
-      {clearModalOpen && (
-        <div className="modal-overlay" onClick={() => setClearModalOpen(false)}>
-          <div className="modal-content animate-fade-in" style={{ width: '400px', textAlign: 'center' }} onClick={e => e.stopPropagation()}>
-            <div style={{ background: '#fee2e2', width: '48px', height: '48px', borderRadius: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem', color: '#dc2626' }}><Trash2 size={24} /></div>
-            <h2 style={{ marginBottom: '0.5rem', fontSize: '18px', fontWeight: 600 }}>Clear All Logs?</h2>
-            <p style={{ color: 'var(--unifi-text-muted)', marginBottom: '2rem' }}>This will permanently delete all {logs.length} changelog entries. This action cannot be undone.</p>
-            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
-              <button className="btn" onClick={() => setClearModalOpen(false)}>Cancel</button>
-              <button className="btn btn-destructive" onClick={handleClearAll}>Delete All Logs</button>
+      <Dialog open={clearModalOpen} onOpenChange={setClearModalOpen}>
+        <DialogContent className="max-w-[400px] text-center">
+          <DialogHeader className="flex flex-col items-center">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-(--red-bg-subtle) text-(--red)">
+              <Trash2 size={24} />
             </div>
-          </div>
-        </div>
-      )}
+            <DialogTitle className="text-lg font-semibold">Clear All Logs?</DialogTitle>
+            <DialogDescription className="mt-2">
+              This will permanently delete all {logs.length} changelog entries. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex justify-center gap-4 sm:justify-center">
+            <Button variant="outline" onClick={() => setClearModalOpen(false)}>Cancel</Button>
+            <Button variant="destructive" onClick={handleClearAll}>Delete All Logs</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

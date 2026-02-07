@@ -117,51 +117,37 @@ const CommandPalette = ({ onNavigate }: CommandPaletteProps) => {
 
   return (
     <div
-      style={{
-        position: 'fixed', inset: 0, zIndex: 9999,
-        background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)',
-        display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
-        paddingTop: '15vh',
-      }}
+      className="fixed inset-0 z-9999 bg-black/50 backdrop-blur-sm flex items-start justify-center pt-[15vh]"
       onClick={() => setOpen(false)}
     >
       <div
-        style={{
-          width: '560px', maxHeight: '480px',
-          background: 'var(--card-bg, #fff)', borderRadius: '14px',
-          boxShadow: '0 24px 80px rgba(0,0,0,0.25)',
-          overflow: 'hidden',
-          border: '1px solid var(--border, #e2e8f0)',
-        }}
+        className="w-[560px] max-h-[480px] bg-card rounded-[14px] shadow-[0_24px_80px_rgba(0,0,0,0.25)] overflow-hidden border border-border"
         onClick={e => e.stopPropagation()}
       >
         {/* Search Input */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.875rem 1.25rem', borderBottom: '1px solid var(--border, #e2e8f0)' }}>
-          <Search size={18} color="#94a3b8" />
+        <div className="flex items-center gap-3 px-5 py-3.5 border-b border-border">
+          <Search size={18} className="text-(--text-light)" />
           <input
             ref={inputRef}
             value={query}
             onChange={e => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Search devices, subnets, VLANs, WiFi, services..."
-            style={{
-              flex: 1, border: 'none', outline: 'none', fontSize: '15px',
-              background: 'transparent', color: 'var(--text-primary, #1e293b)',
-            }}
+            className="flex-1 border-none outline-none text-[15px] bg-transparent text-foreground"
           />
-          <kbd style={{ fontSize: '10px', padding: '2px 6px', borderRadius: '4px', background: '#f1f3f5', color: '#94a3b8', border: '1px solid #e2e8f0' }}>ESC</kbd>
+          <kbd className="text-[10px] px-1.5 py-px rounded bg-(--muted-bg) text-(--text-light) border border-border">ESC</kbd>
         </div>
 
         {/* Results */}
-        <div style={{ maxHeight: '380px', overflowY: 'auto', padding: '0.5rem' }}>
+        <div className="max-h-[380px] overflow-y-auto p-2">
           {results.length === 0 ? (
-            <div style={{ padding: '2rem', textAlign: 'center', color: '#94a3b8', fontSize: '13px' }}>
+            <div className="p-8 text-center text-(--text-light) text-[13px]">
               {query ? 'No results found' : 'Loading...'}
             </div>
           ) : (
             <>
               {!query && (
-                <div style={{ padding: '0.25rem 0.75rem 0.5rem', fontSize: '10px', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                <div className="px-3 pt-1 pb-2 text-[10px] font-semibold text-(--text-light) uppercase tracking-wide">
                   Quick Jump
                 </div>
               )}
@@ -170,28 +156,19 @@ const CommandPalette = ({ onNavigate }: CommandPaletteProps) => {
                 return (
                   <div
                     key={`${r.type}-${r.id}`}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: '0.75rem',
-                      padding: '0.625rem 0.75rem', borderRadius: '8px', cursor: 'pointer',
-                      background: i === selectedIdx ? '#f1f5f9' : 'transparent',
-                      transition: 'background 0.1s',
-                    }}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-colors ${i === selectedIdx ? 'bg-(--muted-bg-alt)' : 'bg-transparent'}`}
                     onMouseEnter={() => setSelectedIdx(i)}
                     onClick={() => handleSelect(r)}
                   >
-                    <div style={{
-                      width: '32px', height: '32px', borderRadius: '8px',
-                      background: `${r.color}12`, color: r.color,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                    }}>
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${r.color}12`, color: r.color }}>
                       <Icon size={16} />
                     </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: 500, fontSize: '13px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.title}</div>
-                      <div style={{ fontSize: '11px', color: '#94a3b8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.subtitle}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-[13px] truncate">{r.title}</div>
+                      <div className="text-[11px] text-(--text-light) truncate">{r.subtitle}</div>
                     </div>
-                    <span style={{ fontSize: '10px', color: '#94a3b8', textTransform: 'capitalize', background: '#f1f3f5', padding: '2px 6px', borderRadius: '4px', flexShrink: 0 }}>{r.type}</span>
-                    <ArrowRight size={12} color="#cbd5e1" />
+                    <span className="text-[10px] text-(--text-light) capitalize bg-(--muted-bg) px-1.5 py-px rounded shrink-0">{r.type}</span>
+                    <ArrowRight size={12} className="text-border" />
                   </div>
                 )
               })}
@@ -200,10 +177,10 @@ const CommandPalette = ({ onNavigate }: CommandPaletteProps) => {
         </div>
 
         {/* Footer */}
-        <div style={{ borderTop: '1px solid var(--border, #e2e8f0)', padding: '0.5rem 1rem', display: 'flex', gap: '1rem', justifyContent: 'center', fontSize: '10px', color: '#94a3b8' }}>
-          <span><kbd style={{ padding: '1px 4px', borderRadius: '3px', background: '#f1f3f5', border: '1px solid #e2e8f0', marginRight: '3px' }}>&uarr;&darr;</kbd> Navigate</span>
-          <span><kbd style={{ padding: '1px 4px', borderRadius: '3px', background: '#f1f3f5', border: '1px solid #e2e8f0', marginRight: '3px' }}>Enter</kbd> Open</span>
-          <span><kbd style={{ padding: '1px 4px', borderRadius: '3px', background: '#f1f3f5', border: '1px solid #e2e8f0', marginRight: '3px' }}>Esc</kbd> Close</span>
+        <div className="border-t border-border px-4 py-2 flex gap-4 justify-center text-[10px] text-(--text-light)">
+          <span><kbd className="px-1 py-px rounded bg-(--muted-bg) border border-border mr-1">&uarr;&darr;</kbd> Navigate</span>
+          <span><kbd className="px-1 py-px rounded bg-(--muted-bg) border border-border mr-1">Enter</kbd> Open</span>
+          <span><kbd className="px-1 py-px rounded bg-(--muted-bg) border border-border mr-1">Esc</kbd> Close</span>
         </div>
       </div>
     </div>

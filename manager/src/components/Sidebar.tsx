@@ -9,6 +9,7 @@ import {
 import { RefObject, useState, useRef, useEffect } from 'react'
 import { Site, CustomCategory } from '@/types'
 import { getCategoryIcon } from '@/lib/category-icons'
+import { Button } from '@/components/ui/button'
 
 export type ViewType = 'dashboard' | 'devices' | 'ipam' | 'vlans' | 'wifi' | 'topology' | 'services' | 'changelog' | 'settings'
 
@@ -92,7 +93,7 @@ const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selecte
             <item.icon size={18} />
           </div>
         ))}
-        <div style={{ flex: 1 }} />
+        <div className="flex-1" />
         <div
           className={`sidebar-icon ${activeView === 'settings' ? 'active' : ''}`}
           title="Settings"
@@ -100,7 +101,7 @@ const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selecte
         >
           <Settings size={18} />
         </div>
-        <div style={{ position: 'relative' }} ref={userMenuRef}>
+        <div className="relative" ref={userMenuRef}>
           <button
             className="user-menu-trigger"
             onClick={() => setUserMenuOpen(!userMenuOpen)}
@@ -133,16 +134,16 @@ const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selecte
       <div className="sidebar-secondary">
         {/* Site Switcher */}
         {sites.length > 0 && (
-          <div style={{ position: 'relative', marginBottom: '1rem' }} ref={siteMenuRef}>
+          <div className="relative mb-4" ref={siteMenuRef}>
             <button
               className="site-switcher-btn"
               onClick={() => setSiteMenuOpen(!siteMenuOpen)}
             >
               <MapPin size={14} />
-              <span style={{ flex: 1, textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <span className="flex-1 text-left truncate">
                 {activeSite?.name || 'Select Site'}
               </span>
-              <ChevronDown size={12} style={{ opacity: 0.5, transform: siteMenuOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }} />
+              <ChevronDown size={12} className={`opacity-50 transition-transform duration-150 ${siteMenuOpen ? 'rotate-180' : ''}`} />
             </button>
             {siteMenuOpen && (
               <div className="site-switcher-dropdown animate-fade-in">
@@ -153,17 +154,16 @@ const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selecte
                     onClick={() => { onSwitchSite?.(s.id); setSiteMenuOpen(false) }}
                   >
                     <MapPin size={12} />
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 500 }}>{s.name}</div>
-                      {s._count && <div style={{ fontSize: '10px', color: 'var(--text-light)' }}>{s._count.devices} devices · {s._count.subnets} subnets</div>}
+                    <div className="flex-1">
+                      <div className="font-medium">{s.name}</div>
+                      {s._count && <div className="text-[10px] text-(--text-light)">{s._count.devices} devices · {s._count.subnets} subnets</div>}
                     </div>
                   </button>
                 ))}
-                <div style={{ borderTop: '1px solid var(--border)', margin: '0.25rem 0', padding: '0.25rem' }}>
-                  <div style={{ display: 'flex', gap: '0.25rem' }}>
+                <div className="border-t border-border my-1 p-1">
+                  <div className="flex gap-1">
                     <input
-                      className="unifi-input"
-                      style={{ height: '28px', fontSize: '11px', flex: 1 }}
+                      className="unifi-input h-7 text-[11px] flex-1"
                       placeholder="New site name..."
                       value={newSiteName}
                       onChange={e => setNewSiteName(e.target.value)}
@@ -175,9 +175,9 @@ const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selecte
                         }
                       }}
                     />
-                    <button
-                      className="btn btn-primary"
-                      style={{ height: '28px', padding: '0 8px', fontSize: '11px' }}
+                    <Button
+                      size="sm"
+                      className="h-7 px-2 text-[11px]"
                       disabled={!newSiteName.trim()}
                       onClick={() => {
                         if (newSiteName.trim()) {
@@ -188,7 +188,7 @@ const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selecte
                       }}
                     >
                       <Plus size={12} />
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -198,19 +198,18 @@ const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selecte
 
         <div className="sidebar-section-title">{activeView === 'settings' ? 'Settings' : navItems.find(n => n.id === activeView)?.label}</div>
         
-        <div style={{ position: 'relative', marginBottom: '1.5rem' }}>
-          <Search style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--unifi-text-muted)' }} size={14} />
+        <div className="relative mb-6">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" size={14} />
           <input 
             ref={searchInputRef}
             type="text" 
-            className="unifi-input" 
+            className="unifi-input pl-8 pr-10 h-8" 
             placeholder="Search..." 
-            style={{ paddingLeft: '2rem', paddingRight: '2.5rem', height: '32px' }}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
           {!searchTerm && (
-            <span style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', gap: '2px', color: '#94a3b8', fontSize: '10px', pointerEvents: 'none' }}>
+            <span className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-0.5 text-(--text-light) text-[10px] pointer-events-none">
               <Command size={10} /> K
             </span>
           )}
@@ -219,7 +218,7 @@ const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selecte
         {activeView === 'devices' && (
           <>
             <h3>Filters</h3>
-            <div className="filter-list" style={{ marginBottom: '1.5rem' }}>
+            <div className="filter-list mb-6">
               <div className={`filter-item ${selectedCategory === null ? 'active-filter' : ''}`} onClick={() => setSelectedCategory(null)}>
                 <Server size={14} color={selectedCategory === null ? '#0055ff' : '#5e6670'} /> <span>All Devices</span>
               </div>
@@ -245,8 +244,8 @@ const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selecte
               )}
             </div>
             {categories.length > 0 && (
-              <div style={{ marginTop: '0.75rem' }}>
-                <div className="filter-item" style={{ fontSize: '11px', color: 'var(--text-light)' }} onClick={() => { setSettingsTab?.('categories'); setActiveView('settings') }}>
+              <div className="mt-3">
+                <div className="filter-item text-[11px] text-(--text-light)" onClick={() => { setSettingsTab?.('categories'); setActiveView('settings') }}>
                   <Tag size={12} /> <span>Manage Categories</span>
                 </div>
               </div>
@@ -269,7 +268,7 @@ const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selecte
         {activeView === 'ipam' && (
           <>
             <h3>Filters</h3>
-            <div className="filter-list" style={{ marginBottom: '1.5rem' }}>
+            <div className="filter-list mb-6">
               <div className={`filter-item ${selectedIpFilter === null ? 'active-filter' : ''}`} onClick={() => setSelectedIpFilter(null)}>
                 <Globe size={14} color={selectedIpFilter === null ? '#0055ff' : '#5e6670'} /> <span>All Addresses</span>
               </div>
@@ -289,13 +288,13 @@ const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selecte
         {activeView === 'topology' && (
           <>
             <h3>Filters</h3>
-            <div className="filter-list" style={{ marginBottom: '1.5rem' }}>
+            <div className="filter-list mb-6">
               <div className={`filter-item ${selectedCategory === null ? 'active-filter' : ''}`} onClick={() => setSelectedCategory(null)}>
                 <Share2 size={14} color={selectedCategory === null ? '#0055ff' : '#5e6670'} /> <span>All Devices</span>
               </div>
             </div>
             <h3>Device Types</h3>
-            <div className="filter-list" style={{ marginBottom: '1.5rem' }}>
+            <div className="filter-list mb-6">
               {categories.length > 0 ? categories.map(cat => (
                 <div key={cat.id} className={`filter-item ${selectedCategory === cat.name ? 'active-filter' : ''}`} onClick={() => setSelectedCategory(selectedCategory === cat.name ? null : cat.name)}>
                   <div className="legend-dot" style={{ background: cat.color }} /> <span>{cat.name}</span>
@@ -309,9 +308,9 @@ const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selecte
             </div>
             <h3>Controls</h3>
             <div className="filter-list">
-              <div className="filter-item" style={{ fontSize: '11px', color: '#5e6670' }}><span style={{ fontFamily: 'monospace', background: '#f1f3f5', padding: '1px 5px', borderRadius: '3px', marginRight: '6px' }}>Scroll</span> <span>Zoom in/out</span></div>
-              <div className="filter-item" style={{ fontSize: '11px', color: '#5e6670' }}><span style={{ fontFamily: 'monospace', background: '#f1f3f5', padding: '1px 5px', borderRadius: '3px', marginRight: '6px' }}>Drag</span> <span>Pan canvas</span></div>
-              <div className="filter-item" style={{ fontSize: '11px', color: '#5e6670' }}><span style={{ fontFamily: 'monospace', background: '#f1f3f5', padding: '1px 5px', borderRadius: '3px', marginRight: '6px' }}>Drag node</span> <span>Move device</span></div>
+              <div className="filter-item text-[11px] text-(--text-slate)"><code className="bg-(--muted-bg) px-1.5 py-px rounded text-[10px] mr-1.5">Scroll</code> <span>Zoom in/out</span></div>
+              <div className="filter-item text-[11px] text-(--text-slate)"><code className="bg-(--muted-bg) px-1.5 py-px rounded text-[10px] mr-1.5">Drag</code> <span>Pan canvas</span></div>
+              <div className="filter-item text-[11px] text-(--text-slate)"><code className="bg-(--muted-bg) px-1.5 py-px rounded text-[10px] mr-1.5">Drag node</code> <span>Move device</span></div>
             </div>
           </>
         )}
@@ -319,22 +318,22 @@ const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selecte
         {activeView === 'wifi' && (
           <>
             <h3>Filters</h3>
-            <div className="filter-list" style={{ marginBottom: '1.5rem' }}>
+            <div className="filter-list mb-6">
               <div className={`filter-item ${selectedServiceFilter === null ? 'active-filter' : ''}`} onClick={() => setSelectedServiceFilter(null)}>
                 <Wifi size={14} color={selectedServiceFilter === null ? '#0055ff' : '#5e6670'} /> <span>All Networks</span>
               </div>
             </div>
             <h3>Security</h3>
-            <div className="filter-list" style={{ marginBottom: '1.5rem' }}>
+            <div className="filter-list mb-6">
               <div className={`filter-item ${selectedServiceFilter === 'wpa2' ? 'active-filter' : ''}`} onClick={() => setSelectedServiceFilter(selectedServiceFilter === 'wpa2' ? null : 'wpa2')}><Lock size={14} color={selectedServiceFilter === 'wpa2' ? '#0055ff' : '#5e6670'} /> <span>WPA2</span></div>
               <div className={`filter-item ${selectedServiceFilter === 'wpa3' ? 'active-filter' : ''}`} onClick={() => setSelectedServiceFilter(selectedServiceFilter === 'wpa3' ? null : 'wpa3')}><Shield size={14} color={selectedServiceFilter === 'wpa3' ? '#0055ff' : '#5e6670'} /> <span>WPA3</span></div>
               <div className={`filter-item ${selectedServiceFilter === 'open' ? 'active-filter' : ''}`} onClick={() => setSelectedServiceFilter(selectedServiceFilter === 'open' ? null : 'open')}><Wifi size={14} color={selectedServiceFilter === 'open' ? '#0055ff' : '#5e6670'} /> <span>Open</span></div>
             </div>
             <h3>Band</h3>
             <div className="filter-list">
-              <div className="filter-item" style={{ fontSize: '11px', color: '#5e6670' }}><span style={{ fontFamily: 'monospace', background: '#f1f3f5', padding: '1px 5px', borderRadius: '3px', marginRight: '6px' }}>2.4 GHz</span> <span>Legacy devices</span></div>
-              <div className="filter-item" style={{ fontSize: '11px', color: '#5e6670' }}><span style={{ fontFamily: 'monospace', background: '#f1f3f5', padding: '1px 5px', borderRadius: '3px', marginRight: '6px' }}>5 GHz</span> <span>High speed</span></div>
-              <div className="filter-item" style={{ fontSize: '11px', color: '#5e6670' }}><span style={{ fontFamily: 'monospace', background: '#f1f3f5', padding: '1px 5px', borderRadius: '3px', marginRight: '6px' }}>6 GHz</span> <span>WiFi 6E</span></div>
+              <div className="filter-item text-[11px] text-(--text-slate)"><code className="bg-(--muted-bg) px-1.5 py-px rounded text-[10px] mr-1.5">2.4 GHz</code> <span>Legacy devices</span></div>
+              <div className="filter-item text-[11px] text-(--text-slate)"><code className="bg-(--muted-bg) px-1.5 py-px rounded text-[10px] mr-1.5">5 GHz</code> <span>High speed</span></div>
+              <div className="filter-item text-[11px] text-(--text-slate)"><code className="bg-(--muted-bg) px-1.5 py-px rounded text-[10px] mr-1.5">6 GHz</code> <span>WiFi 6E</span></div>
             </div>
           </>
         )}
@@ -342,23 +341,23 @@ const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selecte
         {activeView === 'services' && (
           <>
             <h3>Filters</h3>
-            <div className="filter-list" style={{ marginBottom: '1.5rem' }}>
+            <div className="filter-list mb-6">
               <div className={`filter-item ${selectedServiceFilter === null ? 'active-filter' : ''}`} onClick={() => setSelectedServiceFilter(null)}>
                 <Wifi size={14} color={selectedServiceFilter === null ? '#0055ff' : '#5e6670'} /> <span>All Services</span>
               </div>
             </div>
             <h3>Protocol</h3>
-            <div className="filter-list" style={{ marginBottom: '1.5rem' }}>
+            <div className="filter-list mb-6">
               <div className={`filter-item ${selectedServiceFilter === 'tcp' ? 'active-filter' : ''}`} onClick={() => setSelectedServiceFilter(selectedServiceFilter === 'tcp' ? null : 'tcp')}><Globe size={14} color={selectedServiceFilter === 'tcp' ? '#0055ff' : '#5e6670'} /> <span>TCP</span></div>
               <div className={`filter-item ${selectedServiceFilter === 'udp' ? 'active-filter' : ''}`} onClick={() => setSelectedServiceFilter(selectedServiceFilter === 'udp' ? null : 'udp')}><Globe size={14} color={selectedServiceFilter === 'udp' ? '#0055ff' : '#5e6670'} /> <span>UDP</span></div>
             </div>
             <h3>Common Ports</h3>
             <div className="filter-list">
-              <div className="filter-item" style={{ fontSize: '11px', color: '#5e6670' }}><span style={{ fontFamily: 'monospace', background: '#f1f3f5', padding: '1px 5px', borderRadius: '3px', marginRight: '6px' }}>80/443</span> <span>HTTP/HTTPS</span></div>
-              <div className="filter-item" style={{ fontSize: '11px', color: '#5e6670' }}><span style={{ fontFamily: 'monospace', background: '#f1f3f5', padding: '1px 5px', borderRadius: '3px', marginRight: '6px' }}>22</span> <span>SSH</span></div>
-              <div className="filter-item" style={{ fontSize: '11px', color: '#5e6670' }}><span style={{ fontFamily: 'monospace', background: '#f1f3f5', padding: '1px 5px', borderRadius: '3px', marginRight: '6px' }}>53</span> <span>DNS</span></div>
-              <div className="filter-item" style={{ fontSize: '11px', color: '#5e6670' }}><span style={{ fontFamily: 'monospace', background: '#f1f3f5', padding: '1px 5px', borderRadius: '3px', marginRight: '6px' }}>3306</span> <span>MySQL</span></div>
-              <div className="filter-item" style={{ fontSize: '11px', color: '#5e6670' }}><span style={{ fontFamily: 'monospace', background: '#f1f3f5', padding: '1px 5px', borderRadius: '3px', marginRight: '6px' }}>5432</span> <span>PostgreSQL</span></div>
+              <div className="filter-item text-[11px] text-(--text-slate)"><code className="bg-(--muted-bg) px-1.5 py-px rounded text-[10px] mr-1.5">80/443</code> <span>HTTP/HTTPS</span></div>
+              <div className="filter-item text-[11px] text-(--text-slate)"><code className="bg-(--muted-bg) px-1.5 py-px rounded text-[10px] mr-1.5">22</code> <span>SSH</span></div>
+              <div className="filter-item text-[11px] text-(--text-slate)"><code className="bg-(--muted-bg) px-1.5 py-px rounded text-[10px] mr-1.5">53</code> <span>DNS</span></div>
+              <div className="filter-item text-[11px] text-(--text-slate)"><code className="bg-(--muted-bg) px-1.5 py-px rounded text-[10px] mr-1.5">3306</code> <span>MySQL</span></div>
+              <div className="filter-item text-[11px] text-(--text-slate)"><code className="bg-(--muted-bg) px-1.5 py-px rounded text-[10px] mr-1.5">5432</code> <span>PostgreSQL</span></div>
             </div>
           </>
         )}
@@ -366,7 +365,7 @@ const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selecte
         {activeView === 'vlans' && (
           <>
             <h3>Filters</h3>
-            <div className="filter-list" style={{ marginBottom: '1.5rem' }}>
+            <div className="filter-list mb-6">
               <div className={`filter-item ${selectedVlanRole === null ? 'active-filter' : ''}`} onClick={() => setSelectedVlanRole(null)}>
                 <Network size={14} color={selectedVlanRole === null ? '#0055ff' : '#5e6670'} /> <span>All VLANs</span>
               </div>
@@ -385,8 +384,8 @@ const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selecte
               )}
             </div>
             {vlanRoles.length > 0 && (
-              <div style={{ marginTop: '0.75rem' }}>
-                <div className="filter-item" style={{ fontSize: '11px', color: 'var(--text-light)' }} onClick={() => { setSettingsTab?.('vlan-roles'); setActiveView('settings') }}>
+              <div className="mt-3">
+                <div className="filter-item text-[11px] text-(--text-light)" onClick={() => { setSettingsTab?.('vlan-roles'); setActiveView('settings') }}>
                   <Tag size={12} /> <span>Manage Roles</span>
                 </div>
               </div>
@@ -396,7 +395,7 @@ const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selecte
         {activeView === 'settings' && (
           <>
             <h3>Account</h3>
-            <div className="filter-list" style={{ marginBottom: '1.5rem' }}>
+            <div className="filter-list mb-6">
               <div className={`filter-item ${settingsTab === 'profile' ? 'active-filter' : ''}`} onClick={() => setSettingsTab?.('profile')}>
                 <User size={14} color={settingsTab === 'profile' ? '#0055ff' : '#5e6670'} /> <span>Profile</span>
               </div>
@@ -405,7 +404,7 @@ const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selecte
               </div>
             </div>
             <h3>Preferences</h3>
-            <div className="filter-list" style={{ marginBottom: '1.5rem' }}>
+            <div className="filter-list mb-6">
               <div className={`filter-item ${settingsTab === 'notifications' ? 'active-filter' : ''}`} onClick={() => setSettingsTab?.('notifications')}>
                 <Bell size={14} color={settingsTab === 'notifications' ? '#0055ff' : '#5e6670'} /> <span>Notifications</span>
               </div>
@@ -414,7 +413,7 @@ const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selecte
               </div>
             </div>
             <h3>Customization</h3>
-            <div className="filter-list" style={{ marginBottom: '1.5rem' }}>
+            <div className="filter-list mb-6">
               <div className={`filter-item ${settingsTab === 'categories' ? 'active-filter' : ''}`} onClick={() => setSettingsTab?.('categories')}>
                 <Tag size={14} color={settingsTab === 'categories' ? '#0055ff' : '#5e6670'} /> <span>Categories</span>
               </div>
@@ -439,13 +438,13 @@ const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selecte
         {activeView === 'changelog' && (
           <>
             <h3>Filters</h3>
-            <div className="filter-list" style={{ marginBottom: '1.5rem' }}>
+            <div className="filter-list mb-6">
               <div className={`filter-item ${selectedChangelogFilter === null ? 'active-filter' : ''}`} onClick={() => setSelectedChangelogFilter(null)}>
                 <History size={14} color={selectedChangelogFilter === null ? '#0055ff' : '#5e6670'} /> <span>All Changes</span>
               </div>
             </div>
             <h3>Action Type</h3>
-            <div className="filter-list" style={{ marginBottom: '1.5rem' }}>
+            <div className="filter-list mb-6">
               <div className={`filter-item ${selectedChangelogFilter === 'create' ? 'active-filter' : ''}`} onClick={() => setSelectedChangelogFilter(selectedChangelogFilter === 'create' ? null : 'create')}><div className="legend-dot" style={{ background: '#10b981' }} /> <span>Created</span></div>
               <div className={`filter-item ${selectedChangelogFilter === 'update' ? 'active-filter' : ''}`} onClick={() => setSelectedChangelogFilter(selectedChangelogFilter === 'update' ? null : 'update')}><div className="legend-dot" style={{ background: '#0055ff' }} /> <span>Updated</span></div>
               <div className={`filter-item ${selectedChangelogFilter === 'delete' ? 'active-filter' : ''}`} onClick={() => setSelectedChangelogFilter(selectedChangelogFilter === 'delete' ? null : 'delete')}><div className="legend-dot" style={{ background: '#ef4444' }} /> <span>Deleted</span></div>

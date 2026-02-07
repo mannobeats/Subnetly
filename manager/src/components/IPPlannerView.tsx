@@ -3,6 +3,10 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { IPAddress, IPRange, Device } from '@/types'
 import { Info, Plus, Trash2, Globe, Server, LayoutGrid, List, BarChart3, Edit2, ChevronLeft, ChevronRight, AlertTriangle } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 
 interface SubnetWithRelations {
   id: string
@@ -488,7 +492,7 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
           <Globe size={40} color="#cbd5e1" />
           <h3>No subnets configured</h3>
           <p>Create your first subnet to start planning IP addresses.</p>
-          <button className="btn btn-primary" onClick={openCreateSubnet}><Plus size={14} /> Create Subnet</button>
+          <Button onClick={openCreateSubnet}><Plus size={14} /> Create Subnet</Button>
         </div>
         {subnetModalOpen && renderSubnetModal()}
       </div>
@@ -497,17 +501,19 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
 
   function renderSubnetModal() {
     return (
-      <div className="modal-overlay" onClick={() => { setSubnetModalOpen(false); setEditingSubnetId(null) }}>
-        <div className="modal-content animate-fade-in" onClick={e => e.stopPropagation()}>
-          <h2 style={{ marginBottom: '1.5rem', fontSize: '16px', fontWeight: 600 }}>{editingSubnetId ? 'Edit Subnet' : 'Create Subnet'}</h2>
+      <Dialog open={subnetModalOpen} onOpenChange={(open) => { if (!open) { setSubnetModalOpen(false); setEditingSubnetId(null) } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingSubnetId ? 'Edit Subnet' : 'Create Subnet'}</DialogTitle>
+          </DialogHeader>
           <form onSubmit={handleSaveSubnet}>
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.25rem' }}>
-              <div className="input-group">
-                <label className="input-label">Network Prefix</label>
-                <input required className="unifi-input" value={subnetForm.prefix} onChange={e => setSubnetForm({ ...subnetForm, prefix: e.target.value })} placeholder="e.g. 10.0.10.0" />
+            <div className="grid grid-cols-[2fr_1fr] gap-5">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-muted-foreground">Network Prefix</Label>
+                <Input required value={subnetForm.prefix} onChange={e => setSubnetForm({ ...subnetForm, prefix: e.target.value })} placeholder="e.g. 10.0.10.0" className="h-9 text-[13px]" />
               </div>
-              <div className="input-group">
-                <label className="input-label">Mask</label>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-muted-foreground">Mask</Label>
                 <select className="unifi-input" value={subnetForm.mask} onChange={e => setSubnetForm({ ...subnetForm, mask: e.target.value })}>
                   <option value="8">/8 (16.7M hosts)</option>
                   <option value="16">/16 (65,534 hosts)</option>
@@ -524,22 +530,22 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
                 </select>
               </div>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
-              <div className="input-group">
-                <label className="input-label">Gateway</label>
-                <input className="unifi-input" value={subnetForm.gateway} onChange={e => setSubnetForm({ ...subnetForm, gateway: e.target.value })} placeholder="e.g. 10.0.10.1" />
+            <div className="grid grid-cols-2 gap-5">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-muted-foreground">Gateway</Label>
+                <Input value={subnetForm.gateway} onChange={e => setSubnetForm({ ...subnetForm, gateway: e.target.value })} placeholder="e.g. 10.0.10.1" className="h-9 text-[13px]" />
               </div>
-              <div className="input-group">
-                <label className="input-label">VLAN</label>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-muted-foreground">VLAN</Label>
                 <select className="unifi-input" value={subnetForm.vlanId} onChange={e => setSubnetForm({ ...subnetForm, vlanId: e.target.value })}>
                   <option value="">None</option>
                   {vlans.map(v => <option key={v.id} value={v.id}>VLAN {v.vid} — {v.name}</option>)}
                 </select>
               </div>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
-              <div className="input-group">
-                <label className="input-label">Role</label>
+            <div className="grid grid-cols-2 gap-5">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-muted-foreground">Role</Label>
                 <select className="unifi-input" value={subnetForm.role} onChange={e => setSubnetForm({ ...subnetForm, role: e.target.value })}>
                   <option value="">None</option>
                   <option value="production">Production</option>
@@ -548,18 +554,18 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
                   <option value="guest">Guest</option>
                 </select>
               </div>
-              <div className="input-group">
-                <label className="input-label">Description</label>
-                <input className="unifi-input" value={subnetForm.description} onChange={e => setSubnetForm({ ...subnetForm, description: e.target.value })} placeholder="Optional" />
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-muted-foreground">Description</Label>
+                <Input value={subnetForm.description} onChange={e => setSubnetForm({ ...subnetForm, description: e.target.value })} placeholder="Optional" className="h-9 text-[13px]" />
               </div>
             </div>
-            <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem', justifyContent: 'flex-end' }}>
-              <button type="button" className="btn" onClick={() => { setSubnetModalOpen(false); setEditingSubnetId(null) }}>Cancel</button>
-              <button type="submit" className="btn btn-primary">{editingSubnetId ? 'Save Changes' : 'Create Subnet'}</button>
-            </div>
+            <DialogFooter className="mt-8">
+              <Button type="button" variant="outline" onClick={() => { setSubnetModalOpen(false); setEditingSubnetId(null) }}>Cancel</Button>
+              <Button type="submit">{editingSubnetId ? 'Save Changes' : 'Create Subnet'}</Button>
+            </DialogFooter>
           </form>
-        </div>
-      </div>
+        </DialogContent>
+      </Dialog>
     )
   }
 
@@ -567,9 +573,9 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
     <div className="ipam-view animate-fade-in">
       {/* Toolbar */}
       <div className="ipam-toolbar">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flex: 1, minWidth: 0 }}>
+        <div className="flex items-center gap-6 flex-1 min-w-0">
           <div className="ipam-subnet-selector">
-            <label className="input-label" style={{ marginBottom: '0' }}>Subnet</label>
+            <label className="input-label mb-0">Subnet</label>
             <select className="unifi-input" value={selectedSubnet || ''} onChange={e => { setSelectedSubnet(e.target.value); setGridPage(0) }}>
               {subnets.map(s => (
                 <option key={s.id} value={s.id}>{s.prefix}/{s.mask} — {s.description || 'Unnamed'} {s.vlan ? `(VLAN ${s.vlan.vid})` : ''}</option>
@@ -587,34 +593,34 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
             <span className="ipam-util-detail">{utilization.used} / {utilization.total} addresses used</span>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexShrink: 0 }}>
+        <div className="flex gap-2 items-center shrink-0">
           <div className="ipam-view-toggle">
             <button className={`ipam-toggle-btn ${viewMode === 'grid' ? 'active' : ''}`} onClick={() => setViewMode('grid')} title="Grid View"><LayoutGrid size={14} /></button>
             <button className={`ipam-toggle-btn ${viewMode === 'list' ? 'active' : ''}`} onClick={() => setViewMode('list')} title="List View"><List size={14} /></button>
             <button className={`ipam-toggle-btn ${viewMode === 'summary' ? 'active' : ''}`} onClick={() => setViewMode('summary')} title="Summary"><BarChart3 size={14} /></button>
           </div>
-          <div style={{ width: '1px', height: '24px', background: '#e2e8f0', margin: '0 0.25rem' }} />
-          <button className="btn btn-primary" onClick={openCreateSubnet}><Plus size={14} /> Subnet</button>
-          {subnet && <button className="btn" onClick={openEditSubnet} title="Edit Subnet"><Edit2 size={14} /></button>}
-          {subnet && <button className="btn" onClick={openCreateRange}><Plus size={14} /> Range</button>}
-          {subnet && <button className="btn" onClick={() => setDeleteSubnetModal(true)} style={{ color: '#ef4444' }}><Trash2 size={14} /></button>}
+          <div className="w-px h-6 bg-border mx-1" />
+          <Button onClick={openCreateSubnet}><Plus size={14} /> Subnet</Button>
+          {subnet && <Button variant="outline" onClick={openEditSubnet} title="Edit Subnet"><Edit2 size={14} /></Button>}
+          {subnet && <Button variant="outline" onClick={openCreateRange}><Plus size={14} /> Range</Button>}
+          {subnet && <Button variant="ghost" className="text-(--red) hover:text-(--red)" onClick={() => setDeleteSubnetModal(true)}><Trash2 size={14} /></Button>}
         </div>
       </div>
 
       {/* Subnet Overlap Warnings */}
       {subnetOverlaps.length > 0 && (
-        <div style={{ marginBottom: '0.75rem', padding: '0.75rem 1rem', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-            <AlertTriangle size={16} color="#dc2626" />
-            <span style={{ fontWeight: 600, fontSize: '13px', color: '#dc2626' }}>Subnet Overlap Detected ({subnetOverlaps.length})</span>
+        <div className="mb-3 px-4 py-3 bg-[#fef2f2] border border-[#fecaca] rounded-lg">
+          <div className="flex items-center gap-2 mb-2">
+            <AlertTriangle size={16} className="text-[#dc2626]" />
+            <span className="font-semibold text-[13px] text-[#dc2626]">Subnet Overlap Detected ({subnetOverlaps.length})</span>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <div className="flex flex-col gap-1">
             {subnetOverlaps.map((o, i) => (
-              <div key={i} style={{ fontSize: '12px', color: '#991b1b', display: 'flex', gap: '6px', alignItems: 'center' }}>
-                <code style={{ background: '#fee2e2', padding: '1px 5px', borderRadius: '3px', fontSize: '11px' }}>{o.a}</code>
+              <div key={i} className="text-xs text-[#991b1b] flex gap-1.5 items-center">
+                <code className="bg-[#fee2e2] px-1.5 py-px rounded text-[11px]">{o.a}</code>
                 <span>({o.aDesc})</span>
-                <span style={{ color: '#dc2626' }}>overlaps with</span>
-                <code style={{ background: '#fee2e2', padding: '1px 5px', borderRadius: '3px', fontSize: '11px' }}>{o.b}</code>
+                <span className="text-[#dc2626]">overlaps with</span>
+                <code className="bg-[#fee2e2] px-1.5 py-px rounded text-[11px]">{o.b}</code>
                 <span>({o.bDesc})</span>
               </div>
             ))}
@@ -632,8 +638,8 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
                 <div className="ipam-range-dot" style={{ background: rc.border }} />
                 <span>{rc.label}: .{r.startAddr.split('.').pop()} — .{r.endAddr.split('.').pop()}</span>
                 {r.description && <span className="ipam-range-desc">{r.description}</span>}
-                <button className="btn" style={{ padding: '0 4px', border: 'none', background: 'transparent', color: rc.border, marginLeft: '4px' }} onClick={() => openEditRange(r)} title="Edit Range"><Edit2 size={11} /></button>
-                <button className="btn" style={{ padding: '0 4px', border: 'none', background: 'transparent', color: '#ef4444' }} onClick={() => handleDeleteRange(r.id)} title="Delete Range"><Trash2 size={11} /></button>
+                <Button variant="ghost" size="icon" className="h-5 w-5 ml-1" style={{ color: rc.border }} onClick={() => openEditRange(r)} title="Edit Range"><Edit2 size={11} /></Button>
+                <Button variant="ghost" size="icon" className="h-5 w-5 text-(--red)" onClick={() => handleDeleteRange(r.id)} title="Delete Range"><Trash2 size={11} /></Button>
               </div>
             )
           })}
@@ -645,13 +651,13 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
         <>
           {/* Pagination controls */}
           {totalPages > 1 && (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem', padding: '0.5rem 0.75rem', background: 'var(--card-bg, #fff)', border: '1px solid var(--border, #e2e8f0)', borderRadius: '8px' }}>
-              <span style={{ fontSize: '12px', color: 'var(--unifi-text-muted)' }}>
+            <div className="flex items-center justify-between mb-3 px-3 py-2 bg-card border border-border rounded-lg">
+              <span className="text-xs text-muted-foreground">
                 Showing addresses <strong>{subnetBlock.startOctet + gridPage * GRID_PAGE_SIZE}</strong> — <strong>{Math.min(subnetBlock.startOctet + (gridPage + 1) * GRID_PAGE_SIZE - 1, subnetBlock.startOctet + subnetBlock.blockSize - 1)}</strong> of <strong>{subnetBlock.blockSize}</strong>
               </span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <button className="btn" style={{ padding: '4px 8px', fontSize: '11px' }} disabled={gridPage === 0} onClick={() => setGridPage(p => p - 1)}><ChevronLeft size={14} /> Prev</button>
-                <div style={{ display: 'flex', gap: '2px' }}>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" className="h-7 px-2 text-[11px]" disabled={gridPage === 0} onClick={() => setGridPage(p => p - 1)}><ChevronLeft size={14} /> Prev</Button>
+                <div className="flex gap-0.5">
                   {Array.from({ length: Math.min(totalPages, 10) }, (_, i) => {
                     const pageIdx = totalPages <= 10 ? i : (
                       gridPage < 5 ? i :
@@ -659,12 +665,12 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
                       gridPage - 4 + i
                     )
                     return (
-                      <button key={pageIdx} className="btn" style={{ padding: '4px 8px', fontSize: '11px', fontWeight: pageIdx === gridPage ? 700 : 400, background: pageIdx === gridPage ? '#0055ff' : 'transparent', color: pageIdx === gridPage ? '#fff' : 'inherit', borderRadius: '4px', minWidth: '28px' }} onClick={() => setGridPage(pageIdx)}>{pageIdx + 1}</button>
+                      <button key={pageIdx} className={`px-2 py-1 text-[11px] rounded min-w-7 ${pageIdx === gridPage ? 'bg-[#0055ff] text-white font-bold' : 'bg-transparent hover:bg-accent'}`} onClick={() => setGridPage(pageIdx)}>{pageIdx + 1}</button>
                     )
                   })}
-                  {totalPages > 10 && <span style={{ fontSize: '11px', color: '#94a3b8', padding: '4px' }}>of {totalPages}</span>}
+                  {totalPages > 10 && <span className="text-[11px] text-(--text-light) p-1">of {totalPages}</span>}
                 </div>
-                <button className="btn" style={{ padding: '4px 8px', fontSize: '11px' }} disabled={gridPage >= totalPages - 1} onClick={() => setGridPage(p => p + 1)}>Next <ChevronRight size={14} /></button>
+                <Button variant="outline" size="sm" className="h-7 px-2 text-[11px]" disabled={gridPage >= totalPages - 1} onClick={() => setGridPage(p => p + 1)}>Next <ChevronRight size={14} /></Button>
               </div>
             </div>
           )}
@@ -738,13 +744,13 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
           <table className="unifi-table">
             <thead>
               <tr>
-                <th style={{ width: '60px' }}>#</th>
-                <th style={{ width: '140px' }}>IP Address</th>
-                <th style={{ width: '100px' }}>Status</th>
-                <th style={{ width: '160px' }}>Device / DNS</th>
-                <th style={{ width: '120px' }}>Range</th>
+                <th className="w-[60px]">#</th>
+                <th className="w-[140px]">IP Address</th>
+                <th className="w-[100px]">Status</th>
+                <th className="w-40">Device / DNS</th>
+                <th className="w-[120px]">Range</th>
                 <th>Description</th>
-                <th style={{ width: '60px' }}></th>
+                <th className="w-[60px]"></th>
               </tr>
             </thead>
             <tbody>
@@ -755,40 +761,40 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
                 const colors = getCellColor(cell.status)
                 return (
                   <tr key={cell.octet} style={{ opacity: dimmed ? 0.3 : 1 }}>
-                    <td><span style={{ fontWeight: 600, fontSize: '11px', color: '#94a3b8' }}>.{cell.octet}</span></td>
-                    <td><code style={{ fontSize: '11px', background: '#f1f3f5', padding: '2px 6px', borderRadius: '3px' }}>{cell.fullIp}</code></td>
+                    <td><span className="font-semibold text-[11px] text-(--text-light)">.{cell.octet}</span></td>
+                    <td><code className="text-[11px] bg-(--muted-bg) px-1.5 py-px rounded">{cell.fullIp}</code></td>
                     <td>
                       <span className="ipam-list-status" style={{ background: colors.bg, color: colors.color }}>
                         {cell.status === 'gateway' ? 'Gateway' : cell.status === 'assigned' ? 'Assigned' : cell.status === 'network' ? 'Network' : cell.status === 'broadcast' ? 'Broadcast' : cell.range ? rangeColors[cell.range.role]?.label || cell.range.role : 'Available'}
                       </span>
                     </td>
-                    <td style={{ fontWeight: 500 }}>
+                    <td className="font-medium">
                       {cell.device ? (
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span className="flex items-center gap-1">
                           <Server size={11} color="#0055ff" />
                           {cell.device.name}
                         </span>
                       ) : label ? label : '—'}
                     </td>
-                    <td style={{ fontSize: '11px', color: '#94a3b8' }}>
+                    <td className="text-[11px] text-(--text-light)">
                       {cell.range ? `${rangeColors[cell.range.role]?.label || cell.range.role}: .${cell.range.startAddr.split('.').pop()}–.${cell.range.endAddr.split('.').pop()}` : '—'}
                     </td>
-                    <td style={{ color: 'var(--unifi-text-muted)', fontSize: '12px' }}>{cell.ip?.description || '—'}</td>
-                    <td style={{ textAlign: 'right' }}>
+                    <td className="text-muted-foreground text-xs">{cell.ip?.description || '—'}</td>
+                    <td className="text-right">
                       {cell.ip && (
-                        <div style={{ display: 'flex', gap: '2px', justifyContent: 'flex-end' }}>
-                          <button className="btn" style={{ padding: '0 6px', border: 'none', background: 'transparent', color: '#0055ff' }} onClick={() => { setEditingIpId(cell.ip!.id); const dev = cell.device || devices.find(d => d.ipAddress === cell.ip!.address); setIpForm({ address: cell.ip!.address, dnsName: cell.ip!.dnsName || '', description: cell.ip!.description || '', status: cell.ip!.status, deviceId: dev?.id || '' }); setIpModalOpen(true) }} title="Edit"><Edit2 size={12} /></button>
-                          <button className="btn" style={{ padding: '0 6px', border: 'none', background: 'transparent', color: '#ef4444' }} onClick={() => handleDeleteIp(cell.ip!.id)} title="Delete"><Trash2 size={12} /></button>
+                        <div className="flex gap-0.5 justify-end">
+                          <Button variant="ghost" size="icon" className="h-6 w-6 text-[#0055ff]" onClick={() => { setEditingIpId(cell.ip!.id); const dev = cell.device || devices.find(d => d.ipAddress === cell.ip!.address); setIpForm({ address: cell.ip!.address, dnsName: cell.ip!.dnsName || '', description: cell.ip!.description || '', status: cell.ip!.status, deviceId: dev?.id || '' }); setIpModalOpen(true) }} title="Edit"><Edit2 size={12} /></Button>
+                          <Button variant="ghost" size="icon" className="h-6 w-6 text-(--red)" onClick={() => handleDeleteIp(cell.ip!.id)} title="Delete"><Trash2 size={12} /></Button>
                         </div>
                       )}
                       {!cell.ip && cell.device && (
-                        <div style={{ display: 'flex', gap: '2px', justifyContent: 'flex-end' }}>
-                          <button className="btn" style={{ padding: '0 6px', border: 'none', background: 'transparent', color: '#0055ff' }} onClick={() => handlePromoteDeviceIp(cell.device!)} title="Manage in IPAM"><Edit2 size={12} /></button>
-                          <button className="btn" style={{ padding: '0 6px', border: 'none', background: 'transparent', color: '#ef4444' }} onClick={() => handleUnlinkDevice(cell.device!.id)} title="Unlink IP"><Trash2 size={12} /></button>
+                        <div className="flex gap-0.5 justify-end">
+                          <Button variant="ghost" size="icon" className="h-6 w-6 text-[#0055ff]" onClick={() => handlePromoteDeviceIp(cell.device!)} title="Manage in IPAM"><Edit2 size={12} /></Button>
+                          <Button variant="ghost" size="icon" className="h-6 w-6 text-(--red)" onClick={() => handleUnlinkDevice(cell.device!.id)} title="Unlink IP"><Trash2 size={12} /></Button>
                         </div>
                       )}
                       {!cell.ip && !cell.device && cell.status !== 'network' && cell.status !== 'broadcast' && cell.status !== 'gateway' && (
-                        <button className="btn" style={{ padding: '0 6px', border: 'none', background: 'transparent', color: '#0055ff' }} onClick={() => openAssignFromGrid(cell.fullIp)}><Plus size={12} /></button>
+                        <Button variant="ghost" size="icon" className="h-6 w-6 text-[#0055ff]" onClick={() => openAssignFromGrid(cell.fullIp)}><Plus size={12} /></Button>
                       )}
                     </td>
                   </tr>
@@ -815,26 +821,26 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
         return (
           <div className="ipam-summary-view">
             {/* Stats Cards — consistent with all views */}
-            <div className="dash-stat-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+            <div className="dash-stat-grid grid-cols-4">
               <div className="dash-stat-card">
                 <div className="dash-stat-label">Used Addresses</div>
-                <div className="dash-stat-value" style={{ color: '#0055ff' }}>{utilization.used}</div>
-                <div style={{ fontSize: '10px', color: 'var(--text-light)' }}>{utilization.pct}% of {utilization.total}</div>
+                <div className="dash-stat-value text-[#0055ff]">{utilization.used}</div>
+                <div className="text-[10px] text-(--text-light)">{utilization.pct}% of {utilization.total}</div>
               </div>
               <div className="dash-stat-card">
                 <div className="dash-stat-label">Available</div>
-                <div className="dash-stat-value" style={{ color: '#10b981' }}>{statusCounts['available'] || 0}</div>
-                <div style={{ fontSize: '10px', color: 'var(--text-light)' }}>Ready to assign</div>
+                <div className="dash-stat-value text-[#10b981]">{statusCounts['available'] || 0}</div>
+                <div className="text-[10px] text-(--text-light)">Ready to assign</div>
               </div>
               <div className="dash-stat-card">
                 <div className="dash-stat-label">Devices</div>
-                <div className="dash-stat-value" style={{ color: '#7c3aed' }}>{deviceCount}</div>
-                <div style={{ fontSize: '10px', color: 'var(--text-light)' }}>Linked to IPs</div>
+                <div className="dash-stat-value text-[#7c3aed]">{deviceCount}</div>
+                <div className="text-[10px] text-(--text-light)">Linked to IPs</div>
               </div>
               <div className="dash-stat-card">
                 <div className="dash-stat-label">Manual IPs</div>
-                <div className="dash-stat-value" style={{ color: '#f59e0b' }}>{ipamCount}</div>
-                <div style={{ fontSize: '10px', color: 'var(--text-light)' }}>No device linked</div>
+                <div className="dash-stat-value text-[#f59e0b]">{ipamCount}</div>
+                <div className="text-[10px] text-(--text-light)">No device linked</div>
               </div>
             </div>
 
@@ -903,10 +909,10 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
                   return (
                     <div key={i} className="ipam-range-summary-row">
                       <div className="ipam-range-summary-header">
-                        <span style={{ fontWeight: 600, fontSize: '12px' }}>{rc.label}: .{r.startAddr.split('.').pop()} — .{r.endAddr.split('.').pop()}</span>
-                        <span style={{ fontSize: '11px', color: '#94a3b8' }}>{r.used}/{r.total} used ({r.pct}%)</span>
+                        <span className="font-semibold text-xs">{rc.label}: .{r.startAddr.split('.').pop()} — .{r.endAddr.split('.').pop()}</span>
+                        <span className="text-[11px] text-(--text-light)">{r.used}/{r.total} used ({r.pct}%)</span>
                       </div>
-                      <div className="ipam-util-bar" style={{ height: '6px' }}>
+                      <div className="ipam-util-bar h-1.5">
                         <div className="ipam-util-fill" style={{ width: `${r.pct}%`, background: rc.border }} />
                       </div>
                     </div>
@@ -923,9 +929,9 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
                   {cellData.filter(c => c.device).map(c => (
                     <div key={c.octet} className="ipam-summary-device-row">
                       <Server size={13} color="#0055ff" />
-                      <span style={{ fontWeight: 500 }}>{c.device!.name}</span>
-                      <code style={{ fontSize: '10px', color: '#94a3b8', marginLeft: 'auto' }}>{c.fullIp}</code>
-                      <span className={`badge badge-${c.device!.status === 'active' ? 'green' : 'orange'}`} style={{ fontSize: '9px' }}>{c.device!.status}</span>
+                      <span className="font-medium">{c.device!.name}</span>
+                      <code className="text-[10px] text-(--text-light) ml-auto">{c.fullIp}</code>
+                      <span className={`badge badge-${c.device!.status === 'active' ? 'green' : 'orange'} text-[9px]`}>{c.device!.status}</span>
                     </div>
                   ))}
                 </div>
@@ -953,22 +959,22 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
           <div className="ipam-table-section">
             <div className="dash-section-header">
               <h2>Assigned Addresses</h2>
-              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+              <div className="flex gap-2 items-center">
                 <span className="dash-section-badge">{totalAssigned} addresses</span>
-                <button className="btn btn-primary" style={{ padding: '4px 10px', fontSize: '11px' }} onClick={() => { setEditingIpId(null); setIpForm({ address: `${base}.`, dnsName: '', description: '', status: 'active', deviceId: '' }); setIpModalOpen(true) }}><Plus size={12} /> Assign IP</button>
+                <Button size="sm" className="h-7 px-2.5 text-[11px]" onClick={() => { setEditingIpId(null); setIpForm({ address: `${base}.`, dnsName: '', description: '', status: 'active', deviceId: '' }); setIpModalOpen(true) }}><Plus size={12} /> Assign IP</Button>
               </div>
             </div>
             {totalAssigned === 0 ? (
-              <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--unifi-text-muted)', fontSize: '13px' }}>No IP addresses assigned yet. Click a cell in the grid or use the button above.</div>
+              <div className="p-8 text-center text-muted-foreground text-[13px]">No IP addresses assigned yet. Click a cell in the grid or use the button above.</div>
             ) : (
               <table className="unifi-table">
                 <thead>
                   <tr>
-                    <th style={{ width: '140px' }}>Address</th>
-                    <th style={{ width: '160px' }}>Device / DNS</th>
-                    <th style={{ width: '100px' }}>Status</th>
+                    <th className="w-[140px]">Address</th>
+                    <th className="w-40">Device / DNS</th>
+                    <th className="w-[100px]">Status</th>
                     <th>Description</th>
-                    <th style={{ width: '80px', textAlign: 'right', paddingRight: '1rem' }}>Actions</th>
+                    <th className="w-20 text-right pr-4">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -978,10 +984,10 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
                       const linkedDevice = ipToDevice.get(ip.address)
                       return (
                         <tr key={ip.id}>
-                          <td><code style={{ fontSize: '11px', background: '#f1f3f5', padding: '2px 6px', borderRadius: '3px' }}>{ip.address}/{ip.mask}</code></td>
-                          <td style={{ fontWeight: 500 }}>
+                          <td><code className="text-[11px] bg-(--muted-bg) px-1.5 py-px rounded">{ip.address}/{ip.mask}</code></td>
+                          <td className="font-medium">
                             {linkedDevice ? (
-                              <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <span className="flex items-center gap-1">
                                 <Server size={11} color="#0055ff" />
                                 {linkedDevice.name}
                               </span>
@@ -990,11 +996,11 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
                             )}
                           </td>
                           <td><span className="badge badge-green">{ip.status}</span></td>
-                          <td style={{ color: 'var(--unifi-text-muted)' }}>{ip.description || '—'}</td>
-                          <td style={{ textAlign: 'right', paddingRight: '0.5rem' }}>
-                            <div style={{ display: 'flex', gap: '2px', justifyContent: 'flex-end' }}>
-                              <button className="btn" style={{ padding: '0 6px', border: 'none', background: 'transparent', color: '#0055ff' }} onClick={() => { setEditingIpId(ip.id); const dev = linkedDevice || devices.find(d => d.ipAddress === ip.address); setIpForm({ address: ip.address, dnsName: ip.dnsName || '', description: ip.description || '', status: ip.status, deviceId: dev?.id || '' }); setIpModalOpen(true) }} title="Edit"><Edit2 size={12} /></button>
-                              <button className="btn" style={{ padding: '0 6px', border: 'none', background: 'transparent', color: '#ef4444' }} onClick={() => handleDeleteIp(ip.id)} title="Delete"><Trash2 size={12} /></button>
+                          <td className="text-muted-foreground">{ip.description || '—'}</td>
+                          <td className="text-right pr-2">
+                            <div className="flex gap-0.5 justify-end">
+                              <Button variant="ghost" size="icon" className="h-6 w-6 text-[#0055ff]" onClick={() => { setEditingIpId(ip.id); const dev = linkedDevice || devices.find(d => d.ipAddress === ip.address); setIpForm({ address: ip.address, dnsName: ip.dnsName || '', description: ip.description || '', status: ip.status, deviceId: dev?.id || '' }); setIpModalOpen(true) }} title="Edit"><Edit2 size={12} /></Button>
+                              <Button variant="ghost" size="icon" className="h-6 w-6 text-(--red)" onClick={() => handleDeleteIp(ip.id)} title="Delete"><Trash2 size={12} /></Button>
                             </div>
                           </td>
                         </tr>
@@ -1002,19 +1008,19 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
                     })}
                   {deviceOnlyEntries.map(d => (
                     <tr key={`dev-${d.id}`}>
-                      <td><code style={{ fontSize: '11px', background: '#f1f3f5', padding: '2px 6px', borderRadius: '3px' }}>{d.ipAddress}/{subnet.mask}</code></td>
-                      <td style={{ fontWeight: 500 }}>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <td><code className="text-[11px] bg-(--muted-bg) px-1.5 py-px rounded">{d.ipAddress}/{subnet.mask}</code></td>
+                      <td className="font-medium">
+                        <span className="flex items-center gap-1">
                           <Server size={11} color="#0055ff" />
                           {d.name}
                         </span>
                       </td>
                       <td><span className={`badge badge-${d.status === 'active' ? 'green' : 'orange'}`}>{d.status}</span></td>
-                      <td style={{ color: 'var(--unifi-text-muted)' }}>{d.category} — {d.platform || 'No platform'}</td>
-                      <td style={{ textAlign: 'right', paddingRight: '0.5rem' }}>
-                        <div style={{ display: 'flex', gap: '2px', justifyContent: 'flex-end' }}>
-                          <button className="btn" style={{ padding: '0 6px', border: 'none', background: 'transparent', color: '#0055ff' }} onClick={() => handlePromoteDeviceIp(d)} title="Manage in IPAM"><Edit2 size={12} /></button>
-                          <button className="btn" style={{ padding: '0 6px', border: 'none', background: 'transparent', color: '#ef4444' }} onClick={() => handleUnlinkDevice(d.id)} title="Unlink IP from device"><Trash2 size={12} /></button>
+                      <td className="text-muted-foreground">{d.category} — {d.platform || 'No platform'}</td>
+                      <td className="text-right pr-2">
+                        <div className="flex gap-0.5 justify-end">
+                          <Button variant="ghost" size="icon" className="h-6 w-6 text-[#0055ff]" onClick={() => handlePromoteDeviceIp(d)} title="Manage in IPAM"><Edit2 size={12} /></Button>
+                          <Button variant="ghost" size="icon" className="h-6 w-6 text-(--red)" onClick={() => handleUnlinkDevice(d.id)} title="Unlink IP from device"><Trash2 size={12} /></Button>
                         </div>
                       </td>
                     </tr>
@@ -1030,123 +1036,126 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
       {subnetModalOpen && renderSubnetModal()}
 
       {/* Range Create Modal */}
-      {rangeModalOpen && subnet && (
-        <div className="modal-overlay" onClick={() => { setRangeModalOpen(false); setEditingRangeId(null) }}>
-          <div className="modal-content animate-fade-in" onClick={e => e.stopPropagation()}>
-            <h2 style={{ marginBottom: '1.5rem', fontSize: '16px', fontWeight: 600 }}>{editingRangeId ? 'Edit' : 'Add'} IP Range {editingRangeId ? '' : `to ${subnet.prefix}/${subnet.mask}`}</h2>
-            <form onSubmit={handleSaveRange}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
-                <div className="input-group">
-                  <label className="input-label">Start Octet (.x)</label>
-                  <input required type="number" min="1" max="254" className="unifi-input" value={rangeForm.startOctet} onChange={e => setRangeForm({ ...rangeForm, startOctet: e.target.value })} placeholder="e.g. 150" />
-                </div>
-                <div className="input-group">
-                  <label className="input-label">End Octet (.x)</label>
-                  <input required type="number" min="1" max="254" className="unifi-input" value={rangeForm.endOctet} onChange={e => setRangeForm({ ...rangeForm, endOctet: e.target.value })} placeholder="e.g. 199" />
-                </div>
+      <Dialog open={rangeModalOpen && !!subnet} onOpenChange={(open) => { if (!open) { setRangeModalOpen(false); setEditingRangeId(null) } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingRangeId ? 'Edit' : 'Add'} IP Range {editingRangeId ? '' : `to ${subnet?.prefix}/${subnet?.mask}`}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSaveRange}>
+            <div className="grid grid-cols-2 gap-5">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-muted-foreground">Start Octet (.x)</Label>
+                <Input required type="number" min={1} max={254} value={rangeForm.startOctet} onChange={e => setRangeForm({ ...rangeForm, startOctet: e.target.value })} placeholder="e.g. 150" className="h-9 text-[13px]" />
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
-                <div className="input-group">
-                  <label className="input-label">Role</label>
-                  <select className="unifi-input" value={rangeForm.role} onChange={e => setRangeForm({ ...rangeForm, role: e.target.value })}>
-                    <option value="dhcp">DHCP Pool</option>
-                    <option value="reserved">Reserved</option>
-                    <option value="infrastructure">Infrastructure</option>
-                  </select>
-                </div>
-                <div className="input-group">
-                  <label className="input-label">Description</label>
-                  <input className="unifi-input" value={rangeForm.description} onChange={e => setRangeForm({ ...rangeForm, description: e.target.value })} placeholder="Optional" />
-                </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-muted-foreground">End Octet (.x)</Label>
+                <Input required type="number" min={1} max={254} value={rangeForm.endOctet} onChange={e => setRangeForm({ ...rangeForm, endOctet: e.target.value })} placeholder="e.g. 199" className="h-9 text-[13px]" />
               </div>
-              <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem', justifyContent: 'flex-end' }}>
-                <button type="button" className="btn" onClick={() => { setRangeModalOpen(false); setEditingRangeId(null) }}>Cancel</button>
-                <button type="submit" className="btn btn-primary">{editingRangeId ? 'Save Changes' : 'Add Range'}</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* IP Assign/Edit Modal — with device linking */}
-      {ipModalOpen && subnet && (
-        <div className="modal-overlay" onClick={() => { setIpModalOpen(false); setEditingIpId(null) }}>
-          <div className="modal-content animate-fade-in" onClick={e => e.stopPropagation()}>
-            <h2 style={{ marginBottom: '1.5rem', fontSize: '16px', fontWeight: 600 }}>{editingIpId ? 'Edit IP Address' : 'Assign IP Address'}</h2>
-            <form onSubmit={handleAssignIp}>
-              <div className="input-group">
-                <label className="input-label">Link to Device (Optional)</label>
-                <select className="unifi-input" value={ipForm.deviceId} onChange={e => {
-                  const dev = devices.find(d => d.id === e.target.value)
-                  if (dev) {
-                    setIpForm({
-                      ...ipForm,
-                      deviceId: e.target.value,
-                      dnsName: dev.name,
-                      description: `Assigned to ${dev.name}`,
-                    })
-                  } else {
-                    // Unassigning — clear device-related fields
-                    setIpForm({
-                      ...ipForm,
-                      deviceId: '',
-                      dnsName: '',
-                      description: '',
-                    })
-                  }
-                }}>
-                  <option value="">{editingIpId ? '— Unassign device —' : 'No device — manual assignment'}</option>
-                  {devices.map(d => <option key={d.id} value={d.id}>{d.name} ({d.ipAddress || 'no IP'}) — {d.category}</option>)}
+            </div>
+            <div className="grid grid-cols-2 gap-5">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-muted-foreground">Role</Label>
+                <select className="unifi-input" value={rangeForm.role} onChange={e => setRangeForm({ ...rangeForm, role: e.target.value })}>
+                  <option value="dhcp">DHCP Pool</option>
+                  <option value="reserved">Reserved</option>
+                  <option value="infrastructure">Infrastructure</option>
                 </select>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
-                <div className="input-group">
-                  <label className="input-label">IP Address</label>
-                  <input required className="unifi-input" value={ipForm.address} onChange={e => setIpForm({ ...ipForm, address: e.target.value })} placeholder="e.g. 10.0.10.20" />
-                </div>
-                <div className="input-group">
-                  <label className="input-label">DNS Name</label>
-                  <input className="unifi-input" value={ipForm.dnsName} onChange={e => setIpForm({ ...ipForm, dnsName: e.target.value })} placeholder="e.g. my-server" />
-                </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-muted-foreground">Description</Label>
+                <Input value={rangeForm.description} onChange={e => setRangeForm({ ...rangeForm, description: e.target.value })} placeholder="Optional" className="h-9 text-[13px]" />
               </div>
-              <div className="input-group">
-                <label className="input-label">Description</label>
-                <input className="unifi-input" value={ipForm.description} onChange={e => setIpForm({ ...ipForm, description: e.target.value })} placeholder="Optional" />
+            </div>
+            <DialogFooter className="mt-8">
+              <Button type="button" variant="outline" onClick={() => { setRangeModalOpen(false); setEditingRangeId(null) }}>Cancel</Button>
+              <Button type="submit">{editingRangeId ? 'Save Changes' : 'Add Range'}</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* IP Assign/Edit Modal — with device linking */}
+      <Dialog open={ipModalOpen && !!subnet} onOpenChange={(open) => { if (!open) { setIpModalOpen(false); setEditingIpId(null) } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingIpId ? 'Edit IP Address' : 'Assign IP Address'}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleAssignIp}>
+            <div className="space-y-1.5 mb-4">
+              <Label className="text-xs font-semibold text-muted-foreground">Link to Device (Optional)</Label>
+              <select className="unifi-input" value={ipForm.deviceId} onChange={e => {
+                const dev = devices.find(d => d.id === e.target.value)
+                if (dev) {
+                  setIpForm({
+                    ...ipForm,
+                    deviceId: e.target.value,
+                    dnsName: dev.name,
+                    description: `Assigned to ${dev.name}`,
+                  })
+                } else {
+                  setIpForm({
+                    ...ipForm,
+                    deviceId: '',
+                    dnsName: '',
+                    description: '',
+                  })
+                }
+              }}>
+                <option value="">{editingIpId ? '— Unassign device —' : 'No device — manual assignment'}</option>
+                {devices.map(d => <option key={d.id} value={d.id}>{d.name} ({d.ipAddress || 'no IP'}) — {d.category}</option>)}
+              </select>
+            </div>
+            <div className="grid grid-cols-2 gap-5">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-muted-foreground">IP Address</Label>
+                <Input required value={ipForm.address} onChange={e => setIpForm({ ...ipForm, address: e.target.value })} placeholder="e.g. 10.0.10.20" className="h-9 text-[13px]" />
               </div>
-              <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem', justifyContent: 'flex-end', alignItems: 'center' }}>
-                {editingIpId && (
-                  <button type="button" className="btn btn-destructive" style={{ marginRight: 'auto', padding: '6px 14px', fontSize: '12px' }} onClick={async () => {
-                    const id = editingIpId
-                    setIpModalOpen(false)
-                    setEditingIpId(null)
-                    setIpForm(emptyIpForm)
-                    await handleDeleteIp(id)
-                  }}>
-                    <Trash2 size={12} style={{ marginRight: '4px' }} /> Delete IP
-                  </button>
-                )}
-                <button type="button" className="btn" onClick={() => { setIpModalOpen(false); setEditingIpId(null) }}>Cancel</button>
-                <button type="submit" className="btn btn-primary">{editingIpId ? 'Save Changes' : 'Assign IP'}</button>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-muted-foreground">DNS Name</Label>
+                <Input value={ipForm.dnsName} onChange={e => setIpForm({ ...ipForm, dnsName: e.target.value })} placeholder="e.g. my-server" className="h-9 text-[13px]" />
               </div>
-            </form>
-          </div>
-        </div>
-      )}
+            </div>
+            <div className="space-y-1.5 mt-4">
+              <Label className="text-xs font-semibold text-muted-foreground">Description</Label>
+              <Input value={ipForm.description} onChange={e => setIpForm({ ...ipForm, description: e.target.value })} placeholder="Optional" className="h-9 text-[13px]" />
+            </div>
+            <div className="flex gap-4 mt-8 justify-end items-center">
+              {editingIpId && (
+                <Button type="button" variant="destructive" size="sm" className="mr-auto text-xs" onClick={async () => {
+                  const id = editingIpId
+                  setIpModalOpen(false)
+                  setEditingIpId(null)
+                  setIpForm(emptyIpForm)
+                  await handleDeleteIp(id)
+                }}>
+                  <Trash2 size={12} className="mr-1" /> Delete IP
+                </Button>
+              )}
+              <Button type="button" variant="outline" onClick={() => { setIpModalOpen(false); setEditingIpId(null) }}>Cancel</Button>
+              <Button type="submit">{editingIpId ? 'Save Changes' : 'Assign IP'}</Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Subnet Modal */}
-      {deleteSubnetModal && (
-        <div className="modal-overlay" onClick={() => setDeleteSubnetModal(false)}>
-          <div className="modal-content animate-fade-in" style={{ width: '400px', textAlign: 'center' }} onClick={e => e.stopPropagation()}>
-            <div style={{ background: '#fee2e2', width: '48px', height: '48px', borderRadius: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem', color: '#dc2626' }}><Trash2 size={24} /></div>
-            <h2 style={{ marginBottom: '0.5rem', fontSize: '18px', fontWeight: 600 }}>Delete Subnet?</h2>
-            <p style={{ color: 'var(--unifi-text-muted)', marginBottom: '2rem' }}>This will remove the subnet and all associated IP addresses and ranges.</p>
-            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
-              <button className="btn" onClick={() => setDeleteSubnetModal(false)}>Cancel</button>
-              <button className="btn btn-destructive" onClick={handleDeleteSubnet}>Delete Subnet</button>
+      <Dialog open={deleteSubnetModal} onOpenChange={setDeleteSubnetModal}>
+        <DialogContent className="max-w-[400px] text-center">
+          <DialogHeader className="flex flex-col items-center">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#fee2e2] text-[#dc2626]">
+              <Trash2 size={24} />
             </div>
-          </div>
-        </div>
-      )}
+            <DialogTitle className="text-lg font-semibold">Delete Subnet?</DialogTitle>
+            <DialogDescription className="mt-2">
+              This will remove the subnet and all associated IP addresses and ranges.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex justify-center gap-4 sm:justify-center mt-4">
+            <Button variant="outline" onClick={() => setDeleteSubnetModal(false)}>Cancel</Button>
+            <Button variant="destructive" onClick={handleDeleteSubnet}>Delete Subnet</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
