@@ -46,7 +46,7 @@ export default function IconPicker({ value, onChange, color = 'var(--text-muted)
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="unifi-input flex items-center gap-1.5 cursor-pointer px-2.5 h-[34px] w-full text-left bg-card"
+        className="w-full h-[34px] border border-border rounded text-(--text) text-[13px] px-2.5 focus:outline-none focus:border-(--blue) bg-card flex items-center gap-1.5 cursor-pointer text-left"
       >
         {renderIcon(value, 14, color)}
         <span className="text-xs text-foreground truncate flex-1">{value}</span>
@@ -63,7 +63,7 @@ export default function IconPicker({ value, onChange, color = 'var(--text-muted)
               <input
                 ref={searchRef}
                 type="text"
-                className="unifi-input pl-7! h-[30px] text-xs w-full"
+                className="w-full h-[30px] border border-border rounded bg-(--surface-alt) text-(--text) text-xs pl-7! pr-3 focus:outline-none focus:border-(--blue) focus:bg-(--surface)"
                 placeholder="Search icons..."
                 value={search}
                 onChange={e => setSearch(e.target.value)}

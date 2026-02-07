@@ -112,21 +112,21 @@ const VLANView = ({ searchTerm = '', selectedRole = null, vlanRoles = [], highli
         </div>
       ) : (
         <>
-          <div className="vlan-grid">
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-4 mb-6">
             {filteredVlans.map(v => {
               const roleEntry = vlanRoles.find(r => r.slug === v.role)
               const color = roleEntry?.color || defaultRoleColors[v.role || ''] || '#64748b'
               const Icon = roleEntry ? getCategoryIcon(roleEntry.icon) : Network
               return (
-                <div key={v.id} className="vlan-card">
-                  <div className="vlan-card-header">
-                    <div className="vlan-card-icon" style={{ background: `${color}14`, color }}>
+                <div key={v.id} className="bg-(--surface) border border-border rounded-lg p-5 transition-shadow hover:shadow-md">
+                  <div className="flex items-start gap-4 mb-3">
+                    <div className="w-10 h-10 rounded-[10px] flex items-center justify-center shrink-0" style={{ background: `${color}14`, color }}>
                       <Icon size={20} />
                     </div>
-                    <div className="vlan-card-title">
-                      <div className="vlan-card-name">
-                        <span className="vlan-vid">VLAN {v.vid}</span>
-                        <span className="vlan-name">{v.name}</span>
+                    <div className="flex items-start justify-between flex-1">
+                      <div className="flex flex-col">
+                        <span className="text-[11px] text-(--text-muted) font-semibold">VLAN {v.vid}</span>
+                        <span className="text-[15px] font-semibold text-(--text)">{v.name}</span>
                       </div>
                       <div className="flex gap-1">
                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(v)} title="Edit"><Edit2 size={12} /></Button>
@@ -134,25 +134,25 @@ const VLANView = ({ searchTerm = '', selectedRole = null, vlanRoles = [], highli
                       </div>
                     </div>
                   </div>
-                  {v.description && <p className="vlan-card-desc">{v.description}</p>}
-                  <div className="vlan-card-role">
-                    <span className="vlan-role-label">Role</span>
-                    <span className="vlan-role-value" style={{ color }}>{v.role || 'Unassigned'}</span>
+                  {v.description && <p className="text-xs text-(--text-muted) mb-3 leading-relaxed">{v.description}</p>}
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-[11px] text-(--text-muted) font-semibold uppercase">Role</span>
+                    <span className="text-xs font-semibold capitalize" style={{ color }}>{v.role || 'Unassigned'}</span>
                   </div>
                   {v.subnets.length > 0 && (
-                    <div className="vlan-subnets">
-                      <span className="vlan-subnets-label">Associated Subnets</span>
+                    <div className="bg-(--surface-alt) border border-border rounded-md p-3 mb-3">
+                      <span className="text-[10px] text-(--text-muted) font-semibold uppercase block mb-2">Associated Subnets</span>
                       {v.subnets.map(s => (
-                        <div key={s.id} className="vlan-subnet-row">
-                          <code className="vlan-subnet-prefix">{s.prefix}/{s.mask}</code>
-                          {s.gateway && <span className="vlan-subnet-gw">GW: {s.gateway}</span>}
+                        <div key={s.id} className="flex items-center justify-between py-1">
+                          <code className="text-xs font-medium bg-(--muted-bg) px-1.5 py-0.5 rounded">{s.prefix}/{s.mask}</code>
+                          {s.gateway && <span className="text-[10px] text-(--text-muted)">GW: {s.gateway}</span>}
                         </div>
                       ))}
                     </div>
                   )}
-                  <div className="vlan-card-footer">
-                    <div className="vlan-tag-row">
-                      <span className="badge badge-blue">{v.subnets.length} subnet{v.subnets.length !== 1 ? 's' : ''}</span>
+                  <div className="pt-2">
+                    <div className="flex gap-2">
+                      <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-(--blue-bg) text-(--blue)">{v.subnets.length} subnet{v.subnets.length !== 1 ? 's' : ''}</span>
                       {v.role && <span className="px-2 py-0.5 rounded text-[11px] font-semibold" style={{ background: `${color}14`, color }}>{v.role}</span>}
                     </div>
                   </div>
@@ -165,7 +165,7 @@ const VLANView = ({ searchTerm = '', selectedRole = null, vlanRoles = [], highli
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-[13px] font-semibold">VLAN Overview</h2>
             </div>
-            <table className="unifi-table">
+            <table className="w-full border-collapse bg-(--surface) rounded-(--radius) border border-border table-fixed">
               <thead>
                 <tr>
                   <th className="w-20">VID</th>
@@ -223,7 +223,7 @@ const VLANView = ({ searchTerm = '', selectedRole = null, vlanRoles = [], highli
             <div className="grid grid-cols-2 gap-5">
               <div>
                 <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Role</Label>
-                <select className="unifi-input" value={form.role} onChange={e => setForm({ ...form, role: e.target.value })}>
+                <select className="w-full h-9 border border-border rounded bg-(--surface-alt) text-(--text) text-[13px] px-3 focus:outline-none focus:border-(--blue) focus:bg-(--surface)" value={form.role} onChange={e => setForm({ ...form, role: e.target.value })}>
                   <option value="">None</option>
                   {vlanRoles.length > 0 ? vlanRoles.map(r => (
                     <option key={r.id} value={r.slug}>{r.name}</option>
@@ -239,7 +239,7 @@ const VLANView = ({ searchTerm = '', selectedRole = null, vlanRoles = [], highli
               </div>
               <div>
                 <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Status</Label>
-                <select className="unifi-input" value={form.status} onChange={e => setForm({ ...form, status: e.target.value })}>
+                <select className="w-full h-9 border border-border rounded bg-(--surface-alt) text-(--text) text-[13px] px-3 focus:outline-none focus:border-(--blue) focus:bg-(--surface)" value={form.status} onChange={e => setForm({ ...form, status: e.target.value })}>
                   <option value="active">Active</option>
                   <option value="reserved">Reserved</option>
                   <option value="deprecated">Deprecated</option>

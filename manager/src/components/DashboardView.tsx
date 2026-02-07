@@ -112,7 +112,7 @@ const DashboardView = ({ categories = [] }: DashboardViewProps) => {
               {s.ranges.length > 0 && (
                 <div className="flex flex-wrap gap-1 mt-2">
                   {s.ranges.map((r, i) => (
-                    <span key={i} className={`badge badge-${r.role === 'dhcp' ? 'orange' : r.role === 'reserved' ? 'purple' : 'blue'}`}>
+                    <span key={i} className={`px-2 py-0.5 rounded text-[11px] font-semibold ${r.role === 'dhcp' ? 'bg-(--orange-bg) text-(--orange)' : r.role === 'reserved' ? 'bg-(--purple-bg) text-(--purple)' : 'bg-(--blue-bg) text-(--blue)'}`}>
                       {r.role}: {r.startAddr.split('.').pop()}-{r.endAddr.split('.').pop()}
                     </span>
                   ))}
@@ -198,7 +198,7 @@ const DashboardView = ({ categories = [] }: DashboardViewProps) => {
                           {w.vlan && <><span>·</span><span>VLAN {w.vlan.vid}</span></>}
                         </div>
                       </div>
-                      <span className={`badge badge-${w.enabled ? 'green' : 'orange'} text-[9px]`}>{w.enabled ? 'on' : 'off'}</span>
+                      <span className={`px-2 py-0.5 rounded text-[9px] font-semibold ${w.enabled ? 'bg-(--green-bg) text-(--green)' : 'bg-(--orange-bg) text-(--orange)'}`}>{w.enabled ? 'on' : 'off'}</span>
                       {w.guestNetwork && <span className="px-1 py-px rounded text-[9px] bg-[#fef3c7] text-[#92400e]">Guest</span>}
                     </div>
                   )

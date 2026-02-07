@@ -390,8 +390,8 @@ const TopologyView = ({ selectedCategory = null }: TopologyViewProps) => {
 
   if (devices.length === 0) {
     return (
-      <div className="topo-view animate-fade-in">
-        <div className="empty-state flex-1">
+      <div className="flex gap-0 h-full relative animate-fade-in">
+        <div className="flex flex-col items-center justify-center p-16 px-8 text-center bg-(--surface) border border-border rounded-lg flex-1">
           <Share2 size={40} color="#cbd5e1" />
           <h3>No devices to visualize</h3>
           <p>Add devices and connect them with cables to see your network topology here.</p>
@@ -401,32 +401,32 @@ const TopologyView = ({ selectedCategory = null }: TopologyViewProps) => {
   }
 
   return (
-    <div className="topo-view animate-fade-in">
-      <div className="topo-canvas relative">
+    <div className="flex gap-0 h-full relative animate-fade-in">
+      <div className="flex-1 bg-(--surface) border border-border rounded-lg overflow-auto min-h-[500px] relative">
         {/* Zoom Controls */}
-        <div className="topo-controls">
+        <div className="absolute top-3 right-3 flex items-center gap-1 bg-(--surface) border border-border rounded-lg px-2 py-1 z-10 shadow-sm">
           <button
-            className={`topo-ctrl-btn ${showSubnetClouds ? 'topo-ctrl-active' : ''}`}
+            className={`flex items-center justify-center w-7 h-7 border-none bg-transparent rounded-md cursor-pointer text-(--text-slate) transition-all hover:bg-(--muted-bg-alt) hover:text-(--text) ${showSubnetClouds ? 'bg-(--blue-bg)! text-(--blue-light)!' : ''}`}
             onClick={() => setShowSubnetClouds(v => !v)}
             title="Toggle Subnet Groups"
           >
             <Layers size={14} />
           </button>
           <div className="w-px h-4 bg-border" />
-          <button className="topo-ctrl-btn" onClick={() => setZoom(z => Math.min(3, z + 0.2))} title="Zoom In"><ZoomIn size={14} /></button>
-          <button className="topo-ctrl-btn" onClick={() => setZoom(z => Math.max(0.3, z - 0.2))} title="Zoom Out"><ZoomOut size={14} /></button>
-          <button className="topo-ctrl-btn" onClick={resetView} title="Center View"><Maximize2 size={14} /></button>
-          <button className="topo-ctrl-btn" onClick={resetLayout} title="Reset Layout"><RotateCcw size={14} /></button>
-          <span className="topo-zoom-label">{Math.round(zoom * 100)}%</span>
+          <button className="flex items-center justify-center w-7 h-7 border-none bg-transparent rounded-md cursor-pointer text-(--text-slate) transition-all hover:bg-(--muted-bg-alt) hover:text-(--text)" onClick={() => setZoom(z => Math.min(3, z + 0.2))} title="Zoom In"><ZoomIn size={14} /></button>
+          <button className="flex items-center justify-center w-7 h-7 border-none bg-transparent rounded-md cursor-pointer text-(--text-slate) transition-all hover:bg-(--muted-bg-alt) hover:text-(--text)" onClick={() => setZoom(z => Math.max(0.3, z - 0.2))} title="Zoom Out"><ZoomOut size={14} /></button>
+          <button className="flex items-center justify-center w-7 h-7 border-none bg-transparent rounded-md cursor-pointer text-(--text-slate) transition-all hover:bg-(--muted-bg-alt) hover:text-(--text)" onClick={resetView} title="Center View"><Maximize2 size={14} /></button>
+          <button className="flex items-center justify-center w-7 h-7 border-none bg-transparent rounded-md cursor-pointer text-(--text-slate) transition-all hover:bg-(--muted-bg-alt) hover:text-(--text)" onClick={resetLayout} title="Reset Layout"><RotateCcw size={14} /></button>
+          <span className="text-[10px] text-(--text-light) font-medium min-w-8 text-center">{Math.round(zoom * 100)}%</span>
         </div>
 
         {/* Subnet Legend */}
         {showSubnetClouds && subnetClouds.length > 0 && (
-          <div className="topo-subnet-legend">
+          <div className="absolute top-3 left-3 flex flex-col gap-1 bg-(--surface) border border-border rounded-lg px-3 py-2 z-10 shadow-sm">
             {subnetClouds.map(cloud => (
-              <div key={cloud.id} className="topo-subnet-legend-item">
-                <span className="topo-subnet-legend-dot" style={{ background: cloud.color }} />
-                <span className="topo-subnet-legend-text">
+              <div key={cloud.id} className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-sm shrink-0" style={{ background: cloud.color }} />
+                <span className="text-[10px] font-medium text-(--text-slate) whitespace-nowrap">
                   {cloud.subnet.prefix}/{cloud.subnet.mask}
                   {cloud.subnet.vlan && <span className="opacity-60"> (VLAN {cloud.subnet.vlan.vid})</span>}
                 </span>
@@ -437,7 +437,7 @@ const TopologyView = ({ selectedCategory = null }: TopologyViewProps) => {
 
         <svg
           ref={svgRef}
-          className="topo-svg"
+          className="w-full h-full min-h-[500px]"
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
@@ -660,9 +660,9 @@ const TopologyView = ({ selectedCategory = null }: TopologyViewProps) => {
 
       {/* Detail Panel */}
       {selectedDevice && (
-        <div className="topo-detail-panel animate-fade-in">
-          <div className="topo-detail-header">
-            <div className="topo-detail-icon" style={{ background: `${categoryColors[selectedDevice.category]}14`, color: categoryColors[selectedDevice.category] }}>
+        <div className="w-80 bg-(--surface) border border-border rounded-lg p-5 ml-4 overflow-y-auto max-h-full animate-fade-in">
+          <div className="flex items-center gap-4 mb-5 pb-4 border-b border-border">
+            <div className="w-10 h-10 rounded-[10px] flex items-center justify-center shrink-0" style={{ background: `${categoryColors[selectedDevice.category]}14`, color: categoryColors[selectedDevice.category] }}>
               {(() => { const I = categoryIcons[selectedDevice.category] || Monitor; return <I size={20} /> })()}
             </div>
             <div>
@@ -670,24 +670,24 @@ const TopologyView = ({ selectedCategory = null }: TopologyViewProps) => {
               <code className="text-[11px] text-(--text-slate)">{selectedDevice.ipAddress}</code>
             </div>
           </div>
-          <div className="topo-detail-grid">
-            <div className="topo-detail-item">
-              <span className="topo-detail-label">Category</span>
-              <span className="badge" style={{ background: `${categoryColors[selectedDevice.category]}14`, color: categoryColors[selectedDevice.category] }}>{selectedDevice.category}</span>
+          <div className="flex flex-col gap-3 mb-5">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] text-(--text-muted) font-semibold uppercase">Category</span>
+              <span className="px-2 py-0.5 rounded text-[11px] font-semibold" style={{ background: `${categoryColors[selectedDevice.category]}14`, color: categoryColors[selectedDevice.category] }}>{selectedDevice.category}</span>
             </div>
-            <div className="topo-detail-item">
-              <span className="topo-detail-label">Status</span>
-              <span className={`badge badge-${selectedDevice.status === 'active' ? 'green' : 'orange'}`}>{selectedDevice.status}</span>
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] text-(--text-muted) font-semibold uppercase">Status</span>
+              <span className={`px-2 py-0.5 rounded text-[11px] font-semibold ${selectedDevice.status === 'active' ? 'bg-(--green-bg) text-(--green)' : 'bg-(--orange-bg) text-(--orange)'}`}>{selectedDevice.status}</span>
             </div>
             {selectedDevice.platform && (
-              <div className="topo-detail-item">
-                <span className="topo-detail-label">Platform</span>
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] text-(--text-muted) font-semibold uppercase">Platform</span>
                 <span className="text-xs">{selectedDevice.platform}</span>
               </div>
             )}
             {selectedDevice.deviceType && (
-              <div className="topo-detail-item">
-                <span className="topo-detail-label">Hardware</span>
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] text-(--text-muted) font-semibold uppercase">Hardware</span>
                 <span className="text-xs">{selectedDevice.deviceType.manufacturer.name} {selectedDevice.deviceType.model}</span>
               </div>
             )}
@@ -697,18 +697,18 @@ const TopologyView = ({ selectedCategory = null }: TopologyViewProps) => {
               const sub = subId ? subnets.find(s => s.id === subId) : null
               if (!sub) return null
               return (
-                <div className="topo-detail-item">
-                  <span className="topo-detail-label">Network</span>
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] text-(--text-muted) font-semibold uppercase">Network</span>
                   <span className="text-xs">{sub.prefix}/{sub.mask}{sub.vlan ? ` (VLAN ${sub.vlan.vid})` : ''}</span>
                 </div>
               )
             })()}
           </div>
           {selectedDevice.interfaces.length > 0 && (
-            <div className="topo-detail-section">
+            <div className="mt-4 pt-4 border-t border-border">
               <h4>Interfaces</h4>
               {selectedDevice.interfaces.map(iface => (
-                <div key={iface.id} className="topo-iface-row">
+                <div key={iface.id} className="flex items-center gap-2 py-1 text-xs">
                   <Network size={12} color="#64748b" />
                   <span>{iface.name}</span>
                 </div>
@@ -716,12 +716,12 @@ const TopologyView = ({ selectedCategory = null }: TopologyViewProps) => {
             </div>
           )}
           {selectedDevice.services.length > 0 && (
-            <div className="topo-detail-section">
+            <div className="mt-4 pt-4 border-t border-border">
               <h4>Services</h4>
               {selectedDevice.services.map(s => (
-                <div key={s.id} className="topo-service-row">
-                  <span className="topo-service-name">{s.name}</span>
-                  <code className="topo-service-port">{s.protocol}:{s.ports}</code>
+                <div key={s.id} className="flex items-center justify-between py-1">
+                  <span className="text-xs font-medium">{s.name}</span>
+                  <code className="text-[10px] bg-(--muted-bg) px-1.5 py-0.5 rounded">{s.protocol}:{s.ports}</code>
                 </div>
               ))}
             </div>
@@ -733,10 +733,10 @@ const TopologyView = ({ selectedCategory = null }: TopologyViewProps) => {
             const peers = (subnetGroups.groups.get(subId) || []).filter(d => d.id !== selectedDevice.id)
             if (peers.length === 0) return null
             return (
-              <div className="topo-detail-section">
+              <div className="mt-4 pt-4 border-t border-border">
                 <h4>Same Network</h4>
                 {peers.map(p => (
-                  <div key={p.id} className="topo-iface-row cursor-pointer" onClick={() => setSelectedNode(p.id)}>
+                  <div key={p.id} className="flex items-center gap-2 py-1 text-xs cursor-pointer" onClick={() => setSelectedNode(p.id)}>
                     <Server size={12} color="#64748b" />
                     <span>{p.name}</span>
                     <code className="text-[9px] text-(--text-light) ml-auto">{p.ipAddress}</code>

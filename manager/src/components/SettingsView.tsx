@@ -203,16 +203,16 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
     : '?'
 
   return (
-    <div className="settings-view animate-fade-in">
-        <div className="settings-panel">
+    <div className="p-0 animate-fade-in">
+        <div className="p-8 max-w-[640px]">
           {/* ── PROFILE ── */}
           {activeTab === 'profile' && (
             <>
               <h2>Profile</h2>
-              <p className="settings-panel-desc">Manage your account information</p>
+              <p className="text-[13px] text-(--text-muted) mb-8">Manage your account information</p>
 
-              <div className="settings-section">
-                <div className="settings-avatar">{initials}</div>
+              <div className="bg-(--surface) border border-border rounded-lg p-6 mb-6">
+                <div className="w-16 h-16 rounded-full bg-linear-to-br from-(--blue) to-(--blue-light) text-white flex items-center justify-center text-2xl font-bold uppercase mb-4">{initials}</div>
                 <div className="space-y-1.5">
                   <Label className="text-xs font-semibold text-muted-foreground">Display Name</Label>
                   <Input
@@ -231,7 +231,7 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
                     className="h-9 text-[13px]"
                   />
                 </div>
-                <div className="settings-actions">
+                <div className="flex gap-3 mt-4">
                   <Button onClick={handleProfileSave} disabled={profileSaving}>
                     {profileSaving ? <><Loader2 size={14} className="animate-spin" /> Saving...</> :
                      profileSuccess ? <><Check size={14} /> Saved!</> :
@@ -240,23 +240,23 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
                 </div>
               </div>
 
-              <div className="settings-section">
+              <div className="bg-(--surface) border border-border rounded-lg p-6 mb-6">
                 <h3>Account Information</h3>
-                <div className="settings-row">
+                <div className="flex items-center justify-between py-3 border-b border-(--muted-bg-alt) last:border-b-0">
                   <div>
-                    <div className="settings-row-label">User ID</div>
-                    <div className="settings-row-desc">Your unique account identifier</div>
+                    <div className="text-[13px] font-medium text-(--text)">User ID</div>
+                    <div className="text-[11px] text-(--text-muted) mt-0.5">Your unique account identifier</div>
                   </div>
-                  <span className="settings-row-value font-mono text-[11px]">
+                  <span className="text-[11px] text-(--text-muted) font-mono">
                     {session?.user?.id || '—'}
                   </span>
                 </div>
-                <div className="settings-row">
+                <div className="flex items-center justify-between py-3 border-b border-(--muted-bg-alt) last:border-b-0">
                   <div>
-                    <div className="settings-row-label">Role</div>
-                    <div className="settings-row-desc">Your access level</div>
+                    <div className="text-[13px] font-medium text-(--text)">Role</div>
+                    <div className="text-[11px] text-(--text-muted) mt-0.5">Your access level</div>
                   </div>
-                  <span className="badge badge-blue">Administrator</span>
+                  <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-(--blue-bg) text-(--blue)">Administrator</span>
                 </div>
               </div>
             </>
@@ -266,9 +266,9 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
           {activeTab === 'security' && (
             <>
               <h2>Security</h2>
-              <p className="settings-panel-desc">Manage your password and security settings</p>
+              <p className="text-[13px] text-(--text-muted) mb-8">Manage your password and security settings</p>
 
-              <div className="settings-section">
+              <div className="bg-(--surface) border border-border rounded-lg p-6 mb-6">
                 <h3>Change Password</h3>
                 {passwordError && (
                   <div className="flex items-center gap-2 mb-4 px-3 py-2 rounded-md bg-[#fef2f2] border border-[#fecaca] text-[#dc2626] text-[13px]">
@@ -312,7 +312,7 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
                     className="h-9 text-[13px]"
                   />
                 </div>
-                <div className="settings-actions">
+                <div className="flex gap-3 mt-4">
                   <Button
                     onClick={handlePasswordChange}
                     disabled={passwordSaving || !currentPassword || !newPassword || !confirmPassword}
@@ -322,14 +322,14 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
                 </div>
               </div>
 
-              <div className="settings-section">
+              <div className="bg-(--surface) border border-border rounded-lg p-6 mb-6">
                 <h3>Session</h3>
-                <div className="settings-row">
+                <div className="flex items-center justify-between py-3 border-b border-(--muted-bg-alt) last:border-b-0">
                   <div>
-                    <div className="settings-row-label">Session Duration</div>
-                    <div className="settings-row-desc">How long you stay signed in</div>
+                    <div className="text-[13px] font-medium text-(--text)">Session Duration</div>
+                    <div className="text-[11px] text-(--text-muted) mt-0.5">How long you stay signed in</div>
                   </div>
-                  <span className="settings-row-value">7 days</span>
+                  <span className="text-[13px] text-(--text-muted)">7 days</span>
                 </div>
               </div>
             </>
@@ -339,14 +339,14 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
           {activeTab === 'notifications' && (
             <>
               <h2>Notifications</h2>
-              <p className="settings-panel-desc">Configure notification preferences</p>
+              <p className="text-[13px] text-(--text-muted) mb-8">Configure notification preferences</p>
 
-              <div className="settings-section">
+              <div className="bg-(--surface) border border-border rounded-lg p-6 mb-6">
                 <h3>Changelog Tracking</h3>
-                <div className="settings-row">
+                <div className="flex items-center justify-between py-3 border-b border-(--muted-bg-alt) last:border-b-0">
                   <div>
-                    <div className="settings-row-label">Enable Changelog</div>
-                    <div className="settings-row-desc">Track all changes made to devices, subnets, and services</div>
+                    <div className="text-[13px] font-medium text-(--text)">Enable Changelog</div>
+                    <div className="text-[11px] text-(--text-muted) mt-0.5">Track all changes made to devices, subnets, and services</div>
                   </div>
                   <button
                     className={`settings-toggle ${changelogEnabled ? 'active' : ''}`}
@@ -361,17 +361,17 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
           {activeTab === 'application' && (
             <>
               <h2>Application</h2>
-              <p className="settings-panel-desc">Customize the application behavior</p>
+              <p className="text-[13px] text-(--text-muted) mb-8">Customize the application behavior</p>
 
-              <div className="settings-section">
+              <div className="bg-(--surface) border border-border rounded-lg p-6 mb-6">
                 <h3>General</h3>
-                <div className="settings-row">
+                <div className="flex items-center justify-between py-3 border-b border-(--muted-bg-alt) last:border-b-0">
                   <div>
-                    <div className="settings-row-label">Default View</div>
-                    <div className="settings-row-desc">The view shown when you open the app</div>
+                    <div className="text-[13px] font-medium text-(--text)">Default View</div>
+                    <div className="text-[11px] text-(--text-muted) mt-0.5">The view shown when you open the app</div>
                   </div>
                   <select
-                    className="unifi-input w-40"
+                    className="w-40 h-9 border border-border rounded bg-(--surface-alt) text-(--text) text-[13px] px-3 focus:outline-none focus:border-(--blue) focus:bg-(--surface)"
                     value={defaultView}
                     onChange={e => setDefaultView(e.target.value)}
                   >
@@ -382,13 +382,13 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
                     <option value="services">Services</option>
                   </select>
                 </div>
-                <div className="settings-row">
+                <div className="flex items-center justify-between py-3 border-b border-(--muted-bg-alt) last:border-b-0">
                   <div>
-                    <div className="settings-row-label">Items Per Page</div>
-                    <div className="settings-row-desc">Number of items shown in tables</div>
+                    <div className="text-[13px] font-medium text-(--text)">Items Per Page</div>
+                    <div className="text-[11px] text-(--text-muted) mt-0.5">Number of items shown in tables</div>
                   </div>
                   <select
-                    className="unifi-input w-[100px]"
+                    className="w-[100px] h-9 border border-border rounded bg-(--surface-alt) text-(--text) text-[13px] px-3 focus:outline-none focus:border-(--blue) focus:bg-(--surface)"
                     value={itemsPerPage}
                     onChange={e => setItemsPerPage(e.target.value)}
                   >
@@ -399,22 +399,22 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
                 </div>
               </div>
 
-              <div className="settings-section">
+              <div className="bg-(--surface) border border-border rounded-lg p-6 mb-6">
                 <h3>Display</h3>
-                <div className="settings-row">
+                <div className="flex items-center justify-between py-3 border-b border-(--muted-bg-alt) last:border-b-0">
                   <div>
-                    <div className="settings-row-label">Auto-Refresh Data</div>
-                    <div className="settings-row-desc">Automatically refresh data when switching views</div>
+                    <div className="text-[13px] font-medium text-(--text)">Auto-Refresh Data</div>
+                    <div className="text-[11px] text-(--text-muted) mt-0.5">Automatically refresh data when switching views</div>
                   </div>
                   <button
                     className={`settings-toggle ${autoRefresh ? 'active' : ''}`}
                     onClick={() => setAutoRefresh(!autoRefresh)}
                   />
                 </div>
-                <div className="settings-row">
+                <div className="flex items-center justify-between py-3 border-b border-(--muted-bg-alt) last:border-b-0">
                   <div>
-                    <div className="settings-row-label">Show Tooltips</div>
-                    <div className="settings-row-desc">Display helpful tooltips on hover</div>
+                    <div className="text-[13px] font-medium text-(--text)">Show Tooltips</div>
+                    <div className="text-[11px] text-(--text-muted) mt-0.5">Display helpful tooltips on hover</div>
                   </div>
                   <button
                     className={`settings-toggle ${showTooltips ? 'active' : ''}`}
@@ -423,12 +423,12 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
                 </div>
               </div>
 
-              <div className="settings-section">
+              <div className="bg-(--surface) border border-border rounded-lg p-6 mb-6">
                 <h3>Safety</h3>
-                <div className="settings-row">
+                <div className="flex items-center justify-between py-3 border-b border-(--muted-bg-alt) last:border-b-0">
                   <div>
-                    <div className="settings-row-label">Confirm Deletions</div>
-                    <div className="settings-row-desc">Show confirmation dialog before deleting items</div>
+                    <div className="text-[13px] font-medium text-(--text)">Confirm Deletions</div>
+                    <div className="text-[11px] text-(--text-muted) mt-0.5">Show confirmation dialog before deleting items</div>
                   </div>
                   <button
                     className={`settings-toggle ${confirmDeletes ? 'active' : ''}`}
@@ -437,15 +437,15 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
                 </div>
               </div>
 
-              <div className="settings-section">
+              <div className="bg-(--surface) border border-border rounded-lg p-6 mb-6">
                 <h3 className="flex items-center gap-2"><Activity size={16} className="text-[#22c55e]" /> Health Checks</h3>
                 <p className="text-xs text-(--text-light) mb-4">
                   Automatically monitor your services by pinging their URLs at regular intervals. Services must have a URL and health check enabled individually.
                 </p>
-                <div className="settings-row">
+                <div className="flex items-center justify-between py-3 border-b border-(--muted-bg-alt) last:border-b-0">
                   <div>
-                    <div className="settings-row-label">Enable Auto Health Checks</div>
-                    <div className="settings-row-desc">Globally enable or disable automatic health monitoring</div>
+                    <div className="text-[13px] font-medium text-(--text)">Enable Auto Health Checks</div>
+                    <div className="text-[11px] text-(--text-muted) mt-0.5">Globally enable or disable automatic health monitoring</div>
                   </div>
                   <button
                     className={`settings-toggle ${hcEnabled ? 'active' : ''}`}
@@ -454,13 +454,13 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
                 </div>
                 {hcEnabled && (
                   <>
-                    <div className="settings-row">
+                    <div className="flex items-center justify-between py-3 border-b border-(--muted-bg-alt) last:border-b-0">
                       <div>
-                        <div className="settings-row-label">Check Interval</div>
-                        <div className="settings-row-desc">How often to ping service URLs</div>
+                        <div className="text-[13px] font-medium text-(--text)">Check Interval</div>
+                        <div className="text-[11px] text-(--text-muted) mt-0.5">How often to ping service URLs</div>
                       </div>
                       <select
-                        className="unifi-input w-40"
+                        className="w-40 h-9 border border-border rounded bg-(--surface-alt) text-(--text) text-[13px] px-3 focus:outline-none focus:border-(--blue) focus:bg-(--surface)"
                         value={hcInterval}
                         onChange={e => setHcInterval(parseInt(e.target.value))}
                       >
@@ -473,13 +473,13 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
                         <option value="3600">Every 1 hour</option>
                       </select>
                     </div>
-                    <div className="settings-row">
+                    <div className="flex items-center justify-between py-3 border-b border-(--muted-bg-alt) last:border-b-0">
                       <div>
-                        <div className="settings-row-label">Request Timeout</div>
-                        <div className="settings-row-desc">Max seconds to wait for a response before marking as down</div>
+                        <div className="text-[13px] font-medium text-(--text)">Request Timeout</div>
+                        <div className="text-[11px] text-(--text-muted) mt-0.5">Max seconds to wait for a response before marking as down</div>
                       </div>
                       <select
-                        className="unifi-input w-[120px]"
+                        className="w-[120px] h-9 border border-border rounded bg-(--surface-alt) text-(--text) text-[13px] px-3 focus:outline-none focus:border-(--blue) focus:bg-(--surface)"
                         value={hcTimeout}
                         onChange={e => setHcTimeout(parseInt(e.target.value))}
                       >
@@ -505,35 +505,35 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
           {activeTab === 'data' && (
             <>
               <h2>Data & Storage</h2>
-              <p className="settings-panel-desc">Manage your data, backups, and database</p>
+              <p className="text-[13px] text-(--text-muted) mb-8">Manage your data, backups, and database</p>
 
-              <div className="settings-section">
+              <div className="bg-(--surface) border border-border rounded-lg p-6 mb-6">
                 <h3>Database</h3>
-                <div className="settings-row">
+                <div className="flex items-center justify-between py-3 border-b border-(--muted-bg-alt) last:border-b-0">
                   <div>
-                    <div className="settings-row-label">Database Type</div>
-                    <div className="settings-row-desc">The database engine powering the application</div>
+                    <div className="text-[13px] font-medium text-(--text)">Database Type</div>
+                    <div className="text-[11px] text-(--text-muted) mt-0.5">The database engine powering the application</div>
                   </div>
-                  <span className="badge badge-blue">PostgreSQL</span>
+                  <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-(--blue-bg) text-(--blue)">PostgreSQL</span>
                 </div>
-                <div className="settings-row">
+                <div className="flex items-center justify-between py-3 border-b border-(--muted-bg-alt) last:border-b-0">
                   <div>
-                    <div className="settings-row-label">ORM</div>
-                    <div className="settings-row-desc">Object-Relational Mapping layer</div>
+                    <div className="text-[13px] font-medium text-(--text)">ORM</div>
+                    <div className="text-[11px] text-(--text-muted) mt-0.5">Object-Relational Mapping layer</div>
                   </div>
-                  <span className="settings-row-value">Prisma 7</span>
+                  <span className="text-[13px] text-(--text-muted)">Prisma 7</span>
                 </div>
               </div>
 
-              <div className="settings-section">
+              <div className="bg-(--surface) border border-border rounded-lg p-6 mb-6">
                 <h3>Backup & Export</h3>
                 <p className="text-xs text-(--text-light) mb-4">
                   Export a full backup of the current site including all devices, subnets, VLANs, IP addresses, services, WiFi networks, categories, and changelog.
                 </p>
-                <div className="settings-row">
+                <div className="flex items-center justify-between py-3 border-b border-(--muted-bg-alt) last:border-b-0">
                   <div>
-                    <div className="settings-row-label">Export Full Backup</div>
-                    <div className="settings-row-desc">Download a complete JSON backup of all site data</div>
+                    <div className="text-[13px] font-medium text-(--text)">Export Full Backup</div>
+                    <div className="text-[11px] text-(--text-muted) mt-0.5">Download a complete JSON backup of all site data</div>
                   </div>
                   <Button variant="outline" disabled={exporting} onClick={async () => {
                     setExporting(true)
@@ -560,7 +560,7 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
                 </div>
               </div>
 
-              <div className="settings-section">
+              <div className="bg-(--surface) border border-border rounded-lg p-6 mb-6">
                 <h3>Restore from Backup</h3>
                 <p className="text-xs text-(--text-light) mb-4">
                   Import a previously exported JSON backup. <strong className="text-(--red)">Warning:</strong> This will replace ALL data in the current site.
@@ -583,10 +583,10 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
                     )}
                   </div>
                 )}
-                <div className="settings-row">
+                <div className="flex items-center justify-between py-3 border-b border-(--muted-bg-alt) last:border-b-0">
                   <div>
-                    <div className="settings-row-label">Import Backup File</div>
-                    <div className="settings-row-desc">Select a .json backup file to restore</div>
+                    <div className="text-[13px] font-medium text-(--text)">Import Backup File</div>
+                    <div className="text-[11px] text-(--text-muted) mt-0.5">Select a .json backup file to restore</div>
                   </div>
                   <div className="flex gap-2 items-center">
                     <label className="inline-flex items-center gap-1.5 cursor-pointer px-3 py-1.5 rounded-md border border-border bg-card text-[13px] font-medium hover:bg-accent transition-colors">
@@ -604,12 +604,12 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
                 </div>
               </div>
 
-              <div className="settings-section settings-danger-zone">
+              <div className="bg-(--surface) border border-(--red-border) rounded-lg p-6 mb-6 [&_h3]:text-(--red)">
                 <h3>Danger Zone</h3>
                 <div className="flex flex-col gap-3">
                   <div>
-                    <div className="settings-row-label">Clear All Data</div>
-                    <div className="settings-row-desc">Permanently delete all devices, subnets, VLANs, services, and changelog entries</div>
+                    <div className="text-[13px] font-medium text-(--text)">Clear All Data</div>
+                    <div className="text-[11px] text-(--text-muted) mt-0.5">Permanently delete all devices, subnets, VLANs, services, and changelog entries</div>
                   </div>
                   <div>
                     <Button variant="destructive" onClick={async () => {
@@ -713,47 +713,47 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
           {activeTab === 'about' && (
             <>
               <h2>About</h2>
-              <p className="settings-panel-desc">Application information</p>
+              <p className="text-[13px] text-(--text-muted) mb-8">Application information</p>
 
-              <div className="settings-section">
+              <div className="bg-(--surface) border border-border rounded-lg p-6 mb-6">
                 <h3>Homelab Manager</h3>
-                <div className="settings-row">
+                <div className="flex items-center justify-between py-3 border-b border-(--muted-bg-alt) last:border-b-0">
                   <div>
-                    <div className="settings-row-label">Version</div>
+                    <div className="text-[13px] font-medium text-(--text)">Version</div>
                   </div>
-                  <span className="settings-row-value">0.1.0</span>
+                  <span className="text-[13px] text-(--text-muted)">0.1.0</span>
                 </div>
-                <div className="settings-row">
+                <div className="flex items-center justify-between py-3 border-b border-(--muted-bg-alt) last:border-b-0">
                   <div>
-                    <div className="settings-row-label">Framework</div>
+                    <div className="text-[13px] font-medium text-(--text)">Framework</div>
                   </div>
-                  <span className="settings-row-value">Next.js 16</span>
+                  <span className="text-[13px] text-(--text-muted)">Next.js 16</span>
                 </div>
-                <div className="settings-row">
+                <div className="flex items-center justify-between py-3 border-b border-(--muted-bg-alt) last:border-b-0">
                   <div>
-                    <div className="settings-row-label">Database</div>
+                    <div className="text-[13px] font-medium text-(--text)">Database</div>
                   </div>
-                  <span className="settings-row-value">PostgreSQL 16</span>
+                  <span className="text-[13px] text-(--text-muted)">PostgreSQL 16</span>
                 </div>
-                <div className="settings-row">
+                <div className="flex items-center justify-between py-3 border-b border-(--muted-bg-alt) last:border-b-0">
                   <div>
-                    <div className="settings-row-label">Authentication</div>
+                    <div className="text-[13px] font-medium text-(--text)">Authentication</div>
                   </div>
-                  <span className="settings-row-value">Better Auth</span>
+                  <span className="text-[13px] text-(--text-muted)">Better Auth</span>
                 </div>
-                <div className="settings-row">
+                <div className="flex items-center justify-between py-3 border-b border-(--muted-bg-alt) last:border-b-0">
                   <div>
-                    <div className="settings-row-label">Runtime</div>
+                    <div className="text-[13px] font-medium text-(--text)">Runtime</div>
                   </div>
-                  <span className="settings-row-value">Docker</span>
+                  <span className="text-[13px] text-(--text-muted)">Docker</span>
                 </div>
               </div>
 
-              <div className="settings-section">
+              <div className="bg-(--surface) border border-border rounded-lg p-6 mb-6">
                 <h3>Features</h3>
                 <div className="flex flex-wrap gap-2">
                   {['Device Management', 'IP Planning (IPAM)', 'VLAN Management', 'Network Topology', 'Service Tracking', 'Changelog Audit', 'Multi-Site Support', 'Custom Categories', 'Export/Import', 'Authentication'].map(f => (
-                    <span key={f} className="badge badge-blue">{f}</span>
+                    <span key={f} className="px-2 py-0.5 rounded text-[11px] font-semibold bg-(--blue-bg) text-(--blue)">{f}</span>
                   ))}
                 </div>
               </div>
@@ -812,9 +812,9 @@ function CategoriesTab({ categories, onCategoriesChange }: { categories: CustomC
   return (
     <>
       <h2>Categories</h2>
-      <p className="settings-panel-desc">Manage device categories with custom icons and colors</p>
+      <p className="text-[13px] text-(--text-muted) mb-8">Manage device categories with custom icons and colors</p>
 
-      <div className="settings-section">
+      <div className="bg-(--surface) border border-border rounded-lg p-6 mb-6">
         <h3>Add New Category</h3>
         <div className="flex gap-3 items-end flex-wrap">
           <div className="flex-1 min-w-[140px] space-y-1.5">
@@ -837,7 +837,7 @@ function CategoriesTab({ categories, onCategoriesChange }: { categories: CustomC
         </div>
       </div>
 
-      <div className="settings-section">
+      <div className="bg-(--surface) border border-border rounded-lg p-6 mb-6">
         <h3>Current Categories ({categories.length})</h3>
         {categories.length === 0 ? (
           <p className="text-muted-foreground text-[13px]">No categories yet. Add one above.</p>
@@ -846,7 +846,7 @@ function CategoriesTab({ categories, onCategoriesChange }: { categories: CustomC
             {categories.map(cat => {
               if (editingId === cat.id) {
                 return (
-                  <div key={cat.id} className="settings-row p-3">
+                  <div key={cat.id} className="flex items-center justify-between py-3 border-b border-(--muted-bg-alt) last:border-b-0 p-3">
                     <div className="flex gap-2 items-center flex-1 flex-wrap">
                       <Input className="w-[140px] h-[30px] text-[13px]" value={editName} onChange={e => setEditName(e.target.value)} />
                       <div className="w-[120px]">
@@ -874,14 +874,14 @@ function CategoriesTab({ categories, onCategoriesChange }: { categories: CustomC
 
 function CatRow({ cat, onEdit, onDelete }: { cat: CustomCategory, onEdit: (c: CustomCategory) => void, onDelete: (id: string) => void }) {
   return (
-    <div className="settings-row">
+    <div className="flex items-center justify-between py-3 border-b border-(--muted-bg-alt) last:border-b-0">
       <div className="flex items-center gap-3">
         <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: cat.color + '18' }}>
           {renderCategoryIcon(cat.icon, 16, cat.color)}
         </div>
         <div>
-          <div className="settings-row-label">{cat.name}</div>
-          <div className="settings-row-desc">{cat.icon} · {cat.color}</div>
+          <div className="text-[13px] font-medium text-(--text)">{cat.name}</div>
+          <div className="text-[11px] text-(--text-muted) mt-0.5">{cat.icon} · {cat.color}</div>
         </div>
       </div>
       <div className="flex gap-1">
@@ -934,9 +934,9 @@ function SitesTab({ sites, activeSiteId, onSitesChange }: { sites: Site[], activ
   return (
     <>
       <h2>Sites</h2>
-      <p className="settings-panel-desc">Manage your sites (projects/homelabs). Each site has its own devices, subnets, VLANs, and categories.</p>
+      <p className="text-[13px] text-(--text-muted) mb-8">Manage your sites (projects/homelabs). Each site has its own devices, subnets, VLANs, and categories.</p>
 
-      <div className="settings-section">
+      <div className="bg-(--surface) border border-border rounded-lg p-6 mb-6">
         <h3>Create New Site</h3>
         <div className="flex gap-3 items-end flex-wrap">
           <div className="flex-1 min-w-[160px] space-y-1.5">
@@ -955,7 +955,7 @@ function SitesTab({ sites, activeSiteId, onSitesChange }: { sites: Site[], activ
         </div>
       </div>
 
-      <div className="settings-section">
+      <div className="bg-(--surface) border border-border rounded-lg p-6 mb-6">
         <h3>Your Sites ({sites.length})</h3>
         {sites.length === 0 ? (
           <p className="text-muted-foreground text-[13px]">No sites yet.</p>
@@ -964,7 +964,7 @@ function SitesTab({ sites, activeSiteId, onSitesChange }: { sites: Site[], activ
             {sites.map(site => {
               if (editingId === site.id) {
                 return (
-                  <div key={site.id} className="settings-row p-3">
+                  <div key={site.id} className="flex items-center justify-between py-3 border-b border-(--muted-bg-alt) last:border-b-0 p-3">
                     <div className="flex gap-2 items-center flex-1 flex-wrap">
                       <Input className="w-40 h-[30px] text-[13px]" value={editName} onChange={e => setEditName(e.target.value)} />
                       <Input className="w-[200px] h-[30px] text-[13px]" value={editDesc} onChange={e => setEditDesc(e.target.value)} placeholder="Description" />
@@ -977,17 +977,17 @@ function SitesTab({ sites, activeSiteId, onSitesChange }: { sites: Site[], activ
                 )
               }
               return (
-                <div key={site.id} className="settings-row">
+                <div key={site.id} className="flex items-center justify-between py-3 border-b border-(--muted-bg-alt) last:border-b-0">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: site.id === activeSiteId ? 'var(--blue-bg)' : 'var(--muted-bg)' }}>
                       <MapPin size={16} color={site.id === activeSiteId ? 'var(--blue)' : 'var(--text-muted)'} />
                     </div>
                     <div>
-                      <div className="settings-row-label">
+                      <div className="text-[13px] font-medium text-(--text)">
                         {site.name}
-                        {site.id === activeSiteId && <span className="badge badge-blue ml-2 text-[9px]">Active</span>}
+                        {site.id === activeSiteId && <span className="px-2 py-0.5 rounded text-[9px] font-semibold bg-(--blue-bg) text-(--blue) ml-2">Active</span>}
                       </div>
-                      <div className="settings-row-desc">
+                      <div className="text-[11px] text-(--text-muted) mt-0.5">
                         {site.description || 'No description'}
                         {site._count && <span> · {site._count.devices} devices · {site._count.subnets} subnets · {site._count.vlans} VLANs</span>}
                       </div>
@@ -1054,9 +1054,9 @@ function VlanRolesTab({ roles, onRolesChange }: { roles: CustomCategory[], onRol
   return (
     <>
       <h2>VLAN Roles</h2>
-      <p className="settings-panel-desc">Manage custom VLAN roles used to categorize your VLANs</p>
+      <p className="text-[13px] text-(--text-muted) mb-8">Manage custom VLAN roles used to categorize your VLANs</p>
 
-      <div className="settings-section">
+      <div className="bg-(--surface) border border-border rounded-lg p-6 mb-6">
         <h3>Add New Role</h3>
         <div className="flex gap-3 items-end flex-wrap">
           <div className="flex-1 min-w-[140px] space-y-1.5">
@@ -1079,7 +1079,7 @@ function VlanRolesTab({ roles, onRolesChange }: { roles: CustomCategory[], onRol
         </div>
       </div>
 
-      <div className="settings-section">
+      <div className="bg-(--surface) border border-border rounded-lg p-6 mb-6">
         <h3>Current Roles ({roles.length})</h3>
         {roles.length === 0 ? (
           <p className="text-muted-foreground text-[13px]">No VLAN roles yet. Add one above.</p>
@@ -1088,7 +1088,7 @@ function VlanRolesTab({ roles, onRolesChange }: { roles: CustomCategory[], onRol
             {roles.map(role => {
               if (editingId === role.id) {
                 return (
-                  <div key={role.id} className="settings-row p-3">
+                  <div key={role.id} className="flex items-center justify-between py-3 border-b border-(--muted-bg-alt) last:border-b-0 p-3">
                     <div className="flex gap-2 items-center flex-1 flex-wrap">
                       <Input className="w-[140px] h-[30px] text-[13px]" value={editName} onChange={e => setEditName(e.target.value)} />
                       <div className="w-[120px]">
@@ -1104,14 +1104,14 @@ function VlanRolesTab({ roles, onRolesChange }: { roles: CustomCategory[], onRol
                 )
               }
               return (
-                <div key={role.id} className="settings-row">
+                <div key={role.id} className="flex items-center justify-between py-3 border-b border-(--muted-bg-alt) last:border-b-0">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: role.color + '18' }}>
                       {renderCategoryIcon(role.icon, 16, role.color)}
                     </div>
                     <div>
-                      <div className="settings-row-label">{role.name}</div>
-                      <div className="settings-row-desc">{role.slug} · {role.color}</div>
+                      <div className="text-[13px] font-medium text-(--text)">{role.name}</div>
+                      <div className="text-[11px] text-(--text-muted) mt-0.5">{role.slug} · {role.color}</div>
                     </div>
                   </div>
                   <div className="flex gap-1">

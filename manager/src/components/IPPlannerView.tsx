@@ -469,7 +469,7 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
     setIpModalOpen(true)
   }
 
-  if (loading) return <div className="view-loading">Loading IP Planner...</div>
+  if (loading) return <div className="flex items-center justify-center h-[200px] text-(--text-muted) text-[13px]">Loading IP Planner...</div>
 
   const getCellColor = (status: string) => {
     switch (status) {
@@ -487,8 +487,8 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
   // No subnets - empty state
   if (subnets.length === 0) {
     return (
-      <div className="ipam-view animate-fade-in">
-        <div className="empty-state">
+      <div className="p-0 animate-fade-in">
+        <div className="flex flex-col items-center justify-center p-16 px-8 text-center bg-(--surface) border border-border rounded-lg">
           <Globe size={40} color="#cbd5e1" />
           <h3>No subnets configured</h3>
           <p>Create your first subnet to start planning IP addresses.</p>
@@ -514,7 +514,7 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold text-muted-foreground">Mask</Label>
-                <select className="unifi-input" value={subnetForm.mask} onChange={e => setSubnetForm({ ...subnetForm, mask: e.target.value })}>
+                <select className="w-full h-9 border border-border rounded bg-(--surface-alt) text-(--text) text-[13px] px-3 focus:outline-none focus:border-(--blue) focus:bg-(--surface)" value={subnetForm.mask} onChange={e => setSubnetForm({ ...subnetForm, mask: e.target.value })}>
                   <option value="8">/8 (16.7M hosts)</option>
                   <option value="16">/16 (65,534 hosts)</option>
                   <option value="20">/20 (4,094 hosts)</option>
@@ -537,7 +537,7 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold text-muted-foreground">VLAN</Label>
-                <select className="unifi-input" value={subnetForm.vlanId} onChange={e => setSubnetForm({ ...subnetForm, vlanId: e.target.value })}>
+                <select className="w-full h-9 border border-border rounded bg-(--surface-alt) text-(--text) text-[13px] px-3 focus:outline-none focus:border-(--blue) focus:bg-(--surface)" value={subnetForm.vlanId} onChange={e => setSubnetForm({ ...subnetForm, vlanId: e.target.value })}>
                   <option value="">None</option>
                   {vlans.map(v => <option key={v.id} value={v.id}>VLAN {v.vid} — {v.name}</option>)}
                 </select>
@@ -546,7 +546,7 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
             <div className="grid grid-cols-2 gap-5">
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold text-muted-foreground">Role</Label>
-                <select className="unifi-input" value={subnetForm.role} onChange={e => setSubnetForm({ ...subnetForm, role: e.target.value })}>
+                <select className="w-full h-9 border border-border rounded bg-(--surface-alt) text-(--text) text-[13px] px-3 focus:outline-none focus:border-(--blue) focus:bg-(--surface)" value={subnetForm.role} onChange={e => setSubnetForm({ ...subnetForm, role: e.target.value })}>
                   <option value="">None</option>
                   <option value="production">Production</option>
                   <option value="management">Management</option>
@@ -570,27 +570,27 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
   }
 
   return (
-    <div className="ipam-view animate-fade-in">
+    <div className="p-0 animate-fade-in">
       {/* Toolbar */}
-      <div className="ipam-toolbar">
+      <div className="flex items-center gap-6 mb-4 bg-(--surface) border border-border rounded-lg py-3.5 px-5">
         <div className="flex items-center gap-6 flex-1 min-w-0">
-          <div className="ipam-subnet-selector">
-            <label className="input-label mb-0">Subnet</label>
-            <select className="unifi-input" value={selectedSubnet || ''} onChange={e => { setSelectedSubnet(e.target.value); setGridPage(0) }}>
+          <div className="flex flex-col gap-1 min-w-[280px]">
+            <label className="block text-xs font-semibold text-(--text-muted)">Subnet</label>
+            <select className="w-full h-9 border border-border rounded bg-(--surface-alt) text-(--text) text-[13px] px-3 focus:outline-none focus:border-(--blue) focus:bg-(--surface)" value={selectedSubnet || ''} onChange={e => { setSelectedSubnet(e.target.value); setGridPage(0) }}>
               {subnets.map(s => (
                 <option key={s.id} value={s.id}>{s.prefix}/{s.mask} — {s.description || 'Unnamed'} {s.vlan ? `(VLAN ${s.vlan.vid})` : ''}</option>
               ))}
             </select>
           </div>
-          <div className="ipam-util-section">
-            <div className="ipam-util-header">
-              <span className="ipam-util-label">Utilization</span>
-              <span className="ipam-util-pct" style={{ color: utilization.pct > 80 ? '#ef4444' : utilization.pct > 50 ? '#f59e0b' : '#10b981' }}>{utilization.pct}%</span>
+          <div className="flex-1 max-w-[300px]">
+            <div className="flex justify-between mb-1">
+              <span className="text-[11px] font-semibold text-(--text-muted) uppercase">Utilization</span>
+              <span className="text-[13px] font-bold" style={{ color: utilization.pct > 80 ? '#ef4444' : utilization.pct > 50 ? '#f59e0b' : '#10b981' }}>{utilization.pct}%</span>
             </div>
-            <div className="ipam-util-bar">
-              <div className="ipam-util-fill" style={{ width: `${utilization.pct}%`, background: utilization.pct > 80 ? '#ef4444' : utilization.pct > 50 ? '#f59e0b' : '#10b981' }} />
+            <div className="h-2 bg-(--muted-bg) rounded overflow-hidden mb-1">
+              <div className="h-full rounded transition-all duration-600" style={{ width: `${utilization.pct}%`, background: utilization.pct > 80 ? '#ef4444' : utilization.pct > 50 ? '#f59e0b' : '#10b981' }} />
             </div>
-            <span className="ipam-util-detail">{utilization.used} / {utilization.total} addresses used</span>
+            <span className="text-[11px] text-(--text-muted)">{utilization.used} / {utilization.total} addresses used</span>
           </div>
         </div>
         <div className="flex gap-2 items-center shrink-0">
@@ -630,14 +630,14 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
 
       {/* IP Range Legend */}
       {subnet && subnet.ipRanges.length > 0 && (
-        <div className="ipam-ranges-bar">
+        <div className="flex flex-wrap gap-2 mb-4">
           {subnet.ipRanges.map((r, i) => {
             const rc = rangeColors[r.role] || rangeColors.general
             return (
-              <div key={i} className="ipam-range-tag" style={{ background: rc.bg, borderColor: rc.border }}>
-                <div className="ipam-range-dot" style={{ background: rc.border }} />
+              <div key={i} className="flex items-center gap-2 py-1.5 px-3 rounded-md border text-[11px] font-medium" style={{ background: rc.bg, borderColor: rc.border }}>
+                <div className="w-1.5 h-1.5 rounded-full" style={{ background: rc.border }} />
                 <span>{rc.label}: .{r.startAddr.split('.').pop()} — .{r.endAddr.split('.').pop()}</span>
-                {r.description && <span className="ipam-range-desc">{r.description}</span>}
+                {r.description && <span className="text-(--text-muted) font-normal">{r.description}</span>}
                 <Button variant="ghost" size="icon" className="h-5 w-5 ml-1" style={{ color: rc.border }} onClick={() => openEditRange(r)} title="Edit Range"><Edit2 size={11} /></Button>
                 <Button variant="ghost" size="icon" className="h-5 w-5 text-(--red)" onClick={() => handleDeleteRange(r.id)} title="Delete Range"><Trash2 size={11} /></Button>
               </div>
@@ -675,7 +675,7 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
             </div>
           )}
 
-          <div className="ipam-grid-container">
+          <div className="bg-(--surface) border border-border rounded-lg p-5 mb-6">
             <div className="ipam-grid" style={{ gridTemplateColumns: `repeat(${gridColumns(subnet.mask)}, 1fr)` }}>
               {filteredCells.map((cell) => {
                 const colors = getCellColor(cell.status)
@@ -724,11 +724,11 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
                 <Info size={12} />
                 <div className="ipam-tooltip-content">
                   <strong>{cell.fullIp}</strong>
-                  {cell.isGateway && <span className="badge badge-green">Gateway</span>}
+                  {cell.isGateway && <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-(--green-bg) text-(--green)">Gateway</span>}
                   {cell.device && <span><Server size={10} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />{cell.device.name}</span>}
                   {cell.ip && !cell.device && <span>{cell.ip.dnsName || cell.ip.assignedTo || 'Unnamed'}</span>}
                   {cell.ip?.description && <span className="ipam-tooltip-desc">{cell.ip.description}</span>}
-                  {!cell.ip && !cell.device && cell.range && <span className={`badge badge-${cell.range.role === 'dhcp' ? 'orange' : cell.range.role === 'reserved' ? 'purple' : 'blue'}`}>{cell.range.role} range</span>}
+                  {!cell.ip && !cell.device && cell.range && <span className={`px-2 py-0.5 rounded text-[11px] font-semibold ${cell.range.role === 'dhcp' ? 'bg-(--orange-bg) text-(--orange)' : cell.range.role === 'reserved' ? 'bg-(--purple-bg) text-(--purple)' : 'bg-(--blue-bg) text-(--blue)'}`}>{cell.range.role} range</span>}
                   {(cell.status === 'available' || cell.status === 'dhcp' || cell.status === 'reserved' || cell.status === 'infrastructure') && !cell.ip && !cell.device && <span className="ipam-tooltip-action">Click to assign</span>}
                   {(cell.ip || cell.device) && cell.status === 'assigned' && <span className="ipam-tooltip-action">Click to edit / unassign</span>}
                 </div>
@@ -740,8 +740,8 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
 
       {/* ═══ LIST VIEW ═══ */}
       {viewMode === 'list' && subnet && (
-        <div className="ipam-list-view">
-          <table className="unifi-table">
+        <div className="bg-(--surface) border border-border rounded-lg overflow-hidden">
+          <table className="w-full border-collapse bg-(--surface) rounded-(--radius) border border-border table-fixed">
             <thead>
               <tr>
                 <th className="w-[60px]">#</th>
@@ -819,60 +819,60 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
           return { ...r, total, used, pct: Math.round((used / total) * 100) }
         })
         return (
-          <div className="ipam-summary-view">
+          <div className="flex flex-col gap-5">
             {/* Stats Cards — consistent with all views */}
-            <div className="dash-stat-grid grid-cols-4">
-              <div className="dash-stat-card">
-                <div className="dash-stat-label">Used Addresses</div>
-                <div className="dash-stat-value text-[#0055ff]">{utilization.used}</div>
+            <div className="grid grid-cols-4 gap-4">
+              <div className="bg-card border border-border rounded-lg p-5">
+                <div className="text-xs text-(--text-muted) font-medium">Used Addresses</div>
+                <div className="text-2xl font-bold leading-none text-[#0055ff]">{utilization.used}</div>
                 <div className="text-[10px] text-(--text-light)">{utilization.pct}% of {utilization.total}</div>
               </div>
-              <div className="dash-stat-card">
-                <div className="dash-stat-label">Available</div>
-                <div className="dash-stat-value text-[#10b981]">{statusCounts['available'] || 0}</div>
+              <div className="bg-card border border-border rounded-lg p-5">
+                <div className="text-xs text-(--text-muted) font-medium">Available</div>
+                <div className="text-2xl font-bold leading-none text-[#10b981]">{statusCounts['available'] || 0}</div>
                 <div className="text-[10px] text-(--text-light)">Ready to assign</div>
               </div>
-              <div className="dash-stat-card">
-                <div className="dash-stat-label">Devices</div>
-                <div className="dash-stat-value text-[#7c3aed]">{deviceCount}</div>
+              <div className="bg-card border border-border rounded-lg p-5">
+                <div className="text-xs text-(--text-muted) font-medium">Devices</div>
+                <div className="text-2xl font-bold leading-none text-[#7c3aed]">{deviceCount}</div>
                 <div className="text-[10px] text-(--text-light)">Linked to IPs</div>
               </div>
-              <div className="dash-stat-card">
-                <div className="dash-stat-label">Manual IPs</div>
-                <div className="dash-stat-value text-[#f59e0b]">{ipamCount}</div>
+              <div className="bg-card border border-border rounded-lg p-5">
+                <div className="text-xs text-(--text-muted) font-medium">Manual IPs</div>
+                <div className="text-2xl font-bold leading-none text-[#f59e0b]">{ipamCount}</div>
                 <div className="text-[10px] text-(--text-light)">No device linked</div>
               </div>
             </div>
 
             {/* Subnet Info */}
-            <div className="ipam-summary-section">
-              <h3 className="ipam-summary-section-title">Subnet Details</h3>
-              <div className="ipam-summary-details">
-                <div className="ipam-summary-detail-row">
-                  <span className="ipam-summary-detail-label">Network</span>
+            <div className="bg-(--surface) border border-border rounded-[10px] p-5">
+              <h3 className="text-[13px] font-semibold text-(--text) mb-4">Subnet Details</h3>
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between py-1.5 border-b border-(--muted-bg-alt) last:border-b-0 text-xs">
+                  <span className="text-(--text-light) font-medium">Network</span>
                   <code>{subnet.prefix}/{subnet.mask}</code>
                 </div>
                 {subnet.gateway && (
-                  <div className="ipam-summary-detail-row">
-                    <span className="ipam-summary-detail-label">Gateway</span>
+                  <div className="flex items-center justify-between py-1.5 border-b border-(--muted-bg-alt) last:border-b-0 text-xs">
+                    <span className="text-(--text-light) font-medium">Gateway</span>
                     <code>{subnet.gateway}</code>
                   </div>
                 )}
                 {subnet.vlan && (
-                  <div className="ipam-summary-detail-row">
-                    <span className="ipam-summary-detail-label">VLAN</span>
+                  <div className="flex items-center justify-between py-1.5 border-b border-(--muted-bg-alt) last:border-b-0 text-xs">
+                    <span className="text-(--text-light) font-medium">VLAN</span>
                     <span>VLAN {subnet.vlan.vid} — {subnet.vlan.name}</span>
                   </div>
                 )}
                 {subnet.role && (
-                  <div className="ipam-summary-detail-row">
-                    <span className="ipam-summary-detail-label">Role</span>
-                    <span className="badge" style={{ textTransform: 'capitalize' }}>{subnet.role}</span>
+                  <div className="flex items-center justify-between py-1.5 border-b border-(--muted-bg-alt) last:border-b-0 text-xs">
+                    <span className="text-(--text-light) font-medium">Role</span>
+                    <span className="px-2 py-0.5 rounded text-[11px] font-semibold capitalize">{subnet.role}</span>
                   </div>
                 )}
                 {subnet.description && (
-                  <div className="ipam-summary-detail-row">
-                    <span className="ipam-summary-detail-label">Description</span>
+                  <div className="flex items-center justify-between py-1.5 border-b border-(--muted-bg-alt) last:border-b-0 text-xs">
+                    <span className="text-(--text-light) font-medium">Description</span>
                     <span>{subnet.description}</span>
                   </div>
                 )}
@@ -880,40 +880,40 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
             </div>
 
             {/* Address Breakdown Bar */}
-            <div className="ipam-summary-section">
-              <h3 className="ipam-summary-section-title">Address Breakdown</h3>
-              <div className="ipam-breakdown-bar">
-                {statusCounts['gateway'] && <div className="ipam-breakdown-seg" style={{ flex: statusCounts['gateway'], background: '#10b981' }} title={`Gateway: ${statusCounts['gateway']}`} />}
-                {statusCounts['assigned'] && <div className="ipam-breakdown-seg" style={{ flex: statusCounts['assigned'], background: '#0055ff' }} title={`Assigned: ${statusCounts['assigned']}`} />}
-                {statusCounts['dhcp'] && <div className="ipam-breakdown-seg" style={{ flex: statusCounts['dhcp'], background: '#f59e0b' }} title={`DHCP: ${statusCounts['dhcp']}`} />}
-                {statusCounts['reserved'] && <div className="ipam-breakdown-seg" style={{ flex: statusCounts['reserved'], background: '#8b5cf6' }} title={`Reserved: ${statusCounts['reserved']}`} />}
-                {statusCounts['infrastructure'] && <div className="ipam-breakdown-seg" style={{ flex: statusCounts['infrastructure'], background: '#06b6d4' }} title={`Infrastructure: ${statusCounts['infrastructure']}`} />}
-                {statusCounts['available'] && <div className="ipam-breakdown-seg" style={{ flex: statusCounts['available'], background: '#e2e8f0' }} title={`Available: ${statusCounts['available']}`} />}
+            <div className="bg-(--surface) border border-border rounded-[10px] p-5">
+              <h3 className="text-[13px] font-semibold text-(--text) mb-4">Address Breakdown</h3>
+              <div className="flex h-5 rounded-md overflow-hidden gap-px mb-3">
+                {statusCounts['gateway'] && <div className="min-w-0.5 transition-all duration-300" style={{ flex: statusCounts['gateway'], background: '#10b981' }} title={`Gateway: ${statusCounts['gateway']}`} />}
+                {statusCounts['assigned'] && <div className="min-w-0.5 transition-all duration-300" style={{ flex: statusCounts['assigned'], background: '#0055ff' }} title={`Assigned: ${statusCounts['assigned']}`} />}
+                {statusCounts['dhcp'] && <div className="min-w-0.5 transition-all duration-300" style={{ flex: statusCounts['dhcp'], background: '#f59e0b' }} title={`DHCP: ${statusCounts['dhcp']}`} />}
+                {statusCounts['reserved'] && <div className="min-w-0.5 transition-all duration-300" style={{ flex: statusCounts['reserved'], background: '#8b5cf6' }} title={`Reserved: ${statusCounts['reserved']}`} />}
+                {statusCounts['infrastructure'] && <div className="min-w-0.5 transition-all duration-300" style={{ flex: statusCounts['infrastructure'], background: '#06b6d4' }} title={`Infrastructure: ${statusCounts['infrastructure']}`} />}
+                {statusCounts['available'] && <div className="min-w-0.5 transition-all duration-300" style={{ flex: statusCounts['available'], background: '#e2e8f0' }} title={`Available: ${statusCounts['available']}`} />}
               </div>
-              <div className="ipam-breakdown-legend">
-                {statusCounts['gateway'] && <span><span className="ipam-breakdown-dot" style={{ background: '#10b981' }} /> Gateway ({statusCounts['gateway']})</span>}
-                {statusCounts['assigned'] && <span><span className="ipam-breakdown-dot" style={{ background: '#0055ff' }} /> Assigned ({statusCounts['assigned']})</span>}
-                {statusCounts['dhcp'] && <span><span className="ipam-breakdown-dot" style={{ background: '#f59e0b' }} /> DHCP ({statusCounts['dhcp']})</span>}
-                {statusCounts['reserved'] && <span><span className="ipam-breakdown-dot" style={{ background: '#8b5cf6' }} /> Reserved ({statusCounts['reserved']})</span>}
-                {statusCounts['infrastructure'] && <span><span className="ipam-breakdown-dot" style={{ background: '#06b6d4' }} /> Infrastructure ({statusCounts['infrastructure']})</span>}
-                <span><span className="ipam-breakdown-dot" style={{ background: '#e2e8f0' }} /> Available ({statusCounts['available'] || 0})</span>
+              <div className="flex flex-wrap gap-3 text-[11px] text-(--text-slate)">
+                {statusCounts['gateway'] && <span><span className="inline-block w-2 h-2 rounded-sm mr-1 align-middle" style={{ background: '#10b981' }} /> Gateway ({statusCounts['gateway']})</span>}
+                {statusCounts['assigned'] && <span><span className="inline-block w-2 h-2 rounded-sm mr-1 align-middle" style={{ background: '#0055ff' }} /> Assigned ({statusCounts['assigned']})</span>}
+                {statusCounts['dhcp'] && <span><span className="inline-block w-2 h-2 rounded-sm mr-1 align-middle" style={{ background: '#f59e0b' }} /> DHCP ({statusCounts['dhcp']})</span>}
+                {statusCounts['reserved'] && <span><span className="inline-block w-2 h-2 rounded-sm mr-1 align-middle" style={{ background: '#8b5cf6' }} /> Reserved ({statusCounts['reserved']})</span>}
+                {statusCounts['infrastructure'] && <span><span className="inline-block w-2 h-2 rounded-sm mr-1 align-middle" style={{ background: '#06b6d4' }} /> Infrastructure ({statusCounts['infrastructure']})</span>}
+                <span><span className="inline-block w-2 h-2 rounded-sm mr-1 align-middle" style={{ background: '#e2e8f0' }} /> Available ({statusCounts['available'] || 0})</span>
               </div>
             </div>
 
             {/* Range Utilization */}
             {rangeSummary.length > 0 && (
-              <div className="ipam-summary-section">
-                <h3 className="ipam-summary-section-title">Range Utilization</h3>
+              <div className="bg-(--surface) border border-border rounded-[10px] p-5">
+                <h3 className="text-[13px] font-semibold text-(--text) mb-4">Range Utilization</h3>
                 {rangeSummary.map((r, i) => {
                   const rc = rangeColors[r.role] || rangeColors.general
                   return (
-                    <div key={i} className="ipam-range-summary-row">
-                      <div className="ipam-range-summary-header">
+                    <div key={i} className="mb-3 last:mb-0">
+                      <div className="flex justify-between items-center mb-1">
                         <span className="font-semibold text-xs">{rc.label}: .{r.startAddr.split('.').pop()} — .{r.endAddr.split('.').pop()}</span>
                         <span className="text-[11px] text-(--text-light)">{r.used}/{r.total} used ({r.pct}%)</span>
                       </div>
-                      <div className="ipam-util-bar h-1.5">
-                        <div className="ipam-util-fill" style={{ width: `${r.pct}%`, background: rc.border }} />
+                      <div className="h-1.5 bg-(--muted-bg) rounded overflow-hidden">
+                        <div className="h-full rounded transition-all duration-600" style={{ width: `${r.pct}%`, background: rc.border }} />
                       </div>
                     </div>
                   )
@@ -923,15 +923,15 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
 
             {/* Devices on this subnet */}
             {deviceCount > 0 && (
-              <div className="ipam-summary-section">
-                <h3 className="ipam-summary-section-title">Devices on this Subnet</h3>
-                <div className="ipam-summary-devices">
+              <div className="bg-(--surface) border border-border rounded-[10px] p-5">
+                <h3 className="text-[13px] font-semibold text-(--text) mb-4">Devices on this Subnet</h3>
+                <div className="flex flex-col gap-2">
                   {cellData.filter(c => c.device).map(c => (
-                    <div key={c.octet} className="ipam-summary-device-row">
+                    <div key={c.octet} className="flex items-center gap-2 py-2 px-3 bg-(--surface-alt) border border-(--muted-bg-alt) rounded-lg text-xs">
                       <Server size={13} color="#0055ff" />
                       <span className="font-medium">{c.device!.name}</span>
                       <code className="text-[10px] text-(--text-light) ml-auto">{c.fullIp}</code>
-                      <span className={`badge badge-${c.device!.status === 'active' ? 'green' : 'orange'} text-[9px]`}>{c.device!.status}</span>
+                      <span className={`px-2 py-0.5 rounded text-[9px] font-semibold ${c.device!.status === 'active' ? 'bg-(--green-bg) text-(--green)' : 'bg-(--orange-bg) text-(--orange)'}`}>{c.device!.status}</span>
                     </div>
                   ))}
                 </div>
@@ -956,18 +956,18 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
         })
         const totalAssigned = subnet.ipAddresses.length + deviceOnlyEntries.length
         return (
-          <div className="ipam-table-section">
-            <div className="dash-section-header">
+          <div className="bg-(--surface) border border-border rounded-lg p-5">
+            <div className="flex items-center justify-between mb-4">
               <h2>Assigned Addresses</h2>
               <div className="flex gap-2 items-center">
-                <span className="dash-section-badge">{totalAssigned} addresses</span>
+                <span className="text-[11px] text-(--text-muted) bg-(--muted-bg) px-2 py-0.5 rounded">{totalAssigned} addresses</span>
                 <Button size="sm" className="h-7 px-2.5 text-[11px]" onClick={() => { setEditingIpId(null); setIpForm({ address: `${base}.`, dnsName: '', description: '', status: 'active', deviceId: '' }); setIpModalOpen(true) }}><Plus size={12} /> Assign IP</Button>
               </div>
             </div>
             {totalAssigned === 0 ? (
               <div className="p-8 text-center text-muted-foreground text-[13px]">No IP addresses assigned yet. Click a cell in the grid or use the button above.</div>
             ) : (
-              <table className="unifi-table">
+              <table className="w-full border-collapse bg-(--surface) rounded-(--radius) border border-border table-fixed">
                 <thead>
                   <tr>
                     <th className="w-[140px]">Address</th>
@@ -995,7 +995,7 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
                               ip.dnsName || ip.assignedTo || '—'
                             )}
                           </td>
-                          <td><span className="badge badge-green">{ip.status}</span></td>
+                          <td><span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-(--green-bg) text-(--green)">{ip.status}</span></td>
                           <td className="text-muted-foreground">{ip.description || '—'}</td>
                           <td className="text-right pr-2">
                             <div className="flex gap-0.5 justify-end">
@@ -1015,7 +1015,7 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
                           {d.name}
                         </span>
                       </td>
-                      <td><span className={`badge badge-${d.status === 'active' ? 'green' : 'orange'}`}>{d.status}</span></td>
+                      <td><span className={`px-2 py-0.5 rounded text-[11px] font-semibold ${d.status === 'active' ? 'bg-(--green-bg) text-(--green)' : 'bg-(--orange-bg) text-(--orange)'}`}>{d.status}</span></td>
                       <td className="text-muted-foreground">{d.category} — {d.platform || 'No platform'}</td>
                       <td className="text-right pr-2">
                         <div className="flex gap-0.5 justify-end">
@@ -1055,7 +1055,7 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
             <div className="grid grid-cols-2 gap-5">
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold text-muted-foreground">Role</Label>
-                <select className="unifi-input" value={rangeForm.role} onChange={e => setRangeForm({ ...rangeForm, role: e.target.value })}>
+                <select className="w-full h-9 border border-border rounded bg-(--surface-alt) text-(--text) text-[13px] px-3 focus:outline-none focus:border-(--blue) focus:bg-(--surface)" value={rangeForm.role} onChange={e => setRangeForm({ ...rangeForm, role: e.target.value })}>
                   <option value="dhcp">DHCP Pool</option>
                   <option value="reserved">Reserved</option>
                   <option value="infrastructure">Infrastructure</option>
@@ -1083,7 +1083,7 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
           <form onSubmit={handleAssignIp}>
             <div className="space-y-1.5 mb-4">
               <Label className="text-xs font-semibold text-muted-foreground">Link to Device (Optional)</Label>
-              <select className="unifi-input" value={ipForm.deviceId} onChange={e => {
+              <select className="w-full h-9 border border-border rounded bg-(--surface-alt) text-(--text) text-[13px] px-3 focus:outline-none focus:border-(--blue) focus:bg-(--surface)" value={ipForm.deviceId} onChange={e => {
                 const dev = devices.find(d => d.id === e.target.value)
                 if (dev) {
                   setIpForm({

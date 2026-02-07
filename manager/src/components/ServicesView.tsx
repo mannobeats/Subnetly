@@ -346,7 +346,7 @@ const ServicesView = ({ searchTerm, selectedProtocol = null, highlightId = null 
                         <Container size={16} className="text-[#2563eb]" />
                         <span className="font-semibold text-[13px]">{stackName}</span>
                       </div>
-                      <span className="badge badge-blue text-[9px]">{stackServices.length} containers</span>
+                      <span className="px-2 py-0.5 rounded text-[9px] font-semibold bg-(--blue-bg) text-(--blue)">{stackServices.length} containers</span>
                     </div>
                     <div className="flex flex-col gap-1">
                       {stackServices.map(s => {
@@ -368,34 +368,34 @@ const ServicesView = ({ searchTerm, selectedProtocol = null, highlightId = null 
           )}
 
           {/* Service Cards by Device */}
-          <div className="services-device-grid">
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(360px,1fr))] gap-4 mb-6">
             {Object.values(grouped).map(({ device, services: svcList }) => (
-              <div key={device.id} className="services-device-card">
-                <div className="services-device-header">
+              <div key={device.id} className="bg-(--surface) border border-border rounded-lg overflow-hidden">
+                <div className="flex items-center justify-between p-4 px-5 bg-(--surface-alt) border-b border-border">
                   <div>
-                    <div className="services-device-name">{device.name}</div>
-                    <code className="services-device-ip">{device.ipAddress}</code>
+                    <div className="text-[13px] font-semibold">{device.name}</div>
+                    <code className="text-[11px] text-(--text-muted)">{device.ipAddress}</code>
                   </div>
-                  <span className="badge badge-blue">{svcList.length} service{svcList.length !== 1 ? 's' : ''}</span>
+                  <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-(--blue-bg) text-(--blue)">{svcList.length} service{svcList.length !== 1 ? 's' : ''}</span>
                 </div>
-                <div className="services-list">
+                <div className="py-2">
                   {svcList.map(s => {
                     const Icon = protocolIcons[s.protocol] || Globe
                     const hc = healthColors[s.healthStatus || 'unknown']
                     const ec = envColors[s.environment || 'production'] || envColors.production
                     return (
-                      <div key={s.id} className="services-item" style={{ flexWrap: 'wrap' }}>
+                      <div key={s.id} className="flex items-center gap-3 py-2.5 px-5 transition-colors hover:bg-(--hover)" style={{ flexWrap: 'wrap' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%' }}>
                           <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: hc.dot, flexShrink: 0 }} title={s.healthStatus || 'unknown'} />
-                          <div className="services-item-icon"><Icon size={14} /></div>
-                          <div className="services-item-info" style={{ flex: 1, minWidth: 0 }}>
-                            <span className="services-item-name" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <div className="w-7 h-7 rounded-md bg-(--blue-bg) text-(--blue) flex items-center justify-center shrink-0"><Icon size={14} /></div>
+                          <div className="flex-1 flex flex-col" style={{ flex: 1, minWidth: 0 }}>
+                            <span className="text-xs font-medium" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                               {s.name}
                               {s.version && <span style={{ fontSize: '9px', color: '#94a3b8', fontWeight: 400 }}>v{s.version}</span>}
                             </span>
-                            {s.description && <span className="services-item-desc">{s.description}</span>}
+                            {s.description && <span className="text-[10px] text-(--text-muted)">{s.description}</span>}
                           </div>
-                          <code className="services-item-port">{s.protocol.toUpperCase()}:{s.ports}</code>
+                          <code className="text-[10px] bg-(--muted-bg) px-2 py-0.5 rounded shrink-0">{s.protocol.toUpperCase()}:{s.ports}</code>
                           <div className="flex gap-0.5 ml-1">
                             {s.url && <a href={s.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center h-6 w-6 rounded-md text-[#0055ff] hover:bg-accent" title="Open URL"><ExternalLink size={10} /></a>}
                             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openEdit(s)}><Edit2 size={10} /></Button>
@@ -404,11 +404,11 @@ const ServicesView = ({ searchTerm, selectedProtocol = null, highlightId = null 
                         </div>
                         {/* Tags row */}
                         <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginTop: '4px', paddingLeft: '2rem' }}>
-                          {s.isDocker && <span className="badge" style={{ background: '#dbeafe', color: '#1e40af', fontSize: '8px', padding: '1px 5px' }}>Docker</span>}
-                          {s.dockerImage && <span className="badge" style={{ background: '#f1f5f9', color: '#475569', fontSize: '8px', padding: '1px 5px' }}>{s.dockerImage.length > 25 ? s.dockerImage.slice(0, 25) + '…' : s.dockerImage}</span>}
-                          <span className="badge" style={{ background: ec.bg, color: ec.color, fontSize: '8px', padding: '1px 5px' }}>{s.environment || 'production'}</span>
+                          {s.isDocker && <span className="rounded" style={{ background: '#dbeafe', color: '#1e40af', fontSize: '8px', padding: '1px 5px' }}>Docker</span>}
+                          {s.dockerImage && <span className="rounded" style={{ background: '#f1f5f9', color: '#475569', fontSize: '8px', padding: '1px 5px' }}>{s.dockerImage.length > 25 ? s.dockerImage.slice(0, 25) + '…' : s.dockerImage}</span>}
+                          <span className="rounded" style={{ background: ec.bg, color: ec.color, fontSize: '8px', padding: '1px 5px' }}>{s.environment || 'production'}</span>
                           {s.tags && s.tags.split(',').map(t => t.trim()).filter(Boolean).map(t => (
-                            <span key={t} className="badge" style={{ background: '#f1f5f9', color: '#64748b', fontSize: '8px', padding: '1px 5px' }}>{t}</span>
+                            <span key={t} className="rounded" style={{ background: '#f1f5f9', color: '#64748b', fontSize: '8px', padding: '1px 5px' }}>{t}</span>
                           ))}
                         </div>
                       </div>
@@ -426,7 +426,7 @@ const ServicesView = ({ searchTerm, selectedProtocol = null, highlightId = null 
               <span className="text-[11px] text-muted-foreground bg-(--muted-bg) px-2 py-0.5 rounded">{filtered.length} services</span>
             </div>
             <div className="overflow-x-auto">
-              <table className="unifi-table">
+              <table className="w-full border-collapse bg-(--surface) rounded-(--radius) border border-border table-fixed">
                 <thead>
                   <tr>
                     <th className="w-[30px]"></th>
@@ -456,7 +456,7 @@ const ServicesView = ({ searchTerm, selectedProtocol = null, highlightId = null 
                             {s.url && <a href={s.url} target="_blank" rel="noopener noreferrer" className="text-[#0055ff] inline-flex"><ExternalLink size={10} /></a>}
                           </div>
                         </td>
-                        <td><span className="badge badge-blue">{s.protocol.toUpperCase()}</span></td>
+                        <td><span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-(--blue-bg) text-(--blue)">{s.protocol.toUpperCase()}</span></td>
                         <td><code className="text-[11px] bg-(--muted-bg) px-1.5 py-0.5 rounded">{s.ports}</code></td>
                         <td>
                           <div className="flex items-center gap-1">
@@ -529,7 +529,7 @@ const ServicesView = ({ searchTerm, selectedProtocol = null, highlightId = null 
               </div>
               <div>
                 <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Device</Label>
-                <select required className="unifi-input" value={form.deviceId} onChange={e => setForm({ ...form, deviceId: e.target.value })}>
+                <select required className="w-full h-9 border border-border rounded bg-(--surface-alt) text-(--text) text-[13px] px-3 focus:outline-none focus:border-(--blue) focus:bg-(--surface)" value={form.deviceId} onChange={e => setForm({ ...form, deviceId: e.target.value })}>
                   <option value="">Select device...</option>
                   {devices.map(d => <option key={d.id} value={d.id}>{d.name} ({d.ipAddress})</option>)}
                 </select>
@@ -538,7 +538,7 @@ const ServicesView = ({ searchTerm, selectedProtocol = null, highlightId = null 
             <div className="grid grid-cols-3 gap-5">
               <div>
                 <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Protocol</Label>
-                <select className="unifi-input" value={form.protocol} onChange={e => setForm({ ...form, protocol: e.target.value })}>
+                <select className="w-full h-9 border border-border rounded bg-(--surface-alt) text-(--text) text-[13px] px-3 focus:outline-none focus:border-(--blue) focus:bg-(--surface)" value={form.protocol} onChange={e => setForm({ ...form, protocol: e.target.value })}>
                   <option value="tcp">TCP</option>
                   <option value="udp">UDP</option>
                 </select>
@@ -559,7 +559,7 @@ const ServicesView = ({ searchTerm, selectedProtocol = null, highlightId = null 
               </div>
               <div>
                 <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Environment</Label>
-                <select className="unifi-input" value={form.environment} onChange={e => setForm({ ...form, environment: e.target.value })}>
+                <select className="w-full h-9 border border-border rounded bg-(--surface-alt) text-(--text) text-[13px] px-3 focus:outline-none focus:border-(--blue) focus:bg-(--surface)" value={form.environment} onChange={e => setForm({ ...form, environment: e.target.value })}>
                   <option value="production">Production</option>
                   <option value="staging">Staging</option>
                   <option value="development">Development</option>
@@ -570,7 +570,7 @@ const ServicesView = ({ searchTerm, selectedProtocol = null, highlightId = null 
             <div className="grid grid-cols-2 gap-5">
               <div>
                 <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Health Status</Label>
-                <select className="unifi-input" value={form.healthStatus} onChange={e => setForm({ ...form, healthStatus: e.target.value })}>
+                <select className="w-full h-9 border border-border rounded bg-(--surface-alt) text-(--text) text-[13px] px-3 focus:outline-none focus:border-(--blue) focus:bg-(--surface)" value={form.healthStatus} onChange={e => setForm({ ...form, healthStatus: e.target.value })}>
                   <option value="healthy">Healthy</option>
                   <option value="degraded">Degraded</option>
                   <option value="down">Down</option>

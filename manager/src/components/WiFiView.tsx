@@ -251,7 +251,7 @@ const WiFiView = ({ searchTerm = '', selectedSecurityFilter = null, highlightId 
               <h2 className="text-[13px] font-semibold">All WiFi Networks</h2>
               <span className="text-[11px] text-muted-foreground bg-(--muted-bg) px-2 py-0.5 rounded">{filtered.length} networks</span>
             </div>
-            <table className="unifi-table">
+            <table className="w-full border-collapse bg-(--surface) rounded-(--radius) border border-border table-fixed">
               <thead>
                 <tr>
                   <th className="w-[180px]">SSID</th>
@@ -307,7 +307,7 @@ const WiFiView = ({ searchTerm = '', selectedSecurityFilter = null, highlightId 
               </div>
               <div>
                 <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Security</Label>
-                <select className="unifi-input" value={form.security} onChange={e => setForm({ ...form, security: e.target.value })}>
+                <select className="w-full h-9 border border-border rounded bg-(--surface-alt) text-(--text) text-[13px] px-3 focus:outline-none focus:border-(--blue) focus:bg-(--surface)" value={form.security} onChange={e => setForm({ ...form, security: e.target.value })}>
                   <option value="wpa2-personal">WPA2 Personal</option>
                   <option value="wpa3-personal">WPA3 Personal</option>
                   <option value="wpa2-enterprise">WPA2 Enterprise</option>
@@ -332,7 +332,7 @@ const WiFiView = ({ searchTerm = '', selectedSecurityFilter = null, highlightId 
             <div className="grid grid-cols-2 gap-5">
               <div>
                 <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Band</Label>
-                <select className="unifi-input" value={form.band} onChange={e => setForm({ ...form, band: e.target.value })}>
+                <select className="w-full h-9 border border-border rounded bg-(--surface-alt) text-(--text) text-[13px] px-3 focus:outline-none focus:border-(--blue) focus:bg-(--surface)" value={form.band} onChange={e => setForm({ ...form, band: e.target.value })}>
                   <option value="both">2.4 GHz + 5 GHz</option>
                   <option value="2.4ghz">2.4 GHz Only</option>
                   <option value="5ghz">5 GHz Only</option>
@@ -341,7 +341,7 @@ const WiFiView = ({ searchTerm = '', selectedSecurityFilter = null, highlightId 
               </div>
               <div>
                 <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">VLAN</Label>
-                <select className="unifi-input" value={form.vlanId} onChange={e => setForm({ ...form, vlanId: e.target.value })}>
+                <select className="w-full h-9 border border-border rounded bg-(--surface-alt) text-(--text) text-[13px] px-3 focus:outline-none focus:border-(--blue) focus:bg-(--surface)" value={form.vlanId} onChange={e => setForm({ ...form, vlanId: e.target.value })}>
                   <option value="">None (Default)</option>
                   {vlans.map(v => <option key={v.id} value={v.id}>VLAN {v.vid} — {v.name}</option>)}
                 </select>
@@ -351,7 +351,7 @@ const WiFiView = ({ searchTerm = '', selectedSecurityFilter = null, highlightId 
             <div className="grid grid-cols-2 gap-5">
               <div>
                 <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Subnet</Label>
-                <select className="unifi-input" value={form.subnetId} onChange={e => setForm({ ...form, subnetId: e.target.value })}>
+                <select className="w-full h-9 border border-border rounded bg-(--surface-alt) text-(--text) text-[13px] px-3 focus:outline-none focus:border-(--blue) focus:bg-(--surface)" value={form.subnetId} onChange={e => setForm({ ...form, subnetId: e.target.value })}>
                   <option value="">Auto / None</option>
                   {subnets.map(s => <option key={s.id} value={s.id}>{s.prefix}/{s.mask} {s.description ? `— ${s.description}` : ''}</option>)}
                 </select>
@@ -380,7 +380,7 @@ const WiFiView = ({ searchTerm = '', selectedSecurityFilter = null, highlightId 
             <div className="grid grid-cols-3 gap-5 mt-3">
               <div>
                 <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">PMF</Label>
-                <select className="unifi-input" value={form.pmf} onChange={e => setForm({ ...form, pmf: e.target.value })}>
+                <select className="w-full h-9 border border-border rounded bg-(--surface-alt) text-(--text) text-[13px] px-3 focus:outline-none focus:border-(--blue) focus:bg-(--surface)" value={form.pmf} onChange={e => setForm({ ...form, pmf: e.target.value })}>
                   <option value="disabled">Disabled</option>
                   <option value="optional">Optional</option>
                   <option value="required">Required</option>
@@ -388,7 +388,7 @@ const WiFiView = ({ searchTerm = '', selectedSecurityFilter = null, highlightId 
               </div>
               <div>
                 <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">TX Power</Label>
-                <select className="unifi-input" value={form.txPower} onChange={e => setForm({ ...form, txPower: e.target.value })}>
+                <select className="w-full h-9 border border-border rounded bg-(--surface-alt) text-(--text) text-[13px] px-3 focus:outline-none focus:border-(--blue) focus:bg-(--surface)" value={form.txPower} onChange={e => setForm({ ...form, txPower: e.target.value })}>
                   <option value="auto">Auto</option>
                   <option value="high">High</option>
                   <option value="medium">Medium</option>

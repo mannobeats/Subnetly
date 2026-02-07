@@ -514,7 +514,7 @@ export default function Home() {
       </div>
       <div className="flex-1 overflow-auto p-4 px-6">
         <div className="animate-in fade-in duration-300">
-          <table className="unifi-table">
+          <table className="w-full border-collapse bg-(--surface) rounded-(--radius) border border-border table-fixed">
             <thead>
               <tr>
                 <th className="w-10"></th>
@@ -551,7 +551,7 @@ export default function Home() {
                     })()}
                   </td>
                   <td>
-                    <span className={`status-dot status-${device.status || 'inactive'}`} />
+                    <span className="inline-block w-1.5 h-1.5 rounded-full mr-1.5 align-middle" />
                     <span className="text-xs">{device.status}</span>
                   </td>
                   <td className="text-(--text-slate) text-xs">{device.platform || '—'}</td>
@@ -572,7 +572,7 @@ export default function Home() {
   }
 
   return (
-    <div className="app-container">
+    <div className="flex h-screen w-screen overflow-hidden">
       <Sidebar
         activeView={activeView}
         setActiveView={setActiveView}
@@ -602,9 +602,9 @@ export default function Home() {
         vlanRoles={vlanRoles}
       />
 
-      <div className="main-content">
-        <header className="top-nav">
-          <div className="breadcrumbs">
+      <div className="flex-1 flex flex-col overflow-hidden bg-(--bg)">
+        <header className="h-(--topnav-h) bg-(--surface) border-b border-border flex items-center px-6 justify-between">
+          <div className="flex items-center gap-2 text-sm">
             <span>Homelab Manager</span>
             <ChevronRight size={14} className="text-(--text-slate)" />
             <strong>{viewTitles[activeView]}</strong>
@@ -618,15 +618,15 @@ export default function Home() {
           </div>
         </header>
 
-        {activeView === 'dashboard' && <div className="table-wrapper" key={`dash-${siteKey}`}><DashboardView categories={categories} /></div>}
+        {activeView === 'dashboard' && <div className="flex-1 overflow-auto p-4 px-6" key={`dash-${siteKey}`}><DashboardView categories={categories} /></div>}
         {activeView === 'devices' && renderDevicesView()}
-        {activeView === 'ipam' && <div className="table-wrapper" key={`ipam-${siteKey}`}><IPPlannerView searchTerm={searchTerm} selectedIpFilter={selectedIpFilter} highlightId={highlightId} /></div>}
-        {activeView === 'vlans' && <div className="table-wrapper" key={`vlans-${siteKey}`}><VLANView searchTerm={searchTerm} selectedRole={selectedVlanRole} vlanRoles={vlanRoles} highlightId={highlightId} /></div>}
-        {activeView === 'wifi' && <div className="table-wrapper" key={`wifi-${siteKey}`}><WiFiView searchTerm={searchTerm} selectedSecurityFilter={selectedServiceFilter} highlightId={highlightId} /></div>}
-        {activeView === 'topology' && <div className="table-wrapper" key={`topo-${siteKey}`}><TopologyView selectedCategory={selectedCategory} /></div>}
-        {activeView === 'services' && <div className="table-wrapper" key={`svc-${siteKey}`}><ServicesView searchTerm={searchTerm} selectedProtocol={selectedServiceFilter} highlightId={highlightId} /></div>}
-        {activeView === 'changelog' && <div className="table-wrapper" key={`log-${siteKey}`}><ChangelogView searchTerm={searchTerm} selectedFilter={selectedChangelogFilter} /></div>}
-        {activeView === 'settings' && <div className="table-wrapper"><SettingsView activeTab={settingsTab as 'profile' | 'security' | 'notifications' | 'application' | 'data' | 'about' | 'categories' | 'sites' | 'vlan-roles'} categories={categories} vlanRoles={vlanRoles} onCategoriesChange={fetchSitesAndCategories} sites={sites} activeSiteId={activeSiteId} onSitesChange={fetchSitesAndCategories} /></div>}
+        {activeView === 'ipam' && <div className="flex-1 overflow-auto p-4 px-6" key={`ipam-${siteKey}`}><IPPlannerView searchTerm={searchTerm} selectedIpFilter={selectedIpFilter} highlightId={highlightId} /></div>}
+        {activeView === 'vlans' && <div className="flex-1 overflow-auto p-4 px-6" key={`vlans-${siteKey}`}><VLANView searchTerm={searchTerm} selectedRole={selectedVlanRole} vlanRoles={vlanRoles} highlightId={highlightId} /></div>}
+        {activeView === 'wifi' && <div className="flex-1 overflow-auto p-4 px-6" key={`wifi-${siteKey}`}><WiFiView searchTerm={searchTerm} selectedSecurityFilter={selectedServiceFilter} highlightId={highlightId} /></div>}
+        {activeView === 'topology' && <div className="flex-1 overflow-auto p-4 px-6" key={`topo-${siteKey}`}><TopologyView selectedCategory={selectedCategory} /></div>}
+        {activeView === 'services' && <div className="flex-1 overflow-auto p-4 px-6" key={`svc-${siteKey}`}><ServicesView searchTerm={searchTerm} selectedProtocol={selectedServiceFilter} highlightId={highlightId} /></div>}
+        {activeView === 'changelog' && <div className="flex-1 overflow-auto p-4 px-6" key={`log-${siteKey}`}><ChangelogView searchTerm={searchTerm} selectedFilter={selectedChangelogFilter} /></div>}
+        {activeView === 'settings' && <div className="flex-1 overflow-auto p-4 px-6"><SettingsView activeTab={settingsTab as 'profile' | 'security' | 'notifications' | 'application' | 'data' | 'about' | 'categories' | 'sites' | 'vlan-roles'} categories={categories} vlanRoles={vlanRoles} onCategoriesChange={fetchSitesAndCategories} sites={sites} activeSiteId={activeSiteId} onSitesChange={fetchSitesAndCategories} /></div>}
       </div>
 
       {/* Global Command Palette (Cmd+K) */}
@@ -651,7 +651,7 @@ export default function Home() {
             </div>
             <div>
               <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Category</Label>
-              <select className="unifi-input" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})}>
+              <select className="w-full h-9 border border-border rounded bg-(--surface-alt) text-(--text) text-[13px] px-3 focus:outline-none focus:border-(--blue) focus:bg-(--surface)" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})}>
                 {categories.length > 0 ? categories.map(cat => (
                   <option key={cat.id} value={cat.name}>{cat.name}</option>
                 )) : (
@@ -669,7 +669,7 @@ export default function Home() {
             {subnets.length > 0 && (
               <div>
                 <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">{editingDevice ? 'Subnet' : 'Assign from Subnet (Optional)'}</Label>
-                <select className="unifi-input" value={selectedSubnetId} onChange={e => handleSubnetChange(e.target.value)}>
+                <select className="w-full h-9 border border-border rounded bg-(--surface-alt) text-(--text) text-[13px] px-3 focus:outline-none focus:border-(--blue) focus:bg-(--surface)" value={selectedSubnetId} onChange={e => handleSubnetChange(e.target.value)}>
                   <option value="">Manual IP entry</option>
                   {subnets.map(s => (
                     <option key={s.id} value={s.id}>{s.prefix}/{s.mask} — {s.description || 'Unnamed'} {s.vlan ? `(VLAN ${s.vlan.vid})` : ''}</option>
@@ -681,7 +681,7 @@ export default function Home() {
               <div>
                 <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">IP Address</Label>
                 {selectedSubnetId && availableIps.length > 0 ? (
-                  <select required className="unifi-input" value={formData.ipAddress} onChange={e => setFormData({...formData, ipAddress: e.target.value})}>
+                  <select required className="w-full h-9 border border-border rounded bg-(--surface-alt) text-(--text) text-[13px] px-3 focus:outline-none focus:border-(--blue) focus:bg-(--surface)" value={formData.ipAddress} onChange={e => setFormData({...formData, ipAddress: e.target.value})}>
                     <option value="">Select available IP...</option>
                     {editingDevice && formData.ipAddress && (
                       <option value={formData.ipAddress}>{formData.ipAddress} (current)</option>
@@ -705,7 +705,7 @@ export default function Home() {
               </div>
               <div>
                 <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Status</Label>
-                <select className="unifi-input" value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})}>
+                <select className="w-full h-9 border border-border rounded bg-(--surface-alt) text-(--text) text-[13px] px-3 focus:outline-none focus:border-(--blue) focus:bg-(--surface)" value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})}>
                   <option value="active">Active</option>
                   <option value="planned">Planned</option>
                   <option value="staged">Staged</option>
@@ -716,7 +716,7 @@ export default function Home() {
             </div>
             <div>
               <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Notes (Optional)</Label>
-              <textarea className="unifi-input h-auto pt-2" value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value})} placeholder="Purpose or description" rows={3} />
+              <textarea className="w-full border border-border rounded bg-(--surface-alt) text-(--text) text-[13px] px-3 pt-2 focus:outline-none focus:border-(--blue) focus:bg-(--surface)" value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value})} placeholder="Purpose or description" rows={3} />
             </div>
             <DialogFooter className="mt-6">
               <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>Cancel</Button>
