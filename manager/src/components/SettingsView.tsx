@@ -208,30 +208,32 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
           {/* ── PROFILE ── */}
           {activeTab === 'profile' && (
             <>
-              <h2>Profile</h2>
+              <h2 className="text-lg font-bold text-(--text)">Profile</h2>
               <p className="text-[13px] text-(--text-muted) mb-8">Manage your account information</p>
 
               <div className="bg-(--surface) border border-border rounded-lg p-6 mb-6">
-                <div className="w-16 h-16 rounded-full bg-linear-to-br from-(--blue) to-(--blue-light) text-white flex items-center justify-center text-2xl font-bold uppercase mb-4">{initials}</div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold text-muted-foreground">Display Name</Label>
-                  <Input
-                    type="text"
-                    value={profileName}
-                    onChange={e => setProfileName(e.target.value)}
-                    className="h-9 text-[13px]"
-                  />
+                <div className="w-16 h-16 rounded-full bg-linear-to-br from-(--blue) to-(--blue-light) text-white flex items-center justify-center text-2xl font-bold uppercase mb-6">{initials}</div>
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold text-muted-foreground">Display Name</Label>
+                    <Input
+                      type="text"
+                      value={profileName}
+                      onChange={e => setProfileName(e.target.value)}
+                      className="h-9 text-[13px]"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold text-muted-foreground">Email Address</Label>
+                    <Input
+                      type="email"
+                      value={profileEmail}
+                      onChange={e => setProfileEmail(e.target.value)}
+                      className="h-9 text-[13px]"
+                    />
+                  </div>
                 </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold text-muted-foreground">Email Address</Label>
-                  <Input
-                    type="email"
-                    value={profileEmail}
-                    onChange={e => setProfileEmail(e.target.value)}
-                    className="h-9 text-[13px]"
-                  />
-                </div>
-                <div className="flex gap-3 mt-4">
+                <div className="flex gap-3 mt-6">
                   <Button onClick={handleProfileSave} disabled={profileSaving}>
                     {profileSaving ? <><Loader2 size={14} className="animate-spin" /> Saving...</> :
                      profileSuccess ? <><Check size={14} /> Saved!</> :
@@ -241,7 +243,7 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
               </div>
 
               <div className="bg-(--surface) border border-border rounded-lg p-6 mb-6">
-                <h3>Account Information</h3>
+                <h3 className="text-sm font-semibold text-(--text) mb-5">Account Information</h3>
                 <div className="flex items-center justify-between py-3 border-b border-(--muted-bg-alt) last:border-b-0">
                   <div>
                     <div className="text-[13px] font-medium text-(--text)">User ID</div>
@@ -265,11 +267,11 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
           {/* ── SECURITY ── */}
           {activeTab === 'security' && (
             <>
-              <h2>Security</h2>
+              <h2 className="text-lg font-bold text-(--text)">Security</h2>
               <p className="text-[13px] text-(--text-muted) mb-8">Manage your password and security settings</p>
 
               <div className="bg-(--surface) border border-border rounded-lg p-6 mb-6">
-                <h3>Change Password</h3>
+                <h3 className="text-sm font-semibold text-(--text) mb-5">Change Password</h3>
                 {passwordError && (
                   <div className="flex items-center gap-2 mb-4 px-3 py-2 rounded-md bg-[#fef2f2] border border-[#fecaca] text-[#dc2626] text-[13px]">
                     <AlertCircle size={14} />
@@ -282,37 +284,39 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
                     <span>Password changed successfully</span>
                   </div>
                 )}
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold text-muted-foreground">Current Password</Label>
-                  <Input
-                    type="password"
-                    value={currentPassword}
-                    onChange={e => setCurrentPassword(e.target.value)}
-                    placeholder="Enter current password"
-                    className="h-9 text-[13px]"
-                  />
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold text-muted-foreground">Current Password</Label>
+                    <Input
+                      type="password"
+                      value={currentPassword}
+                      onChange={e => setCurrentPassword(e.target.value)}
+                      placeholder="Enter current password"
+                      className="h-9 text-[13px]"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold text-muted-foreground">New Password</Label>
+                    <Input
+                      type="password"
+                      value={newPassword}
+                      onChange={e => setNewPassword(e.target.value)}
+                      placeholder="Enter new password (min 6 characters)"
+                      className="h-9 text-[13px]"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold text-muted-foreground">Confirm New Password</Label>
+                    <Input
+                      type="password"
+                      value={confirmPassword}
+                      onChange={e => setConfirmPassword(e.target.value)}
+                      placeholder="Confirm new password"
+                      className="h-9 text-[13px]"
+                    />
+                  </div>
                 </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold text-muted-foreground">New Password</Label>
-                  <Input
-                    type="password"
-                    value={newPassword}
-                    onChange={e => setNewPassword(e.target.value)}
-                    placeholder="Enter new password (min 6 characters)"
-                    className="h-9 text-[13px]"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold text-muted-foreground">Confirm New Password</Label>
-                  <Input
-                    type="password"
-                    value={confirmPassword}
-                    onChange={e => setConfirmPassword(e.target.value)}
-                    placeholder="Confirm new password"
-                    className="h-9 text-[13px]"
-                  />
-                </div>
-                <div className="flex gap-3 mt-4">
+                <div className="flex gap-3 mt-6">
                   <Button
                     onClick={handlePasswordChange}
                     disabled={passwordSaving || !currentPassword || !newPassword || !confirmPassword}
@@ -323,7 +327,7 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
               </div>
 
               <div className="bg-(--surface) border border-border rounded-lg p-6 mb-6">
-                <h3>Session</h3>
+                <h3 className="text-sm font-semibold text-(--text) mb-5">Session</h3>
                 <div className="flex items-center justify-between py-3 border-b border-(--muted-bg-alt) last:border-b-0">
                   <div>
                     <div className="text-[13px] font-medium text-(--text)">Session Duration</div>
@@ -338,11 +342,11 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
           {/* ── NOTIFICATIONS ── */}
           {activeTab === 'notifications' && (
             <>
-              <h2>Notifications</h2>
+              <h2 className="text-lg font-bold text-(--text)">Notifications</h2>
               <p className="text-[13px] text-(--text-muted) mb-8">Configure notification preferences</p>
 
               <div className="bg-(--surface) border border-border rounded-lg p-6 mb-6">
-                <h3>Changelog Tracking</h3>
+                <h3 className="text-sm font-semibold text-(--text) mb-5">Changelog Tracking</h3>
                 <div className="flex items-center justify-between py-3 border-b border-(--muted-bg-alt) last:border-b-0">
                   <div>
                     <div className="text-[13px] font-medium text-(--text)">Enable Changelog</div>
@@ -360,11 +364,11 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
           {/* ── APPLICATION ── */}
           {activeTab === 'application' && (
             <>
-              <h2>Application</h2>
+              <h2 className="text-lg font-bold text-(--text)">Application</h2>
               <p className="text-[13px] text-(--text-muted) mb-8">Customize the application behavior</p>
 
               <div className="bg-(--surface) border border-border rounded-lg p-6 mb-6">
-                <h3>General</h3>
+                <h3 className="text-sm font-semibold text-(--text) mb-5">General</h3>
                 <div className="flex items-center justify-between py-3 border-b border-(--muted-bg-alt) last:border-b-0">
                   <div>
                     <div className="text-[13px] font-medium text-(--text)">Default View</div>
@@ -400,7 +404,7 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
               </div>
 
               <div className="bg-(--surface) border border-border rounded-lg p-6 mb-6">
-                <h3>Display</h3>
+                <h3 className="text-sm font-semibold text-(--text) mb-5">Display</h3>
                 <div className="flex items-center justify-between py-3 border-b border-(--muted-bg-alt) last:border-b-0">
                   <div>
                     <div className="text-[13px] font-medium text-(--text)">Auto-Refresh Data</div>
@@ -424,7 +428,7 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
               </div>
 
               <div className="bg-(--surface) border border-border rounded-lg p-6 mb-6">
-                <h3>Safety</h3>
+                <h3 className="text-sm font-semibold text-(--text) mb-5">Safety</h3>
                 <div className="flex items-center justify-between py-3 border-b border-(--muted-bg-alt) last:border-b-0">
                   <div>
                     <div className="text-[13px] font-medium text-(--text)">Confirm Deletions</div>
@@ -438,7 +442,7 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
               </div>
 
               <div className="bg-(--surface) border border-border rounded-lg p-6 mb-6">
-                <h3 className="flex items-center gap-2"><Activity size={16} className="text-[#22c55e]" /> Health Checks</h3>
+                <h3 className="text-sm font-semibold text-(--text) mb-5 flex items-center gap-2"><Activity size={16} className="text-[#22c55e]" /> Health Checks</h3>
                 <p className="text-xs text-(--text-light) mb-4">
                   Automatically monitor your services by pinging their URLs at regular intervals. Services must have a URL and health check enabled individually.
                 </p>
@@ -504,11 +508,11 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
           {/* ── DATA & STORAGE ── */}
           {activeTab === 'data' && (
             <>
-              <h2>Data & Storage</h2>
+              <h2 className="text-lg font-bold text-(--text)">Data & Storage</h2>
               <p className="text-[13px] text-(--text-muted) mb-8">Manage your data, backups, and database</p>
 
               <div className="bg-(--surface) border border-border rounded-lg p-6 mb-6">
-                <h3>Database</h3>
+                <h3 className="text-sm font-semibold text-(--text) mb-5">Database</h3>
                 <div className="flex items-center justify-between py-3 border-b border-(--muted-bg-alt) last:border-b-0">
                   <div>
                     <div className="text-[13px] font-medium text-(--text)">Database Type</div>
@@ -526,7 +530,7 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
               </div>
 
               <div className="bg-(--surface) border border-border rounded-lg p-6 mb-6">
-                <h3>Backup & Export</h3>
+                <h3 className="text-sm font-semibold text-(--text) mb-5">Backup & Export</h3>
                 <p className="text-xs text-(--text-light) mb-4">
                   Export a full backup of the current site including all devices, subnets, VLANs, IP addresses, services, WiFi networks, categories, and changelog.
                 </p>
@@ -561,7 +565,7 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
               </div>
 
               <div className="bg-(--surface) border border-border rounded-lg p-6 mb-6">
-                <h3>Restore from Backup</h3>
+                <h3 className="text-sm font-semibold text-(--text) mb-5">Restore from Backup</h3>
                 <p className="text-xs text-(--text-light) mb-4">
                   Import a previously exported JSON backup. <strong className="text-(--red)">Warning:</strong> This will replace ALL data in the current site.
                 </p>
@@ -605,7 +609,7 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
               </div>
 
               <div className="bg-(--surface) border border-(--red-border) rounded-lg p-6 mb-6 [&_h3]:text-(--red)">
-                <h3>Danger Zone</h3>
+                <h3 className="text-sm font-semibold mb-5">Danger Zone</h3>
                 <div className="flex flex-col gap-3">
                   <div>
                     <div className="text-[13px] font-medium text-(--text)">Clear All Data</div>
@@ -712,11 +716,11 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
           {/* ── ABOUT ── */}
           {activeTab === 'about' && (
             <>
-              <h2>About</h2>
+              <h2 className="text-lg font-bold text-(--text)">About</h2>
               <p className="text-[13px] text-(--text-muted) mb-8">Application information</p>
 
               <div className="bg-(--surface) border border-border rounded-lg p-6 mb-6">
-                <h3>Homelab Manager</h3>
+                <h3 className="text-sm font-semibold text-(--text) mb-5">Homelab Manager</h3>
                 <div className="flex items-center justify-between py-3 border-b border-(--muted-bg-alt) last:border-b-0">
                   <div>
                     <div className="text-[13px] font-medium text-(--text)">Version</div>
@@ -750,7 +754,7 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
               </div>
 
               <div className="bg-(--surface) border border-border rounded-lg p-6 mb-6">
-                <h3>Features</h3>
+                <h3 className="text-sm font-semibold text-(--text) mb-5">Features</h3>
                 <div className="flex flex-wrap gap-2">
                   {['Device Management', 'IP Planning (IPAM)', 'VLAN Management', 'Network Topology', 'Service Tracking', 'Changelog Audit', 'Multi-Site Support', 'Custom Categories', 'Export/Import', 'Authentication'].map(f => (
                     <span key={f} className="px-2 py-0.5 rounded text-[11px] font-semibold bg-(--blue-bg) text-(--blue)">{f}</span>
@@ -811,11 +815,11 @@ function CategoriesTab({ categories, onCategoriesChange }: { categories: CustomC
 
   return (
     <>
-      <h2>Categories</h2>
+      <h2 className="text-lg font-bold text-(--text)">Categories</h2>
       <p className="text-[13px] text-(--text-muted) mb-8">Manage device categories with custom icons and colors</p>
 
       <div className="bg-(--surface) border border-border rounded-lg p-6 mb-6">
-        <h3>Add New Category</h3>
+        <h3 className="text-sm font-semibold text-(--text) mb-5">Add New Category</h3>
         <div className="flex gap-3 items-end flex-wrap">
           <div className="flex-1 min-w-[140px] space-y-1.5">
             <Label className="text-xs font-semibold text-muted-foreground">Name</Label>
@@ -838,7 +842,7 @@ function CategoriesTab({ categories, onCategoriesChange }: { categories: CustomC
       </div>
 
       <div className="bg-(--surface) border border-border rounded-lg p-6 mb-6">
-        <h3>Current Categories ({categories.length})</h3>
+        <h3 className="text-sm font-semibold text-(--text) mb-5">Current Categories ({categories.length})</h3>
         {categories.length === 0 ? (
           <p className="text-muted-foreground text-[13px]">No categories yet. Add one above.</p>
         ) : (
@@ -933,11 +937,11 @@ function SitesTab({ sites, activeSiteId, onSitesChange }: { sites: Site[], activ
 
   return (
     <>
-      <h2>Sites</h2>
+      <h2 className="text-lg font-bold text-(--text)">Sites</h2>
       <p className="text-[13px] text-(--text-muted) mb-8">Manage your sites (projects/homelabs). Each site has its own devices, subnets, VLANs, and categories.</p>
 
       <div className="bg-(--surface) border border-border rounded-lg p-6 mb-6">
-        <h3>Create New Site</h3>
+        <h3 className="text-sm font-semibold text-(--text) mb-5">Create New Site</h3>
         <div className="flex gap-3 items-end flex-wrap">
           <div className="flex-1 min-w-[160px] space-y-1.5">
             <Label className="text-xs font-semibold text-muted-foreground">Site Name</Label>
@@ -956,7 +960,7 @@ function SitesTab({ sites, activeSiteId, onSitesChange }: { sites: Site[], activ
       </div>
 
       <div className="bg-(--surface) border border-border rounded-lg p-6 mb-6">
-        <h3>Your Sites ({sites.length})</h3>
+        <h3 className="text-sm font-semibold text-(--text) mb-5">Your Sites ({sites.length})</h3>
         {sites.length === 0 ? (
           <p className="text-muted-foreground text-[13px]">No sites yet.</p>
         ) : (
@@ -1053,11 +1057,11 @@ function VlanRolesTab({ roles, onRolesChange }: { roles: CustomCategory[], onRol
 
   return (
     <>
-      <h2>VLAN Roles</h2>
+      <h2 className="text-lg font-bold text-(--text)">VLAN Roles</h2>
       <p className="text-[13px] text-(--text-muted) mb-8">Manage custom VLAN roles used to categorize your VLANs</p>
 
       <div className="bg-(--surface) border border-border rounded-lg p-6 mb-6">
-        <h3>Add New Role</h3>
+        <h3 className="text-sm font-semibold text-(--text) mb-5">Add New Role</h3>
         <div className="flex gap-3 items-end flex-wrap">
           <div className="flex-1 min-w-[140px] space-y-1.5">
             <Label className="text-xs font-semibold text-muted-foreground">Name</Label>
@@ -1080,7 +1084,7 @@ function VlanRolesTab({ roles, onRolesChange }: { roles: CustomCategory[], onRol
       </div>
 
       <div className="bg-(--surface) border border-border rounded-lg p-6 mb-6">
-        <h3>Current Roles ({roles.length})</h3>
+        <h3 className="text-sm font-semibold text-(--text) mb-5">Current Roles ({roles.length})</h3>
         {roles.length === 0 ? (
           <p className="text-muted-foreground text-[13px]">No VLAN roles yet. Add one above.</p>
         ) : (
