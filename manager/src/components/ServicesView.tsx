@@ -275,15 +275,15 @@ const ServicesView = ({ searchTerm, selectedProtocol = null, highlightId = null 
 
       {/* Port Conflict Warnings */}
       {portConflicts.length > 0 && (
-        <div className="mb-4 px-4 py-3 bg-[#fef2f2] border border-[#fecaca] rounded-lg">
+        <div className="mb-4 px-4 py-3 bg-(--red-bg) border border-(--red-border) rounded-lg">
           <div className="flex items-center gap-2 mb-2">
-            <AlertTriangle size={16} className="text-[#dc2626]" />
-            <span className="font-semibold text-[13px] text-[#dc2626]">Port Conflicts Detected ({portConflicts.length})</span>
+            <AlertTriangle size={16} className="text-(--red)" />
+            <span className="font-semibold text-[13px] text-(--red)">Port Conflicts Detected ({portConflicts.length})</span>
           </div>
           <div className="flex flex-col gap-1">
             {portConflicts.map((c, i) => (
-              <div key={i} className="text-xs text-[#991b1b] flex gap-1.5 items-center">
-                <code className="bg-[#fee2e2] px-1.5 py-px rounded text-[11px]">{c.protocol.toUpperCase()}:{c.port}</code>
+              <div key={i} className="text-xs text-(--red) flex gap-1.5 items-center">
+                <code className="bg-(--red-bg-subtle) px-1.5 py-px rounded text-[11px]">{c.protocol.toUpperCase()}:{c.port}</code>
                 <span>on <strong>{c.deviceName}</strong> — used by: {c.services.join(', ')}</span>
               </div>
             ))}
@@ -608,7 +608,7 @@ const ServicesView = ({ searchTerm, selectedProtocol = null, highlightId = null 
 
             {/* Health Check Section */}
             {form.url && (
-              <div className="p-4 bg-[#f0fdf4] rounded-lg border border-[#bbf7d0]">
+              <div className="p-4 bg-(--green-bg) rounded-lg border border-(--green) border-opacity-20">
                 <label className="flex items-center gap-2 cursor-pointer text-[13px] font-semibold">
                   <input type="checkbox" checked={form.healthCheckEnabled} onChange={e => setForm({ ...form, healthCheckEnabled: e.target.checked })} className="accent-[#22c55e]" />
                   <Activity size={14} className="text-[#22c55e]" /> Enable Auto Health Check

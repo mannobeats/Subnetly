@@ -68,7 +68,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
 
   if (checkingSetup) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-linear-to-br from-[#f8fafc] via-[#eef2ff] to-[#f0f9ff] p-4">
+      <div className="flex min-h-screen items-center justify-center p-4" style={{ background: 'var(--gradient-login-bg)' }}>
         <div className={cn(
           "w-full max-w-[400px] rounded-xl border border-border bg-card p-10",
           "shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05),0_20px_25px_-5px_rgba(0,0,0,0.08)]",
@@ -84,7 +84,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-linear-to-br from-[#f8fafc] via-[#eef2ff] to-[#f0f9ff] p-4">
+    <div className="flex min-h-screen items-center justify-center p-4" style={{ background: 'var(--gradient-login-bg)' }}>
       <div className={cn(
         "w-full max-w-[400px] rounded-xl border border-border bg-card p-10",
         "shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05),0_20px_25px_-5px_rgba(0,0,0,0.08)]",

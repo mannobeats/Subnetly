@@ -199,7 +199,7 @@ const DashboardView = ({ categories = [] }: DashboardViewProps) => {
                         </div>
                       </div>
                       <span className={`px-2 py-0.5 rounded text-[9px] font-semibold ${w.enabled ? 'bg-(--green-bg) text-(--green)' : 'bg-(--orange-bg) text-(--orange)'}`}>{w.enabled ? 'on' : 'off'}</span>
-                      {w.guestNetwork && <span className="px-1 py-px rounded text-[9px] bg-[#fef3c7] text-[#92400e]">Guest</span>}
+                      {w.guestNetwork && <span className="px-1 py-px rounded text-[9px] bg-(--orange-bg) text-(--orange)">Guest</span>}
                     </div>
                   )
                 })}

@@ -2,10 +2,10 @@
 @import "tw-animate-css";
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:where(.dark, .dark *));
 
 /* ═══════════════════════════════════════════════════════════
-   DESIGN TOKENS
+   DESIGN TOKENS — Light Theme
    ═══════════════════════════════════════════════════════════ */
 :root {
   --white: #ffffff;
@@ -61,7 +61,7 @@
   --sidebar2-w: 280px;
   --topnav-h: 56px;
 
-  /* shadcn/ui theme */
+  /* shadcn/ui theme — light */
   --background: #fbfcfd;
   --foreground: #1a1a1a;
   --card: #ffffff;
@@ -93,6 +93,93 @@
   --sidebar-accent-foreground: #1a1a1a;
   --sidebar-border: #e6e8eb;
   --sidebar-ring: #0055ff;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   DESIGN TOKENS — Dark Theme
+   ═══════════════════════════════════════════════════════════ */
+.dark {
+  --white: #ffffff;
+  --black: #e2e8f0;
+  --blue: #3b82f6;
+  --blue-light: #60a5fa;
+  --blue-dark: #2563eb;
+  --blue-bg: rgba(59, 130, 246, 0.12);
+  --blue-ring: rgba(59, 130, 246, 0.4);
+  --green: #34d399;
+  --green-bg: rgba(52, 211, 153, 0.12);
+  --red: #f87171;
+  --red-dark: #ef4444;
+  --red-bg: rgba(248, 113, 113, 0.12);
+  --red-bg-subtle: rgba(248, 113, 113, 0.15);
+  --red-border: rgba(248, 113, 113, 0.25);
+  --purple: #a78bfa;
+  --purple-bg: rgba(167, 139, 250, 0.12);
+  --orange: #fb923c;
+  --orange-bg: rgba(251, 146, 60, 0.12);
+  --cyan: #22d3ee;
+  --info-bg: rgba(59, 130, 246, 0.1);
+  --info-border: rgba(59, 130, 246, 0.25);
+  --info-text: #93c5fd;
+  --info-accent: #60a5fa;
+  --info-code-bg: rgba(59, 130, 246, 0.15);
+  --bg: #0f172a;
+  --surface: #1e293b;
+  --surface-alt: #1a2332;
+  --muted-bg: #253347;
+  --muted-bg-alt: #1e2d3f;
+  --text: #e2e8f0;
+  --text-muted: #94a3b8;
+  --text-light: #64748b;
+  --text-slate: #94a3b8;
+  --border: #334155;
+  --hover: #253347;
+  --active: #2d3f55;
+  --dark-bg: #0f172a;
+  --toggle-off: #475569;
+  --text-faint: #64748b;
+  --gradient-blue: linear-gradient(135deg, #3b82f6, #60a5fa);
+  --gradient-login-bg: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0c1929 100%);
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+  --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+  --shadow-popup: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 4px 10px -3px rgba(0, 0, 0, 0.3);
+  --shadow-tooltip: 0 8px 24px rgba(0, 0, 0, 0.5);
+
+  /* shadcn/ui theme — dark */
+  --background: #0f172a;
+  --foreground: #e2e8f0;
+  --card: #1e293b;
+  --card-foreground: #e2e8f0;
+  --popover: #1e293b;
+  --popover-foreground: #e2e8f0;
+  --primary: #3b82f6;
+  --primary-foreground: #ffffff;
+  --secondary: #253347;
+  --secondary-foreground: #e2e8f0;
+  --muted: #253347;
+  --muted-foreground: #94a3b8;
+  --accent: #1e2d3f;
+  --accent-foreground: #e2e8f0;
+  --destructive: #ef4444;
+  --destructive-foreground: #ef4444;
+  --input: #334155;
+  --ring: #3b82f6;
+  --chart-1: #3b82f6;
+  --chart-2: #34d399;
+  --chart-3: #a78bfa;
+  --chart-4: #fb923c;
+  --chart-5: #22d3ee;
+  --sidebar-background: #1e293b;
+  --sidebar-foreground: #e2e8f0;
+  --sidebar-primary: #3b82f6;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #253347;
+  --sidebar-accent-foreground: #e2e8f0;
+  --sidebar-border: #334155;
+  --sidebar-ring: #3b82f6;
 }
 
 /* ═══════════════════════════════════════════════════════════

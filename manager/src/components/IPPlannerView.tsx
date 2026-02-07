@@ -472,15 +472,17 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
   if (loading) return <div className="flex items-center justify-center h-[200px] text-(--text-muted) text-[13px]">Loading IP Planner...</div>
 
   const getCellColor = (status: string) => {
+    const root = typeof document !== 'undefined' ? getComputedStyle(document.documentElement) : null
+    const isDark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
     switch (status) {
-      case 'network': return { bg: '#1e293b', color: '#fff' }
-      case 'broadcast': return { bg: '#1e293b', color: '#fff' }
-      case 'gateway': return { bg: '#10b981', color: '#fff' }
-      case 'assigned': return { bg: '#0055ff', color: '#fff' }
-      case 'dhcp': return { bg: '#fef3c7', color: '#92400e' }
-      case 'reserved': return { bg: '#ede9fe', color: '#5b21b6' }
-      case 'infrastructure': return { bg: '#cffafe', color: '#155e75' }
-      default: return { bg: '#f1f3f5', color: '#adb5bd' }
+      case 'network': return { bg: isDark ? '#0f172a' : '#1e293b', color: '#fff' }
+      case 'broadcast': return { bg: isDark ? '#0f172a' : '#1e293b', color: '#fff' }
+      case 'gateway': return { bg: root?.getPropertyValue('--green').trim() || '#10b981', color: '#fff' }
+      case 'assigned': return { bg: root?.getPropertyValue('--blue').trim() || '#0055ff', color: '#fff' }
+      case 'dhcp': return { bg: isDark ? 'rgba(251, 191, 36, 0.15)' : '#fef3c7', color: isDark ? '#fbbf24' : '#92400e' }
+      case 'reserved': return { bg: isDark ? 'rgba(167, 139, 250, 0.15)' : '#ede9fe', color: isDark ? '#a78bfa' : '#5b21b6' }
+      case 'infrastructure': return { bg: isDark ? 'rgba(34, 211, 238, 0.15)' : '#cffafe', color: isDark ? '#22d3ee' : '#155e75' }
+      default: return { bg: root?.getPropertyValue('--muted-bg').trim() || '#f1f3f5', color: root?.getPropertyValue('--text-faint').trim() || '#adb5bd' }
     }
   }
 

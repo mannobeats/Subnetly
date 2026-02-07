@@ -223,9 +223,9 @@ const WiFiView = ({ searchTerm = '', selectedSecurityFilter = null, highlightId 
 
                   <div className="flex flex-wrap gap-1 mb-3">
                     <span className={`px-1.5 py-px rounded text-[10px] font-semibold ${n.enabled ? 'bg-(--green-bg) text-(--green)' : 'bg-(--orange-bg) text-(--orange)'}`}>{n.enabled ? 'Enabled' : 'Disabled'}</span>
-                    {n.guestNetwork && <span className="inline-flex items-center gap-0.5 px-1.5 py-px rounded text-[10px] bg-[#fef3c7] text-[#92400e]"><Users size={8} /> Guest</span>}
+                    {n.guestNetwork && <span className="inline-flex items-center gap-0.5 px-1.5 py-px rounded text-[10px] bg-(--orange-bg) text-(--orange)"><Users size={8} /> Guest</span>}
                     {n.hidden && <span className="inline-flex items-center gap-0.5 px-1.5 py-px rounded text-[10px] bg-(--muted-bg) text-(--text-slate)"><EyeOff size={8} /> Hidden</span>}
-                    {n.clientIsolation && <span className="inline-flex items-center gap-0.5 px-1.5 py-px rounded text-[10px] bg-[#ede9fe] text-[#5b21b6]"><Shield size={8} /> Isolated</span>}
+                    {n.clientIsolation && <span className="inline-flex items-center gap-0.5 px-1.5 py-px rounded text-[10px] bg-(--purple-bg) text-(--purple)"><Shield size={8} /> Isolated</span>}
                   </div>
 
                   <div className="text-xs text-muted-foreground flex flex-col gap-1">

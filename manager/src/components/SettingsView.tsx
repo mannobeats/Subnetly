@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { authClient } from '@/lib/auth-client'
-import { Lock, Save, Check, AlertCircle, Loader2, Plus, Trash2, Edit2, MapPin, Activity, Upload, Download } from 'lucide-react'
+import { Lock, Save, Check, AlertCircle, Loader2, Plus, Trash2, Edit2, MapPin, Activity, Upload, Download, Sun, Moon, Monitor } from 'lucide-react'
+import { useTheme } from 'next-themes'
 import { CustomCategory, Site } from '@/types'
 import { renderCategoryIcon } from '@/lib/category-icons'
 import IconPicker from '@/components/IconPicker'
@@ -57,6 +58,9 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
   const [itemsPerPage, setItemsPerPage] = useState('50')
   const [confirmDeletes, setConfirmDeletes] = useState(true)
   const [changelogEnabled, setChangelogEnabled] = useState(true)
+
+  // Theme
+  const { theme, setTheme } = useTheme()
 
   // Health check settings (stored in DB via API)
   const [hcEnabled, setHcEnabled] = useState(false)
@@ -405,7 +409,33 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
 
               <div className="bg-(--surface) border border-border rounded-lg p-6 mb-6">
                 <h3 className="text-sm font-semibold text-(--text) mb-5">Display</h3>
-                <div className="flex items-center justify-between py-3 border-b border-(--muted-bg-alt) last:border-b-0">
+                <div className="flex items-center justify-between py-3 border-b border-(--muted-bg-alt)">
+                  <div>
+                    <div className="text-[13px] font-medium text-(--text)">Appearance</div>
+                    <div className="text-[11px] text-(--text-muted) mt-0.5">Choose light, dark, or system theme</div>
+                  </div>
+                  <div className="flex border border-border rounded-xl overflow-hidden">
+                    <button
+                      className={`flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-medium transition-colors ${theme === 'light' ? 'bg-(--blue) text-white' : 'bg-(--surface-alt) text-(--text-muted) hover:bg-(--hover)'}`}
+                      onClick={() => setTheme('light')}
+                    >
+                      <Sun size={13} /> Light
+                    </button>
+                    <button
+                      className={`flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-medium border-x border-border transition-colors ${theme === 'dark' ? 'bg-(--blue) text-white' : 'bg-(--surface-alt) text-(--text-muted) hover:bg-(--hover)'}`}
+                      onClick={() => setTheme('dark')}
+                    >
+                      <Moon size={13} /> Dark
+                    </button>
+                    <button
+                      className={`flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-medium transition-colors ${theme === 'system' ? 'bg-(--blue) text-white' : 'bg-(--surface-alt) text-(--text-muted) hover:bg-(--hover)'}`}
+                      onClick={() => setTheme('system')}
+                    >
+                      <Monitor size={13} /> System
+                    </button>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between py-3 border-b border-(--muted-bg-alt)">
                   <div>
                     <div className="text-[13px] font-medium text-(--text)">Auto-Refresh Data</div>
                     <div className="text-[11px] text-(--text-muted) mt-0.5">Automatically refresh data when switching views</div>
