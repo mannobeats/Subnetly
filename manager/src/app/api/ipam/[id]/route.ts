@@ -31,9 +31,17 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
   try {
     const { id } = await params
     const ip = await prisma.iPAddress.findUnique({ where: { id } })
+    if (!ip) return NextResponse.json({ error: 'IP not found' }, { status: 404 })
+
+    // Clear ipAddress on any device that was linked to this IP
+    await prisma.device.updateMany({
+      where: { ipAddress: ip.address },
+      data: { ipAddress: '' },
+    })
+
     await prisma.iPAddress.delete({ where: { id } })
     await prisma.changeLog.create({
-      data: { objectType: 'IPAddress', objectId: id, action: 'delete', changes: JSON.stringify({ address: ip?.address, dnsName: ip?.dnsName }) },
+      data: { objectType: 'IPAddress', objectId: id, action: 'delete', changes: JSON.stringify({ address: ip.address, dnsName: ip.dnsName }) },
     })
     return NextResponse.json({ success: true })
   } catch {

@@ -365,7 +365,14 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
     e.preventDefault()
     if (!subnet) return
 
-    const selectedDevice = ipForm.deviceId ? devices.find(d => d.id === ipForm.deviceId) : null
+    const newDevice = ipForm.deviceId ? devices.find(d => d.id === ipForm.deviceId) : null
+
+    // Find the device currently linked to THIS IP address (the one we're editing)
+    const deviceOnThisIp = devices.find(d => d.ipAddress === ipForm.address) || null
+
+    // If the new device already has a DIFFERENT IP, we need to clean up that old assignment
+    const newDeviceOldIp = newDevice?.ipAddress && newDevice.ipAddress !== ipForm.address
+      ? newDevice.ipAddress : null
 
     const method = editingIpId ? 'PATCH' : 'POST'
     const url = editingIpId ? `/api/ipam/${editingIpId}` : '/api/ipam'
@@ -377,20 +384,44 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
         mask: subnet.mask,
         subnetId: subnet.id,
         status: ipForm.status,
-        dnsName: ipForm.dnsName || (selectedDevice ? selectedDevice.name : null),
+        dnsName: ipForm.dnsName || (newDevice ? newDevice.name : null),
         description: ipForm.description || null,
-        assignedTo: selectedDevice ? selectedDevice.name : null,
+        assignedTo: newDevice ? newDevice.name : null,
       }),
     })
 
     if (res.ok) {
-      if (selectedDevice) {
-        await fetch(`/api/devices/${selectedDevice.id}`, {
+      // 1) If the device on this IP changed or was removed, clear the OLD device's ipAddress
+      if (deviceOnThisIp && deviceOnThisIp.id !== newDevice?.id) {
+        await fetch(`/api/devices/${deviceOnThisIp.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ipAddress: '' }),
+        })
+      }
+
+      // 2) If the new device had a different IP before, clean up that old IPAM record
+      //    Search ALL subnets since the old IP might be on a different subnet
+      if (newDeviceOldIp) {
+        let oldIpamId: string | null = null
+        for (const s of subnets) {
+          const found = s.ipAddresses.find(ip => ip.address === newDeviceOldIp)
+          if (found) { oldIpamId = found.id; break }
+        }
+        if (oldIpamId) {
+          await fetch(`/api/ipam/${oldIpamId}`, { method: 'DELETE' })
+        }
+      }
+
+      // 3) Link the new device to this IP (set device.ipAddress = this IP)
+      if (newDevice) {
+        await fetch(`/api/devices/${newDevice.id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ipAddress: ipForm.address }),
         })
       }
+
       setIpModalOpen(false)
       setIpForm(emptyIpForm)
       setEditingIpId(null)
@@ -398,9 +429,34 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
     } else { alert(editingIpId ? 'Failed to update IP' : 'Failed to assign IP') }
   }
 
-  const handleDeleteIp = async (ipId: string) => {
+  const handleDeleteIp = async (ipId: string, skipRefresh = false) => {
     const res = await fetch(`/api/ipam/${ipId}`, { method: 'DELETE' })
+    if (res.ok && !skipRefresh) fetchData()
+    return res.ok
+  }
+
+  // Unlink a device-only IP (no IPAM record — just clear the device's ipAddress)
+  const handleUnlinkDevice = async (deviceId: string) => {
+    const res = await fetch(`/api/devices/${deviceId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ipAddress: '' }),
+    })
     if (res.ok) fetchData()
+  }
+
+  // Create an IPAM record for a device-only IP so it can be managed
+  const handlePromoteDeviceIp = (device: Device) => {
+    if (!subnet) return
+    setEditingIpId(null)
+    setIpForm({
+      address: device.ipAddress,
+      dnsName: device.name,
+      description: `Assigned to ${device.name}`,
+      status: 'active',
+      deviceId: device.id,
+    })
+    setIpModalOpen(true)
   }
 
   const openAssignFromGrid = (fullIp: string) => {
@@ -668,6 +724,7 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
                   {cell.ip?.description && <span className="ipam-tooltip-desc">{cell.ip.description}</span>}
                   {!cell.ip && !cell.device && cell.range && <span className={`badge badge-${cell.range.role === 'dhcp' ? 'orange' : cell.range.role === 'reserved' ? 'purple' : 'blue'}`}>{cell.range.role} range</span>}
                   {(cell.status === 'available' || cell.status === 'dhcp' || cell.status === 'reserved' || cell.status === 'infrastructure') && !cell.ip && !cell.device && <span className="ipam-tooltip-action">Click to assign</span>}
+                  {(cell.ip || cell.device) && cell.status === 'assigned' && <span className="ipam-tooltip-action">Click to edit / unassign</span>}
                 </div>
               </div>
             )
@@ -719,7 +776,16 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
                     <td style={{ color: 'var(--unifi-text-muted)', fontSize: '12px' }}>{cell.ip?.description || '—'}</td>
                     <td style={{ textAlign: 'right' }}>
                       {cell.ip && (
-                        <button className="btn" style={{ padding: '0 6px', border: 'none', background: 'transparent', color: '#ef4444' }} onClick={() => handleDeleteIp(cell.ip!.id)}><Trash2 size={12} /></button>
+                        <div style={{ display: 'flex', gap: '2px', justifyContent: 'flex-end' }}>
+                          <button className="btn" style={{ padding: '0 6px', border: 'none', background: 'transparent', color: '#0055ff' }} onClick={() => { setEditingIpId(cell.ip!.id); const dev = cell.device || devices.find(d => d.ipAddress === cell.ip!.address); setIpForm({ address: cell.ip!.address, dnsName: cell.ip!.dnsName || '', description: cell.ip!.description || '', status: cell.ip!.status, deviceId: dev?.id || '' }); setIpModalOpen(true) }} title="Edit"><Edit2 size={12} /></button>
+                          <button className="btn" style={{ padding: '0 6px', border: 'none', background: 'transparent', color: '#ef4444' }} onClick={() => handleDeleteIp(cell.ip!.id)} title="Delete"><Trash2 size={12} /></button>
+                        </div>
+                      )}
+                      {!cell.ip && cell.device && (
+                        <div style={{ display: 'flex', gap: '2px', justifyContent: 'flex-end' }}>
+                          <button className="btn" style={{ padding: '0 6px', border: 'none', background: 'transparent', color: '#0055ff' }} onClick={() => handlePromoteDeviceIp(cell.device!)} title="Manage in IPAM"><Edit2 size={12} /></button>
+                          <button className="btn" style={{ padding: '0 6px', border: 'none', background: 'transparent', color: '#ef4444' }} onClick={() => handleUnlinkDevice(cell.device!.id)} title="Unlink IP"><Trash2 size={12} /></button>
+                        </div>
                       )}
                       {!cell.ip && !cell.device && cell.status !== 'network' && cell.status !== 'broadcast' && cell.status !== 'gateway' && (
                         <button className="btn" style={{ padding: '0 6px', border: 'none', background: 'transparent', color: '#0055ff' }} onClick={() => openAssignFromGrid(cell.fullIp)}><Plus size={12} /></button>
@@ -945,7 +1011,12 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
                       </td>
                       <td><span className={`badge badge-${d.status === 'active' ? 'green' : 'orange'}`}>{d.status}</span></td>
                       <td style={{ color: 'var(--unifi-text-muted)' }}>{d.category} — {d.platform || 'No platform'}</td>
-                      <td style={{ textAlign: 'right', paddingRight: '0.5rem', fontSize: '10px', color: '#94a3b8' }}>device</td>
+                      <td style={{ textAlign: 'right', paddingRight: '0.5rem' }}>
+                        <div style={{ display: 'flex', gap: '2px', justifyContent: 'flex-end' }}>
+                          <button className="btn" style={{ padding: '0 6px', border: 'none', background: 'transparent', color: '#0055ff' }} onClick={() => handlePromoteDeviceIp(d)} title="Manage in IPAM"><Edit2 size={12} /></button>
+                          <button className="btn" style={{ padding: '0 6px', border: 'none', background: 'transparent', color: '#ef4444' }} onClick={() => handleUnlinkDevice(d.id)} title="Unlink IP from device"><Trash2 size={12} /></button>
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -1007,15 +1078,25 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
                 <label className="input-label">Link to Device (Optional)</label>
                 <select className="unifi-input" value={ipForm.deviceId} onChange={e => {
                   const dev = devices.find(d => d.id === e.target.value)
-                  setIpForm({
-                    ...ipForm,
-                    deviceId: e.target.value,
-                    dnsName: dev ? dev.name : ipForm.dnsName,
-                    description: dev ? `Assigned to ${dev.name}` : ipForm.description,
-                  })
+                  if (dev) {
+                    setIpForm({
+                      ...ipForm,
+                      deviceId: e.target.value,
+                      dnsName: dev.name,
+                      description: `Assigned to ${dev.name}`,
+                    })
+                  } else {
+                    // Unassigning — clear device-related fields
+                    setIpForm({
+                      ...ipForm,
+                      deviceId: '',
+                      dnsName: '',
+                      description: '',
+                    })
+                  }
                 }}>
-                  <option value="">No device — manual assignment</option>
-                  {devices.map(d => <option key={d.id} value={d.id}>{d.name} ({d.ipAddress}) — {d.category}</option>)}
+                  <option value="">{editingIpId ? '— Unassign device —' : 'No device — manual assignment'}</option>
+                  {devices.map(d => <option key={d.id} value={d.id}>{d.name} ({d.ipAddress || 'no IP'}) — {d.category}</option>)}
                 </select>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
@@ -1032,7 +1113,18 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
                 <label className="input-label">Description</label>
                 <input className="unifi-input" value={ipForm.description} onChange={e => setIpForm({ ...ipForm, description: e.target.value })} placeholder="Optional" />
               </div>
-              <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem', justifyContent: 'flex-end' }}>
+              <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem', justifyContent: 'flex-end', alignItems: 'center' }}>
+                {editingIpId && (
+                  <button type="button" className="btn btn-destructive" style={{ marginRight: 'auto', padding: '6px 14px', fontSize: '12px' }} onClick={async () => {
+                    const id = editingIpId
+                    setIpModalOpen(false)
+                    setEditingIpId(null)
+                    setIpForm(emptyIpForm)
+                    await handleDeleteIp(id)
+                  }}>
+                    <Trash2 size={12} style={{ marginRight: '4px' }} /> Delete IP
+                  </button>
+                )}
                 <button type="button" className="btn" onClick={() => { setIpModalOpen(false); setEditingIpId(null) }}>Cancel</button>
                 <button type="submit" className="btn btn-primary">{editingIpId ? 'Save Changes' : 'Assign IP'}</button>
               </div>
