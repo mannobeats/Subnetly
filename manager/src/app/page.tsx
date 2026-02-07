@@ -513,8 +513,8 @@ export default function Home() {
         </div>
       </div>
       <div className="flex-1 overflow-auto p-4 px-6">
-        <div className="animate-in fade-in duration-300">
-          <table className="w-full border-collapse bg-(--surface) rounded-(--radius) border border-border table-fixed">
+        <div className="animate-in fade-in duration-300 bg-card border border-border rounded-lg overflow-hidden">
+          <table className="w-full border-collapse table-fixed">
             <thead>
               <tr>
                 <th className="w-10"></th>
@@ -551,8 +551,10 @@ export default function Home() {
                     })()}
                   </td>
                   <td>
-                    <span className="inline-block w-1.5 h-1.5 rounded-full mr-1.5 align-middle" />
-                    <span className="text-xs">{device.status}</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="inline-block w-1.5 h-1.5 rounded-full shrink-0" style={{ background: device.status === 'active' ? '#22c55e' : device.status === 'offline' ? '#ef4444' : '#94a3b8' }} />
+                      <span className="text-xs">{device.status}</span>
+                    </div>
                   </td>
                   <td className="text-(--text-slate) text-xs">{device.platform || '—'}</td>
                   <td className="text-right pr-4">

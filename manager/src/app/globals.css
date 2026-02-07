@@ -166,6 +166,41 @@ body {
 .spin { animation: spin 1s linear infinite; }
 
 /* ═══════════════════════════════════════════════════════════
+   TABLE STYLES — Premium UniFi-inspired rows
+   ═══════════════════════════════════════════════════════════ */
+table.table-fixed th,
+table.table-fixed td {
+  padding: 0 16px;
+  height: 44px;
+  vertical-align: middle;
+  text-align: left;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+table.table-fixed th {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  background: var(--surface-alt);
+  border-bottom: 1px solid var(--border);
+  height: 40px;
+}
+table.table-fixed tbody tr {
+  border-bottom: 1px solid var(--muted-bg-alt);
+  transition: background 0.15s;
+}
+table.table-fixed tbody tr:last-child {
+  border-bottom: none;
+}
+table.table-fixed tbody tr:hover {
+  background: var(--hover);
+}
+
+/* ═══════════════════════════════════════════════════════════
    SETTINGS TOGGLE (requires ::after pseudo-element)
    ═══════════════════════════════════════════════════════════ */
 .settings-toggle { width: 40px; height: 22px; border-radius: 11px; background: var(--toggle-off); border: none; cursor: pointer; position: relative; transition: background 0.2s; }

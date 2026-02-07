@@ -378,37 +378,36 @@ const ServicesView = ({ searchTerm, selectedProtocol = null, highlightId = null 
                   </div>
                   <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-(--blue-bg) text-(--blue)">{svcList.length} service{svcList.length !== 1 ? 's' : ''}</span>
                 </div>
-                <div className="py-2">
+                <div className="divide-y divide-border">
                   {svcList.map(s => {
                     const Icon = protocolIcons[s.protocol] || Globe
                     const hc = healthColors[s.healthStatus || 'unknown']
                     const ec = envColors[s.environment || 'production'] || envColors.production
                     return (
-                      <div key={s.id} className="flex items-center gap-3 py-2.5 px-5 transition-colors hover:bg-(--hover)" style={{ flexWrap: 'wrap' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%' }}>
-                          <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: hc.dot, flexShrink: 0 }} title={s.healthStatus || 'unknown'} />
-                          <div className="w-7 h-7 rounded-md bg-(--blue-bg) text-(--blue) flex items-center justify-center shrink-0"><Icon size={14} /></div>
-                          <div className="flex-1 flex flex-col" style={{ flex: 1, minWidth: 0 }}>
-                            <span className="text-xs font-medium" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                              {s.name}
-                              {s.version && <span style={{ fontSize: '9px', color: '#94a3b8', fontWeight: 400 }}>v{s.version}</span>}
-                            </span>
-                            {s.description && <span className="text-[10px] text-(--text-muted)">{s.description}</span>}
+                      <div key={s.id} className="px-5 py-3.5 transition-colors hover:bg-(--hover)">
+                        <div className="flex items-center gap-3 w-full">
+                          <div className="w-2 h-2 rounded-full shrink-0" style={{ background: hc.dot }} title={s.healthStatus || 'unknown'} />
+                          <div className="w-8 h-8 rounded-lg bg-(--blue-bg) text-(--blue) flex items-center justify-center shrink-0"><Icon size={15} /></div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[13px] font-medium truncate">{s.name}</span>
+                              {s.version && <span className="text-[9px] text-(--text-light) font-normal">v{s.version}</span>}
+                            </div>
+                            {s.description && <div className="text-[11px] text-(--text-muted) mt-0.5 truncate">{s.description}</div>}
                           </div>
-                          <code className="text-[10px] bg-(--muted-bg) px-2 py-0.5 rounded shrink-0">{s.protocol.toUpperCase()}:{s.ports}</code>
-                          <div className="flex gap-0.5 ml-1">
-                            {s.url && <a href={s.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center h-6 w-6 rounded-md text-[#0055ff] hover:bg-accent" title="Open URL"><ExternalLink size={10} /></a>}
-                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openEdit(s)}><Edit2 size={10} /></Button>
-                            <Button variant="ghost" size="icon" className="h-6 w-6 text-[#ef4444] hover:text-[#ef4444]" onClick={() => { setDeleteTarget(s.id); setDeleteModalOpen(true) }}><Trash2 size={10} /></Button>
+                          <code className="text-[10px] bg-(--muted-bg) px-2 py-1 rounded shrink-0 font-mono">{s.protocol.toUpperCase()}:{s.ports}</code>
+                          <div className="flex gap-0.5 shrink-0">
+                            {s.url && <a href={s.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center h-7 w-7 rounded-md text-[#0055ff] hover:bg-accent" title="Open URL"><ExternalLink size={12} /></a>}
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(s)}><Edit2 size={12} /></Button>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-[#ef4444] hover:text-[#ef4444]" onClick={() => { setDeleteTarget(s.id); setDeleteModalOpen(true) }}><Trash2 size={12} /></Button>
                           </div>
                         </div>
-                        {/* Tags row */}
-                        <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginTop: '4px', paddingLeft: '2rem' }}>
-                          {s.isDocker && <span className="rounded" style={{ background: '#dbeafe', color: '#1e40af', fontSize: '8px', padding: '1px 5px' }}>Docker</span>}
-                          {s.dockerImage && <span className="rounded" style={{ background: '#f1f5f9', color: '#475569', fontSize: '8px', padding: '1px 5px' }}>{s.dockerImage.length > 25 ? s.dockerImage.slice(0, 25) + '…' : s.dockerImage}</span>}
-                          <span className="rounded" style={{ background: ec.bg, color: ec.color, fontSize: '8px', padding: '1px 5px' }}>{s.environment || 'production'}</span>
+                        <div className="flex gap-1.5 flex-wrap mt-2 pl-13">
+                          {s.isDocker && <span className="rounded px-1.5 py-px text-[9px] font-medium bg-[#dbeafe] text-[#1e40af]">Docker</span>}
+                          {s.dockerImage && <span className="rounded px-1.5 py-px text-[9px] font-medium bg-(--muted-bg) text-(--text-slate)">{s.dockerImage.length > 25 ? s.dockerImage.slice(0, 25) + '…' : s.dockerImage}</span>}
+                          <span className="rounded px-1.5 py-px text-[9px] font-medium" style={{ background: ec.bg, color: ec.color }}>{s.environment || 'production'}</span>
                           {s.tags && s.tags.split(',').map(t => t.trim()).filter(Boolean).map(t => (
-                            <span key={t} className="rounded" style={{ background: '#f1f5f9', color: '#64748b', fontSize: '8px', padding: '1px 5px' }}>{t}</span>
+                            <span key={t} className="rounded px-1.5 py-px text-[9px] font-medium bg-(--muted-bg) text-(--text-slate)">{t}</span>
                           ))}
                         </div>
                       </div>
@@ -420,13 +419,13 @@ const ServicesView = ({ searchTerm, selectedProtocol = null, highlightId = null 
           </div>
 
           {/* Full Table */}
-          <div className="bg-card border border-border rounded-lg p-5 mt-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-[13px] font-semibold">All Services</h2>
+          <div className="bg-card border border-border rounded-lg overflow-hidden mt-6">
+            <div className="flex items-center justify-between px-5 py-4">
+              <h2 className="text-sm font-semibold">All Services</h2>
               <span className="text-[11px] text-muted-foreground bg-(--muted-bg) px-2 py-0.5 rounded">{filtered.length} services</span>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full border-collapse bg-(--surface) rounded-(--radius) border border-border table-fixed">
+              <table className="w-full border-collapse table-fixed">
                 <thead>
                   <tr>
                     <th className="w-[30px]"></th>
@@ -464,12 +463,12 @@ const ServicesView = ({ searchTerm, selectedProtocol = null, highlightId = null 
                             <span className="text-xs">{s.device?.name}</span>
                           </div>
                         </td>
-                        <td className="overflow-visible"><span className="px-1.5 py-0.5 rounded text-[9px] font-semibold whitespace-nowrap" style={{ background: ec.bg, color: ec.color }}>{s.environment || 'production'}</span></td>
-                        <td className="overflow-visible">
+                        <td><span className="px-1.5 py-0.5 rounded text-[9px] font-semibold whitespace-nowrap" style={{ background: ec.bg, color: ec.color }}>{s.environment || 'production'}</span></td>
+                        <td>
                           <select
                             value={s.healthStatus || 'unknown'}
                             onChange={e => handleHealthToggle(s, e.target.value)}
-                            className="text-[10px] px-1.5 py-0.5 rounded cursor-pointer outline-none whitespace-nowrap w-full"
+                            className="text-[11px] px-2 py-1 rounded cursor-pointer outline-none whitespace-nowrap"
                             style={{ border: `1px solid ${hc.dot}`, background: hc.bg, color: hc.color }}
                           >
                             <option value="healthy">Healthy</option>
@@ -478,7 +477,7 @@ const ServicesView = ({ searchTerm, selectedProtocol = null, highlightId = null 
                             <option value="unknown">Unknown</option>
                           </select>
                         </td>
-                        <td className="overflow-visible">
+                        <td>
                           {s.healthCheckEnabled ? (
                             <div className="flex flex-col gap-px">
                               <div className="flex items-center gap-1">
