@@ -59,9 +59,10 @@ const emptyForm = {
 
 interface WiFiViewProps {
   searchTerm?: string
+  selectedSecurityFilter?: string | null
 }
 
-const WiFiView = ({ searchTerm = '' }: WiFiViewProps) => {
+const WiFiView = ({ searchTerm = '', selectedSecurityFilter = null }: WiFiViewProps) => {
   const [networks, setNetworks] = useState<WifiData[]>([])
   const [vlans, setVlans] = useState<WifiVlan[]>([])
   const [subnets, setSubnets] = useState<WifiSubnet[]>([])
@@ -170,14 +171,23 @@ const WiFiView = ({ searchTerm = '' }: WiFiViewProps) => {
 
   const filtered = useMemo(() => {
     return networks.filter(n => {
-      if (!searchTerm) return true
-      const q = searchTerm.toLowerCase()
-      return n.ssid.toLowerCase().includes(q) ||
-        (n.description || '').toLowerCase().includes(q) ||
-        n.security.toLowerCase().includes(q) ||
-        (n.vlan?.name || '').toLowerCase().includes(q)
+      // Security filter from sidebar
+      if (selectedSecurityFilter) {
+        if (selectedSecurityFilter === 'wpa2' && !n.security.startsWith('wpa2')) return false
+        if (selectedSecurityFilter === 'wpa3' && !n.security.startsWith('wpa3')) return false
+        if (selectedSecurityFilter === 'open' && n.security !== 'open') return false
+      }
+      // Search filter
+      if (searchTerm) {
+        const q = searchTerm.toLowerCase()
+        return n.ssid.toLowerCase().includes(q) ||
+          (n.description || '').toLowerCase().includes(q) ||
+          n.security.toLowerCase().includes(q) ||
+          (n.vlan?.name || '').toLowerCase().includes(q)
+      }
+      return true
     })
-  }, [networks, searchTerm])
+  }, [networks, searchTerm, selectedSecurityFilter])
 
   const enabledCount = networks.filter(n => n.enabled).length
   const guestCount = networks.filter(n => n.guestNetwork).length
@@ -186,6 +196,13 @@ const WiFiView = ({ searchTerm = '' }: WiFiViewProps) => {
 
   return (
     <div className="wifi-view animate-fade-in">
+      {/* Action button — above stats for consistency */}
+      {networks.length > 0 && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
+          <button className="btn btn-primary" onClick={openCreate}><Plus size={14} /> Create WiFi Network</button>
+        </div>
+      )}
+
       {/* Stats */}
       <div className="dash-stat-grid" style={{ marginBottom: '1.5rem', gridTemplateColumns: 'repeat(4, 1fr)' }}>
         <div className="dash-stat-card">
@@ -215,10 +232,6 @@ const WiFiView = ({ searchTerm = '' }: WiFiViewProps) => {
         </div>
       ) : (
         <>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
-            <button className="btn btn-primary" onClick={openCreate}><Plus size={14} /> Create WiFi Network</button>
-          </div>
-
           {/* WiFi Network Cards */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
             {filtered.map(n => {

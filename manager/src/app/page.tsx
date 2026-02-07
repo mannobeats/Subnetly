@@ -8,6 +8,7 @@ import VLANView from '@/components/VLANView'
 import TopologyView from '@/components/TopologyView'
 import ServicesView from '@/components/ServicesView'
 import WiFiView from '@/components/WiFiView'
+import CommandPalette from '@/components/CommandPalette'
 import ChangelogView from '@/components/ChangelogView'
 import SettingsView from '@/components/SettingsView'
 import LoginPage from '@/components/LoginPage'
@@ -549,12 +550,15 @@ export default function Home() {
         {activeView === 'devices' && renderDevicesView()}
         {activeView === 'ipam' && <div className="table-wrapper" key={`ipam-${siteKey}`}><IPPlannerView searchTerm={searchTerm} selectedIpFilter={selectedIpFilter} /></div>}
         {activeView === 'vlans' && <div className="table-wrapper" key={`vlans-${siteKey}`}><VLANView searchTerm={searchTerm} selectedRole={selectedVlanRole} vlanRoles={vlanRoles} /></div>}
-        {activeView === 'wifi' && <div className="table-wrapper" key={`wifi-${siteKey}`}><WiFiView searchTerm={searchTerm} /></div>}
+        {activeView === 'wifi' && <div className="table-wrapper" key={`wifi-${siteKey}`}><WiFiView searchTerm={searchTerm} selectedSecurityFilter={selectedServiceFilter} /></div>}
         {activeView === 'topology' && <div className="table-wrapper" key={`topo-${siteKey}`}><TopologyView selectedCategory={selectedCategory} /></div>}
         {activeView === 'services' && <div className="table-wrapper" key={`svc-${siteKey}`}><ServicesView searchTerm={searchTerm} selectedProtocol={selectedServiceFilter} /></div>}
         {activeView === 'changelog' && <div className="table-wrapper" key={`log-${siteKey}`}><ChangelogView searchTerm={searchTerm} selectedFilter={selectedChangelogFilter} /></div>}
         {activeView === 'settings' && <div className="table-wrapper"><SettingsView activeTab={settingsTab as 'profile' | 'security' | 'notifications' | 'application' | 'data' | 'about' | 'categories' | 'sites' | 'vlan-roles'} categories={categories} vlanRoles={vlanRoles} onCategoriesChange={fetchSitesAndCategories} sites={sites} activeSiteId={activeSiteId} onSitesChange={fetchSitesAndCategories} /></div>}
       </div>
+
+      {/* Global Command Palette (Cmd+K) */}
+      <CommandPalette onNavigate={(view) => setActiveView(view as ViewType)} />
 
       {/* Add/Edit Device Modal */}
       {isModalOpen && (

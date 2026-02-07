@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Globe, Radio, Plus, Edit2, Trash2, Zap } from 'lucide-react'
+import { Globe, Radio, Plus, Edit2, Trash2, Zap, AlertTriangle } from 'lucide-react'
 import { Device } from '@/types'
 
 interface ServiceData {
@@ -101,10 +101,38 @@ const ServicesView = ({ searchTerm, selectedProtocol = null }: { searchTerm: str
     return acc
   }, {})
 
+  // Port conflict detection
+  const portConflicts: { deviceName: string; port: string; protocol: string; services: string[] }[] = []
+  const byDevice: Record<string, ServiceData[]> = {}
+  services.forEach(s => { if (s.device) { if (!byDevice[s.device.id]) byDevice[s.device.id] = []; byDevice[s.device.id].push(s) } })
+  Object.values(byDevice).forEach(svcList => {
+    const portMap: Record<string, string[]> = {}
+    svcList.forEach(s => {
+      s.ports.split(',').map(p => p.trim()).forEach(port => {
+        const key = `${s.protocol}:${port}`
+        if (!portMap[key]) portMap[key] = []
+        portMap[key].push(s.name)
+      })
+    })
+    Object.entries(portMap).forEach(([key, names]) => {
+      if (names.length > 1) {
+        const [protocol, port] = key.split(':')
+        portConflicts.push({ deviceName: svcList[0].device.name, port, protocol, services: names })
+      }
+    })
+  })
+
   if (loading) return <div className="view-loading">Loading services...</div>
 
   return (
     <div className="services-view animate-fade-in">
+      {/* Action button — above stats for consistency */}
+      {services.length > 0 && devices.length > 0 && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
+          <button className="btn btn-primary" onClick={openCreate}><Plus size={14} /> Add Service</button>
+        </div>
+      )}
+
       {/* Stats Cards */}
       <div className="dash-stat-grid" style={{ marginBottom: '1.5rem', gridTemplateColumns: 'repeat(5, 1fr)' }}>
         <div className="dash-stat-card">
@@ -129,6 +157,24 @@ const ServicesView = ({ searchTerm, selectedProtocol = null }: { searchTerm: str
         </div>
       </div>
 
+      {/* Port Conflict Warnings */}
+      {portConflicts.length > 0 && (
+        <div style={{ marginBottom: '1rem', padding: '0.75rem 1rem', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+            <AlertTriangle size={16} color="#dc2626" />
+            <span style={{ fontWeight: 600, fontSize: '13px', color: '#dc2626' }}>Port Conflicts Detected ({portConflicts.length})</span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            {portConflicts.map((c, i) => (
+              <div key={i} style={{ fontSize: '12px', color: '#991b1b', display: 'flex', gap: '6px', alignItems: 'center' }}>
+                <code style={{ background: '#fee2e2', padding: '1px 5px', borderRadius: '3px', fontSize: '11px' }}>{c.protocol.toUpperCase()}:{c.port}</code>
+                <span>on <strong>{c.deviceName}</strong> — used by: {c.services.join(', ')}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {services.length === 0 ? (
         <div className="empty-state">
           <Zap size={40} color="#cbd5e1" />
@@ -138,9 +184,6 @@ const ServicesView = ({ searchTerm, selectedProtocol = null }: { searchTerm: str
         </div>
       ) : (
         <>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
-            <button className="btn btn-primary" onClick={openCreate}><Plus size={14} /> Add Service</button>
-          </div>
           <div className="services-device-grid">
             {Object.values(grouped).map(({ device, services: svcList }) => (
               <div key={device.id} className="services-device-card">

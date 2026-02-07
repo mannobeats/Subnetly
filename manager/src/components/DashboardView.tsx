@@ -1,16 +1,17 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Server, Globe, Network, Box, Activity, ArrowUpRight, ArrowDownRight } from 'lucide-react'
+import { Server, Globe, Network, Box, Activity, ArrowUpRight, ArrowDownRight, Wifi } from 'lucide-react'
 import { CustomCategory } from '@/types'
 
 interface DashboardData {
-  counts: { devices: number; subnets: number; vlans: number; ipAddresses: number; services: number }
+  counts: { devices: number; subnets: number; vlans: number; ipAddresses: number; services: number; wifiNetworks: number }
   categoryBreakdown: Record<string, number>
   statusBreakdown: Record<string, number>
   subnetStats: { id: string; prefix: string; description: string; gateway: string; vlan: { vid: number; name: string } | null; totalIps: number; usedIps: number; utilization: number; ranges: { role: string; startAddr: string; endAddr: string }[] }[]
   recentChanges: { id: string; objectType: string; action: string; changes: string; timestamp: string }[]
   services: { id: string; name: string; protocol: string; ports: string; device: { name: string; ipAddress: string } }[]
+  wifiNetworks: { id: string; ssid: string; security: string; band: string; enabled: boolean; guestNetwork: boolean; vlan: { vid: number; name: string } | null; subnet: { prefix: string; mask: number } | null }[]
 }
 
 interface DashboardViewProps {
@@ -33,10 +34,12 @@ const DashboardView = ({ categories = [] }: DashboardViewProps) => {
 
   if (loading || !data) return <div className="view-loading">Loading dashboard...</div>
 
+  const wifiEnabled = (data.wifiNetworks || []).filter(w => w.enabled).length
   const statCards = [
     { label: 'Devices', value: data.counts.devices, icon: Server, color: '#0055ff', sub: `${data.statusBreakdown['active'] || 0} active` },
     { label: 'Subnets', value: data.counts.subnets, icon: Globe, color: '#10b981', sub: `${data.counts.ipAddresses} IPs tracked` },
     { label: 'VLANs', value: data.counts.vlans, icon: Network, color: '#7c3aed', sub: 'Configured' },
+    { label: 'WiFi', value: data.counts.wifiNetworks || 0, icon: Wifi, color: '#06b6d4', sub: `${wifiEnabled} enabled` },
     { label: 'Services', value: data.counts.services, icon: Box, color: '#f97316', sub: 'Running' },
   ]
 
@@ -152,22 +155,59 @@ const DashboardView = ({ categories = [] }: DashboardViewProps) => {
         </div>
       </div>
 
-      {/* Services Overview */}
-      <div className="dash-section">
-        <div className="dash-section-header">
-          <h2>Running Services</h2>
-          <span className="dash-section-badge">{data.services.length} services</span>
-        </div>
-        <div className="dash-services-grid" style={{ maxHeight: '280px', overflowY: 'auto' }}>
-          {data.services.map((s) => (
-            <div key={s.id} className="dash-service-card">
-              <div className="dash-service-name">{s.name}</div>
-              <div className="dash-service-detail">
-                <code>{s.protocol.toUpperCase()}:{s.ports}</code>
-                <span className="dash-service-device">{s.device.name}</span>
+      <div className="dash-two-col">
+        {/* WiFi Networks Overview */}
+        <div className="dash-section">
+          <div className="dash-section-header">
+            <h2>WiFi Networks</h2>
+            <span className="dash-section-badge">{(data.wifiNetworks || []).length} networks</span>
+          </div>
+          <div style={{ maxHeight: '280px', overflowY: 'auto' }}>
+            {(data.wifiNetworks || []).length === 0 ? (
+              <div style={{ padding: '1.5rem', textAlign: 'center', color: 'var(--unifi-text-muted)', fontSize: '13px' }}>No WiFi networks configured</div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                {(data.wifiNetworks || []).map(w => {
+                  const secColor = w.security.startsWith('wpa3') ? '#10b981' : w.security.startsWith('wpa2') ? '#0055ff' : w.security === 'open' ? '#ef4444' : '#64748b'
+                  return (
+                    <div key={w.id} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.5rem 0.75rem', borderRadius: '8px', background: 'var(--card-bg, #f8fafc)', border: '1px solid var(--border, #e2e8f0)', opacity: w.enabled ? 1 : 0.5 }}>
+                      <Wifi size={16} color={secColor} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontWeight: 600, fontSize: '12px' }}>{w.ssid}</div>
+                        <div style={{ fontSize: '10px', color: 'var(--unifi-text-muted)', display: 'flex', gap: '6px', alignItems: 'center' }}>
+                          <span>{w.security === 'open' ? 'Open' : w.security.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
+                          <span>·</span>
+                          <span>{w.band === 'both' ? '2.4+5 GHz' : w.band}</span>
+                          {w.vlan && <><span>·</span><span>VLAN {w.vlan.vid}</span></>}
+                        </div>
+                      </div>
+                      <span className={`badge badge-${w.enabled ? 'green' : 'orange'}`} style={{ fontSize: '9px' }}>{w.enabled ? 'on' : 'off'}</span>
+                      {w.guestNetwork && <span className="badge" style={{ background: '#fef3c7', color: '#92400e', fontSize: '9px' }}>Guest</span>}
+                    </div>
+                  )
+                })}
               </div>
-            </div>
-          ))}
+            )}
+          </div>
+        </div>
+
+        {/* Services Overview */}
+        <div className="dash-section">
+          <div className="dash-section-header">
+            <h2>Running Services</h2>
+            <span className="dash-section-badge">{data.services.length} services</span>
+          </div>
+          <div className="dash-services-grid" style={{ maxHeight: '280px', overflowY: 'auto' }}>
+            {data.services.map((s) => (
+              <div key={s.id} className="dash-service-card">
+                <div className="dash-service-name">{s.name}</div>
+                <div className="dash-service-detail">
+                  <code>{s.protocol.toUpperCase()}:{s.ports}</code>
+                  <span className="dash-service-device">{s.device.name}</span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>

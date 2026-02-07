@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { IPAddress, IPRange, Device } from '@/types'
-import { Info, Plus, Trash2, Globe, Server, LayoutGrid, List, BarChart3, Edit2 } from 'lucide-react'
+import { Info, Plus, Trash2, Globe, Server, LayoutGrid, List, BarChart3, Edit2, ChevronLeft, ChevronRight } from 'lucide-react'
 
 interface SubnetWithRelations {
   id: string
@@ -45,15 +45,16 @@ function getSubnetBlock(prefix: string, mask: number): { base: string; startOcte
   const parts = prefix.split('.').map(Number)
   if (mask >= 24) {
     const blockSize = subnetSize(mask)
-    // The last octet of the prefix tells us the block start
     const startOctet = parts[3] || 0
     const base = parts.slice(0, 3).join('.')
     return { base, startOctet, blockSize }
   }
-  // Large subnets — just use first 256
+  // Large subnets: return full size so pagination can handle it
+  const blockSize = Math.min(subnetSize(mask), 65536) // cap at /16
   const base = parts.slice(0, 3).join('.')
-  return { base, startOctet: 0, blockSize: 256 }
+  return { base, startOctet: 0, blockSize }
 }
+const GRID_PAGE_SIZE = 256
 function gridColumns(mask: number): number {
   if (mask >= 28) return 4   // /28 = 16 addresses → 4 cols
   if (mask >= 27) return 8   // /27 = 32 addresses → 8 cols
@@ -67,6 +68,7 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
   const [selectedSubnet, setSelectedSubnet] = useState<string | null>(null)
   const [hoveredCell, setHoveredCell] = useState<number | null>(null)
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'summary'>('grid')
+  const [gridPage, setGridPage] = useState(0)
   const [loading, setLoading] = useState(true)
   const [vlans, setVlans] = useState<{ id: string; vid: number; name: string }[]>([])
   const [devices, setDevices] = useState<Device[]>([])
@@ -97,6 +99,7 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
         if (prev && subnetData.some((s: SubnetWithRelations) => s.id === prev)) return prev
         return subnetData.length > 0 ? subnetData[0].id : null
       })
+      setGridPage(0)
     }).finally(() => setLoading(false))
   }, [])
 
@@ -133,10 +136,14 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
     return getSubnetBlock(subnet.prefix, subnet.mask)
   }, [subnet])
 
-  const cellData = useMemo(() => {
-    if (!subnet) return []
-    const { base, startOctet, blockSize } = subnetBlock
-    const cells = []
+  const totalPages = useMemo(() => {
+    if (!subnet) return 1
+    return Math.max(1, Math.ceil(subnetBlock.blockSize / GRID_PAGE_SIZE))
+  }, [subnet, subnetBlock])
+
+  // Build lookup maps once for the whole subnet
+  const subnetMaps = useMemo(() => {
+    if (!subnet) return { ipMap: new Map<number, IPAddress>(), rangeMap: new Map<number, IPRange>() }
     const ipMap = new Map<number, IPAddress>()
     subnet.ipAddresses.forEach(ip => {
       const octet = parseInt(ip.address.split('.').pop() || '0')
@@ -148,10 +155,21 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
       const end = parseInt(range.endAddr.split('.').pop() || '0')
       for (let i = start; i <= end; i++) rangeMap.set(i, range)
     })
+    return { ipMap, rangeMap }
+  }, [subnet])
+
+  // Generate cells for the current page only (for grid view performance)
+  const cellData = useMemo(() => {
+    if (!subnet) return []
+    const { base, startOctet, blockSize } = subnetBlock
+    const { ipMap, rangeMap } = subnetMaps
+    const cells = []
     const gatewayOctet = subnet.gateway ? parseInt(subnet.gateway.split('.').pop() || '1') : (startOctet + 1)
     const networkOctet = startOctet
     const broadcastOctet = startOctet + blockSize - 1
-    for (let i = startOctet; i < startOctet + blockSize; i++) {
+    const pageStart = startOctet + gridPage * GRID_PAGE_SIZE
+    const pageEnd = Math.min(pageStart + GRID_PAGE_SIZE, startOctet + blockSize)
+    for (let i = pageStart; i < pageEnd; i++) {
       const ip = ipMap.get(i)
       const range = rangeMap.get(i)
       const fullIp = `${base}.${i}`
@@ -170,7 +188,26 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
       cells.push({ octet: i, fullIp, status, ip, range, device, isGateway })
     }
     return cells
-  }, [subnet, ipToDevice, subnetBlock])
+  }, [subnet, ipToDevice, subnetBlock, subnetMaps, gridPage])
+
+  // All cells for utilization/summary (computed from maps, not full array)
+  const allCellStats = useMemo(() => {
+    if (!subnet) return { assignedCount: 0, gatewayCount: 0 }
+    const { startOctet, blockSize } = subnetBlock
+    const { ipMap } = subnetMaps
+    const gatewayOctet = subnet.gateway ? parseInt(subnet.gateway.split('.').pop() || '1') : (startOctet + 1)
+    let assignedCount = 0
+    let gatewayCount = 0
+    for (let i = startOctet; i < startOctet + blockSize; i++) {
+      const ip = ipMap.get(i)
+      const fullIp = `${subnetBlock.base}.${i}`
+      const device = ipToDevice.get(fullIp)
+      const isGateway = i === gatewayOctet && !!subnet.gateway
+      if (isGateway) gatewayCount++
+      else if (ip || device) assignedCount++
+    }
+    return { assignedCount: assignedCount + gatewayCount, gatewayCount }
+  }, [subnet, subnetBlock, subnetMaps, ipToDevice])
 
   const filteredCells = useMemo(() => {
     if (!searchTerm) return cellData
@@ -186,9 +223,9 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
   const utilization = useMemo(() => {
     if (!subnet) return { used: 0, total: 254, pct: 0 }
     const total = usableHosts(subnet.mask)
-    const assignedCount = cellData.filter(c => c.status === 'assigned' || c.status === 'gateway').length
-    return { used: assignedCount, total, pct: total > 0 ? Math.round((assignedCount / total) * 100) : 0 }
-  }, [subnet, cellData])
+    const used = allCellStats.assignedCount
+    return { used, total, pct: total > 0 ? Math.round((used / total) * 100) : 0 }
+  }, [subnet, allCellStats])
 
   // Subnet CRUD
   const handleSaveSubnet = async (e: React.FormEvent) => {
@@ -451,7 +488,7 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flex: 1, minWidth: 0 }}>
           <div className="ipam-subnet-selector">
             <label className="input-label" style={{ marginBottom: '0' }}>Subnet</label>
-            <select className="unifi-input" value={selectedSubnet || ''} onChange={e => setSelectedSubnet(e.target.value)}>
+            <select className="unifi-input" value={selectedSubnet || ''} onChange={e => { setSelectedSubnet(e.target.value); setGridPage(0) }}>
               {subnets.map(s => (
                 <option key={s.id} value={s.id}>{s.prefix}/{s.mask} — {s.description || 'Unnamed'} {s.vlan ? `(VLAN ${s.vlan.vid})` : ''}</option>
               ))}
@@ -503,6 +540,32 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
       {/* ═══ GRID VIEW ═══ */}
       {viewMode === 'grid' && subnet && (
         <>
+          {/* Pagination controls */}
+          {totalPages > 1 && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem', padding: '0.5rem 0.75rem', background: 'var(--card-bg, #fff)', border: '1px solid var(--border, #e2e8f0)', borderRadius: '8px' }}>
+              <span style={{ fontSize: '12px', color: 'var(--unifi-text-muted)' }}>
+                Showing addresses <strong>{subnetBlock.startOctet + gridPage * GRID_PAGE_SIZE}</strong> — <strong>{Math.min(subnetBlock.startOctet + (gridPage + 1) * GRID_PAGE_SIZE - 1, subnetBlock.startOctet + subnetBlock.blockSize - 1)}</strong> of <strong>{subnetBlock.blockSize}</strong>
+              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <button className="btn" style={{ padding: '4px 8px', fontSize: '11px' }} disabled={gridPage === 0} onClick={() => setGridPage(p => p - 1)}><ChevronLeft size={14} /> Prev</button>
+                <div style={{ display: 'flex', gap: '2px' }}>
+                  {Array.from({ length: Math.min(totalPages, 10) }, (_, i) => {
+                    const pageIdx = totalPages <= 10 ? i : (
+                      gridPage < 5 ? i :
+                      gridPage > totalPages - 6 ? totalPages - 10 + i :
+                      gridPage - 4 + i
+                    )
+                    return (
+                      <button key={pageIdx} className="btn" style={{ padding: '4px 8px', fontSize: '11px', fontWeight: pageIdx === gridPage ? 700 : 400, background: pageIdx === gridPage ? '#0055ff' : 'transparent', color: pageIdx === gridPage ? '#fff' : 'inherit', borderRadius: '4px', minWidth: '28px' }} onClick={() => setGridPage(pageIdx)}>{pageIdx + 1}</button>
+                    )
+                  })}
+                  {totalPages > 10 && <span style={{ fontSize: '11px', color: '#94a3b8', padding: '4px' }}>of {totalPages}</span>}
+                </div>
+                <button className="btn" style={{ padding: '4px 8px', fontSize: '11px' }} disabled={gridPage >= totalPages - 1} onClick={() => setGridPage(p => p + 1)}>Next <ChevronRight size={14} /></button>
+              </div>
+            </div>
+          )}
+
           <div className="ipam-grid-container">
             <div className="ipam-grid" style={{ gridTemplateColumns: `repeat(${gridColumns(subnet.mask)}, 1fr)` }}>
               {filteredCells.map((cell) => {
