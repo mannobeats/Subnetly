@@ -222,7 +222,7 @@ const WiFiView = ({ searchTerm = '', selectedSecurityFilter = null, highlightId 
                   </div>
 
                   <div className="flex flex-wrap gap-1 mb-3">
-                    <span className={`badge badge-${n.enabled ? 'green' : 'orange'} text-[10px]`}>{n.enabled ? 'Enabled' : 'Disabled'}</span>
+                    <span className={`px-1.5 py-px rounded text-[10px] font-semibold ${n.enabled ? 'bg-(--green-bg) text-(--green)' : 'bg-(--orange-bg) text-(--orange)'}`}>{n.enabled ? 'Enabled' : 'Disabled'}</span>
                     {n.guestNetwork && <span className="inline-flex items-center gap-0.5 px-1.5 py-px rounded text-[10px] bg-[#fef3c7] text-[#92400e]"><Users size={8} /> Guest</span>}
                     {n.hidden && <span className="inline-flex items-center gap-0.5 px-1.5 py-px rounded text-[10px] bg-(--muted-bg) text-(--text-slate)"><EyeOff size={8} /> Hidden</span>}
                     {n.clientIsolation && <span className="inline-flex items-center gap-0.5 px-1.5 py-px rounded text-[10px] bg-[#ede9fe] text-[#5b21b6]"><Shield size={8} /> Isolated</span>}
@@ -277,7 +277,7 @@ const WiFiView = ({ searchTerm = '', selectedSecurityFilter = null, highlightId 
                     <td className="text-xs">{bandLabels[n.band] || n.band}</td>
                     <td>{n.vlan ? `VLAN ${n.vlan.vid}` : <span className="text-(--text-light)">—</span>}</td>
                     <td>{n.subnet ? <code className="text-[11px] bg-(--muted-bg) px-1.5 py-0.5 rounded">{n.subnet.prefix}/{n.subnet.mask}</code> : <span className="text-(--text-light)">—</span>}</td>
-                    <td><span className={`badge badge-${n.enabled ? 'green' : 'orange'}`}>{n.enabled ? 'active' : 'disabled'}</span></td>
+                    <td><span className={`px-2 py-0.5 rounded text-[11px] font-semibold ${n.enabled ? 'bg-(--green-bg) text-(--green)' : 'bg-(--orange-bg) text-(--orange)'}`}>{n.enabled ? 'active' : 'disabled'}</span></td>
                     <td className="text-[11px] text-(--text-light)">{[n.guestNetwork && 'Guest', n.hidden && 'Hidden', n.clientIsolation && 'Isolated', n.bandSteering && 'Band Steering'].filter(Boolean).join(', ') || '—'}</td>
                     <td className="text-right pr-2">
                       <div className="flex gap-1 justify-end">

@@ -185,7 +185,7 @@ const VLANView = ({ searchTerm = '', selectedRole = null, vlanRoles = [], highli
                       <td><code className="text-xs font-semibold" style={{ color: rc }}>{v.vid}</code></td>
                       <td className="font-medium">{v.name}</td>
                       <td><span className="px-2 py-0.5 rounded text-[11px] font-semibold" style={{ background: `${rc}14`, color: rc }}>{v.role || '—'}</span></td>
-                      <td><span className={`badge badge-${v.status === 'active' ? 'green' : 'orange'}`}>{v.status}</span></td>
+                      <td><span className={`px-2 py-0.5 rounded text-[11px] font-semibold ${v.status === 'active' ? 'bg-(--green-bg) text-(--green)' : 'bg-(--orange-bg) text-(--orange)'}`}>{v.status}</span></td>
                       <td>{v.subnets.map(s => <code key={s.id} className="text-[11px] bg-(--muted-bg) px-1.5 py-0.5 rounded mr-1">{s.prefix}/{s.mask}</code>)}</td>
                       <td className="text-muted-foreground">{v.description || '—'}</td>
                       <td className="text-right pr-2">

@@ -434,7 +434,7 @@ const ServicesView = ({ searchTerm, selectedProtocol = null, highlightId = null 
                     <th className="w-20">Port(s)</th>
                     <th>Device</th>
                     <th className="w-[110px]">Env</th>
-                    <th className="w-[120px]">Health</th>
+                    <th className="w-[130px]">Health</th>
                     <th className="w-[90px]">Uptime</th>
                     <th className="w-[100px]">Type</th>
                     <th>Description</th>
@@ -464,7 +464,7 @@ const ServicesView = ({ searchTerm, selectedProtocol = null, highlightId = null 
                           </div>
                         </td>
                         <td><span className="px-1.5 py-0.5 rounded text-[9px] font-semibold whitespace-nowrap" style={{ background: ec.bg, color: ec.color }}>{s.environment || 'production'}</span></td>
-                        <td>
+                        <td className="overflow-visible!">
                           <select
                             value={s.healthStatus || 'unknown'}
                             onChange={e => handleHealthToggle(s, e.target.value)}
