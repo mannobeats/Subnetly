@@ -122,8 +122,8 @@ const ChangelogView = ({ searchTerm, selectedFilter = null }: { searchTerm: stri
 
       {/* Clear All Confirmation Modal */}
       {clearModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-content animate-fade-in" style={{ width: '400px', textAlign: 'center' }}>
+        <div className="modal-overlay" onClick={() => setClearModalOpen(false)}>
+          <div className="modal-content animate-fade-in" style={{ width: '400px', textAlign: 'center' }} onClick={e => e.stopPropagation()}>
             <div style={{ background: '#fee2e2', width: '48px', height: '48px', borderRadius: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem', color: '#dc2626' }}><Trash2 size={24} /></div>
             <h2 style={{ marginBottom: '0.5rem', fontSize: '18px', fontWeight: 600 }}>Clear All Logs?</h2>
             <p style={{ color: 'var(--unifi-text-muted)', marginBottom: '2rem' }}>This will permanently delete all {logs.length} changelog entries. This action cannot be undone.</p>

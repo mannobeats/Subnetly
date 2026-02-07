@@ -32,6 +32,16 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
+
+    // Clear device ipAddress for any IPs in this subnet before deleting
+    const ipsInSubnet = await prisma.iPAddress.findMany({ where: { subnetId: id }, select: { address: true } })
+    if (ipsInSubnet.length > 0) {
+      await prisma.device.updateMany({
+        where: { ipAddress: { in: ipsInSubnet.map(ip => ip.address) } },
+        data: { ipAddress: '' },
+      })
+    }
+
     await prisma.iPAddress.deleteMany({ where: { subnetId: id } })
     await prisma.iPRange.deleteMany({ where: { subnetId: id } })
     await prisma.changeLog.create({

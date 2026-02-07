@@ -484,8 +484,8 @@ export default function Home() {
                     })()}
                   </td>
                   <td style={{ fontWeight: 500 }}>{device.name}</td>
-                  <td><code style={{ fontSize: '11px', background: '#f1f3f5', padding: '2px 6px', borderRadius: '3px' }}>{device.ipAddress}</code></td>
-                  <td style={{ color: '#5e6670', fontFamily: 'monospace', fontSize: '12px' }}>{device.macAddress}</td>
+                  <td><code style={{ fontSize: '11px', background: 'var(--muted-bg)', padding: '2px 6px', borderRadius: '3px' }}>{device.ipAddress}</code></td>
+                  <td style={{ color: 'var(--text-slate)', fontFamily: 'monospace', fontSize: '12px' }}>{device.macAddress}</td>
                   <td>
                     {(() => {
                       const cat = categories.find(c => c.name === device.category)
@@ -497,7 +497,7 @@ export default function Home() {
                     <span className={`status-dot status-${device.status || 'inactive'}`} />
                     <span style={{ fontSize: '12px' }}>{device.status}</span>
                   </td>
-                  <td style={{ color: '#5e6670', fontSize: '12px' }}>{device.platform || '—'}</td>
+                  <td style={{ color: 'var(--text-slate)', fontSize: '12px' }}>{device.platform || '—'}</td>
                   <td style={{ textAlign: 'right', paddingRight: '1rem' }}>
                     <div style={{ display: 'flex', gap: '0.25rem', justifyContent: 'flex-end' }}>
                       <button className="btn" style={{ padding: '0 8px', border: 'none', background: 'transparent' }} onClick={() => openEditModal(device)} title="Edit"><Edit2 size={12} /></button>
@@ -673,7 +673,7 @@ export default function Home() {
       {isDeleteModalOpen && (
         <div className="modal-overlay" onClick={() => setIsDeleteModalOpen(false)}>
           <div className="modal-content animate-fade-in" style={{ width: '400px', textAlign: 'center' }} onClick={e => e.stopPropagation()}>
-            <div style={{ background: '#fee2e2', width: '48px', height: '48px', borderRadius: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem', color: '#dc2626' }}>
+            <div style={{ background: 'var(--red-bg-subtle)', width: '48px', height: '48px', borderRadius: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem', color: 'var(--red, #dc2626)' }}>
               <Trash2 size={24} />
             </div>
             <h2 style={{ marginBottom: '0.5rem', fontSize: '18px', fontWeight: 600 }}>Delete Device?</h2>

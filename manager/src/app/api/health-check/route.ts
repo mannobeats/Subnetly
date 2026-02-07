@@ -34,7 +34,7 @@ async function pingUrl(url: string, timeoutMs: number): Promise<{ status: number
 function determineStatus(httpStatus: number, responseTime: number): string {
   // Any HTTP response means the service is reachable.
   // "down" is only for connection failures (timeout, DNS, refused) — handled in the catch block.
-  if (httpStatus >= 200 && httpStatus < 400 || httpStatus === 401 || httpStatus === 403) {
+  if ((httpStatus >= 200 && httpStatus < 400) || httpStatus === 401 || httpStatus === 403) {
     return responseTime > 5000 ? 'degraded' : 'healthy'
   }
   // 5xx or Cloudflare errors (520-530) = server is reachable but having issues
