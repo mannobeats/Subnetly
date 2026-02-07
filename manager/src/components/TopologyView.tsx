@@ -31,7 +31,7 @@ interface TopoSubnet {
 }
 
 const categoryColors: Record<string, string> = {
-  Networking: '#0055ff',
+  Networking: '#3366ff',
   Server: '#10b981',
   VM: '#7c3aed',
   LXC: '#f97316',

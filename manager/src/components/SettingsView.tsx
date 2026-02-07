@@ -1050,7 +1050,7 @@ function SitesTab({ sites, activeSiteId, onSitesChange }: { sites: Site[], activ
 function VlanRolesTab({ roles, onRolesChange }: { roles: CustomCategory[], onRolesChange?: () => void }) {
   const [newName, setNewName] = useState('')
   const [newIcon, setNewIcon] = useState('shield')
-  const [newColor, setNewColor] = useState('#0055ff')
+  const [newColor, setNewColor] = useState('#3366ff')
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editName, setEditName] = useState('')
   const [editIcon, setEditIcon] = useState('')
@@ -1065,7 +1065,7 @@ function VlanRolesTab({ roles, onRolesChange }: { roles: CustomCategory[], onRol
     })
     setNewName('')
     setNewIcon('shield')
-    setNewColor('#0055ff')
+    setNewColor('#3366ff')
     onRolesChange?.()
   }
 

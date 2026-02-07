@@ -37,7 +37,7 @@ const CommandPalette = ({ onNavigate }: CommandPaletteProps) => {
       const items: SearchResult[] = []
       if (Array.isArray(devices)) {
         devices.forEach((d: { id: string; name: string; ipAddress: string; category: string; status: string }) => {
-          items.push({ id: d.id, type: 'device', title: d.name, subtitle: `${d.ipAddress || 'No IP'} \u00b7 ${d.category} \u00b7 ${d.status}`, view: 'devices', icon: Server, color: '#0055ff' })
+          items.push({ id: d.id, type: 'device', title: d.name, subtitle: `${d.ipAddress || 'No IP'} \u00b7 ${d.category} \u00b7 ${d.status}`, view: 'devices', icon: Server, color: '#3366ff' })
         })
       }
       if (Array.isArray(subnets)) {

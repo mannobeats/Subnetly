@@ -475,10 +475,10 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
     const root = typeof document !== 'undefined' ? getComputedStyle(document.documentElement) : null
     const isDark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
     switch (status) {
-      case 'network': return { bg: isDark ? '#0f172a' : '#1e293b', color: '#fff' }
-      case 'broadcast': return { bg: isDark ? '#0f172a' : '#1e293b', color: '#fff' }
+      case 'network': return { bg: isDark ? '#000000' : '#1e293b', color: '#fff' }
+      case 'broadcast': return { bg: isDark ? '#000000' : '#1e293b', color: '#fff' }
       case 'gateway': return { bg: root?.getPropertyValue('--green').trim() || '#10b981', color: '#fff' }
-      case 'assigned': return { bg: root?.getPropertyValue('--blue').trim() || '#0055ff', color: '#fff' }
+      case 'assigned': return { bg: root?.getPropertyValue('--blue').trim() || '#3366ff', color: '#fff' }
       case 'dhcp': return { bg: isDark ? 'rgba(251, 191, 36, 0.15)' : '#fef3c7', color: isDark ? '#fbbf24' : '#92400e' }
       case 'reserved': return { bg: isDark ? 'rgba(167, 139, 250, 0.15)' : '#ede9fe', color: isDark ? '#a78bfa' : '#5b21b6' }
       case 'infrastructure': return { bg: isDark ? 'rgba(34, 211, 238, 0.15)' : '#cffafe', color: isDark ? '#22d3ee' : '#155e75' }
@@ -667,7 +667,7 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
                       gridPage - 4 + i
                     )
                     return (
-                      <button key={pageIdx} className={`px-2 py-1 text-[11px] rounded min-w-7 ${pageIdx === gridPage ? 'bg-[#0055ff] text-white font-bold' : 'bg-transparent hover:bg-accent'}`} onClick={() => setGridPage(pageIdx)}>{pageIdx + 1}</button>
+                      <button key={pageIdx} className={`px-2 py-1 text-[11px] rounded min-w-7 ${pageIdx === gridPage ? 'bg-[#3366ff] text-white font-bold' : 'bg-transparent hover:bg-accent'}`} onClick={() => setGridPage(pageIdx)}>{pageIdx + 1}</button>
                     )
                   })}
                   {totalPages > 10 && <span className="text-[11px] text-(--text-light) p-1">of {totalPages}</span>}
@@ -773,7 +773,7 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
                     <td className="font-medium">
                       {cell.device ? (
                         <span className="flex items-center gap-1">
-                          <Server size={11} color="#0055ff" />
+                          <Server size={11} color="#3366ff" />
                           {cell.device.name}
                         </span>
                       ) : label ? label : '—'}
@@ -785,18 +785,18 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
                     <td className="text-right">
                       {cell.ip && (
                         <div className="flex gap-0.5 justify-end">
-                          <Button variant="ghost" size="icon" className="h-6 w-6 text-[#0055ff]" onClick={() => { setEditingIpId(cell.ip!.id); const dev = cell.device || devices.find(d => d.ipAddress === cell.ip!.address); setIpForm({ address: cell.ip!.address, dnsName: cell.ip!.dnsName || '', description: cell.ip!.description || '', status: cell.ip!.status, deviceId: dev?.id || '' }); setIpModalOpen(true) }} title="Edit"><Edit2 size={12} /></Button>
+                          <Button variant="ghost" size="icon" className="h-6 w-6 text-[#3366ff]" onClick={() => { setEditingIpId(cell.ip!.id); const dev = cell.device || devices.find(d => d.ipAddress === cell.ip!.address); setIpForm({ address: cell.ip!.address, dnsName: cell.ip!.dnsName || '', description: cell.ip!.description || '', status: cell.ip!.status, deviceId: dev?.id || '' }); setIpModalOpen(true) }} title="Edit"><Edit2 size={12} /></Button>
                           <Button variant="ghost" size="icon" className="h-6 w-6 text-(--red)" onClick={() => handleDeleteIp(cell.ip!.id)} title="Delete"><Trash2 size={12} /></Button>
                         </div>
                       )}
                       {!cell.ip && cell.device && (
                         <div className="flex gap-0.5 justify-end">
-                          <Button variant="ghost" size="icon" className="h-6 w-6 text-[#0055ff]" onClick={() => handlePromoteDeviceIp(cell.device!)} title="Manage in IPAM"><Edit2 size={12} /></Button>
+                          <Button variant="ghost" size="icon" className="h-6 w-6 text-[#3366ff]" onClick={() => handlePromoteDeviceIp(cell.device!)} title="Manage in IPAM"><Edit2 size={12} /></Button>
                           <Button variant="ghost" size="icon" className="h-6 w-6 text-(--red)" onClick={() => handleUnlinkDevice(cell.device!.id)} title="Unlink IP"><Trash2 size={12} /></Button>
                         </div>
                       )}
                       {!cell.ip && !cell.device && cell.status !== 'network' && cell.status !== 'broadcast' && cell.status !== 'gateway' && (
-                        <Button variant="ghost" size="icon" className="h-6 w-6 text-[#0055ff]" onClick={() => openAssignFromGrid(cell.fullIp)}><Plus size={12} /></Button>
+                        <Button variant="ghost" size="icon" className="h-6 w-6 text-[#3366ff]" onClick={() => openAssignFromGrid(cell.fullIp)}><Plus size={12} /></Button>
                       )}
                     </td>
                   </tr>
@@ -826,7 +826,7 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
             <div className="grid grid-cols-4 gap-4">
               <div className="bg-card border border-border rounded-lg p-5">
                 <div className="text-xs text-(--text-muted) font-medium">Used Addresses</div>
-                <div className="text-2xl font-bold leading-none text-[#0055ff]">{utilization.used}</div>
+                <div className="text-2xl font-bold leading-none text-[#3366ff]">{utilization.used}</div>
                 <div className="text-[10px] text-(--text-light)">{utilization.pct}% of {utilization.total}</div>
               </div>
               <div className="bg-card border border-border rounded-lg p-5">
@@ -886,7 +886,7 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
               <h3 className="text-[13px] font-semibold text-(--text) mb-4">Address Breakdown</h3>
               <div className="flex h-5 rounded-md overflow-hidden gap-px mb-3">
                 {statusCounts['gateway'] && <div className="min-w-0.5 transition-all duration-300" style={{ flex: statusCounts['gateway'], background: '#10b981' }} title={`Gateway: ${statusCounts['gateway']}`} />}
-                {statusCounts['assigned'] && <div className="min-w-0.5 transition-all duration-300" style={{ flex: statusCounts['assigned'], background: '#0055ff' }} title={`Assigned: ${statusCounts['assigned']}`} />}
+                {statusCounts['assigned'] && <div className="min-w-0.5 transition-all duration-300" style={{ flex: statusCounts['assigned'], background: '#3366ff' }} title={`Assigned: ${statusCounts['assigned']}`} />}
                 {statusCounts['dhcp'] && <div className="min-w-0.5 transition-all duration-300" style={{ flex: statusCounts['dhcp'], background: '#f59e0b' }} title={`DHCP: ${statusCounts['dhcp']}`} />}
                 {statusCounts['reserved'] && <div className="min-w-0.5 transition-all duration-300" style={{ flex: statusCounts['reserved'], background: '#8b5cf6' }} title={`Reserved: ${statusCounts['reserved']}`} />}
                 {statusCounts['infrastructure'] && <div className="min-w-0.5 transition-all duration-300" style={{ flex: statusCounts['infrastructure'], background: '#06b6d4' }} title={`Infrastructure: ${statusCounts['infrastructure']}`} />}
@@ -894,7 +894,7 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
               </div>
               <div className="flex flex-wrap gap-3 text-[11px] text-(--text-slate)">
                 {statusCounts['gateway'] && <span><span className="inline-block w-2 h-2 rounded-sm mr-1 align-middle" style={{ background: '#10b981' }} /> Gateway ({statusCounts['gateway']})</span>}
-                {statusCounts['assigned'] && <span><span className="inline-block w-2 h-2 rounded-sm mr-1 align-middle" style={{ background: '#0055ff' }} /> Assigned ({statusCounts['assigned']})</span>}
+                {statusCounts['assigned'] && <span><span className="inline-block w-2 h-2 rounded-sm mr-1 align-middle" style={{ background: '#3366ff' }} /> Assigned ({statusCounts['assigned']})</span>}
                 {statusCounts['dhcp'] && <span><span className="inline-block w-2 h-2 rounded-sm mr-1 align-middle" style={{ background: '#f59e0b' }} /> DHCP ({statusCounts['dhcp']})</span>}
                 {statusCounts['reserved'] && <span><span className="inline-block w-2 h-2 rounded-sm mr-1 align-middle" style={{ background: '#8b5cf6' }} /> Reserved ({statusCounts['reserved']})</span>}
                 {statusCounts['infrastructure'] && <span><span className="inline-block w-2 h-2 rounded-sm mr-1 align-middle" style={{ background: '#06b6d4' }} /> Infrastructure ({statusCounts['infrastructure']})</span>}
@@ -930,7 +930,7 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
                 <div className="flex flex-col gap-2">
                   {cellData.filter(c => c.device).map(c => (
                     <div key={c.octet} className="flex items-center gap-2 py-2 px-3 bg-(--surface-alt) border border-(--muted-bg-alt) rounded-lg text-xs">
-                      <Server size={13} color="#0055ff" />
+                      <Server size={13} color="#3366ff" />
                       <span className="font-medium">{c.device!.name}</span>
                       <code className="text-[10px] text-(--text-light) ml-auto">{c.fullIp}</code>
                       <span className={`px-2 py-0.5 rounded text-[9px] font-semibold ${c.device!.status === 'active' ? 'bg-(--green-bg) text-(--green)' : 'bg-(--orange-bg) text-(--orange)'}`}>{c.device!.status}</span>
@@ -990,7 +990,7 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
                           <td className="font-medium">
                             {linkedDevice ? (
                               <span className="flex items-center gap-1">
-                                <Server size={11} color="#0055ff" />
+                                <Server size={11} color="#3366ff" />
                                 {linkedDevice.name}
                               </span>
                             ) : (
@@ -1001,7 +1001,7 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
                           <td className="text-muted-foreground">{ip.description || '—'}</td>
                           <td className="text-right pr-2">
                             <div className="flex gap-0.5 justify-end">
-                              <Button variant="ghost" size="icon" className="h-6 w-6 text-[#0055ff]" onClick={() => { setEditingIpId(ip.id); const dev = linkedDevice || devices.find(d => d.ipAddress === ip.address); setIpForm({ address: ip.address, dnsName: ip.dnsName || '', description: ip.description || '', status: ip.status, deviceId: dev?.id || '' }); setIpModalOpen(true) }} title="Edit"><Edit2 size={12} /></Button>
+                              <Button variant="ghost" size="icon" className="h-6 w-6 text-[#3366ff]" onClick={() => { setEditingIpId(ip.id); const dev = linkedDevice || devices.find(d => d.ipAddress === ip.address); setIpForm({ address: ip.address, dnsName: ip.dnsName || '', description: ip.description || '', status: ip.status, deviceId: dev?.id || '' }); setIpModalOpen(true) }} title="Edit"><Edit2 size={12} /></Button>
                               <Button variant="ghost" size="icon" className="h-6 w-6 text-(--red)" onClick={() => handleDeleteIp(ip.id)} title="Delete"><Trash2 size={12} /></Button>
                             </div>
                           </td>
@@ -1013,7 +1013,7 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
                       <td><code className="text-[11px] bg-(--muted-bg) px-1.5 py-px rounded">{d.ipAddress}/{subnet.mask}</code></td>
                       <td className="font-medium">
                         <span className="flex items-center gap-1">
-                          <Server size={11} color="#0055ff" />
+                          <Server size={11} color="#3366ff" />
                           {d.name}
                         </span>
                       </td>
@@ -1021,7 +1021,7 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _high
                       <td className="text-muted-foreground">{d.category} — {d.platform || 'No platform'}</td>
                       <td className="text-right pr-2">
                         <div className="flex gap-0.5 justify-end">
-                          <Button variant="ghost" size="icon" className="h-6 w-6 text-[#0055ff]" onClick={() => handlePromoteDeviceIp(d)} title="Manage in IPAM"><Edit2 size={12} /></Button>
+                          <Button variant="ghost" size="icon" className="h-6 w-6 text-[#3366ff]" onClick={() => handlePromoteDeviceIp(d)} title="Manage in IPAM"><Edit2 size={12} /></Button>
                           <Button variant="ghost" size="icon" className="h-6 w-6 text-(--red)" onClick={() => handleUnlinkDevice(d.id)} title="Unlink IP from device"><Trash2 size={12} /></Button>
                         </div>
                       </td>

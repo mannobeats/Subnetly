@@ -90,7 +90,7 @@ export default function IconPicker({ value, onChange, color = 'var(--text-muted)
                       : 'border border-transparent hover:bg-(--muted-bg)'
                   }`}
                 >
-                  {renderIcon(name, 15, isSelected ? 'var(--blue, #0055ff)' : 'var(--text-muted, #5e6670)')}
+                  {renderIcon(name, 15, isSelected ? 'var(--blue, #3366ff)' : 'var(--text-muted, #5e6670)')}
                 </button>
               )
             })}

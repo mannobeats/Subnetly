@@ -48,7 +48,7 @@ const bandLabels: Record<string, string> = {
 
 const securityColors: Record<string, string> = {
   'open': '#ef4444',
-  'wpa2-personal': '#0055ff',
+  'wpa2-personal': '#3366ff',
   'wpa3-personal': '#10b981',
   'wpa2-enterprise': '#7c3aed',
   'wpa3-enterprise': '#059669',
@@ -171,7 +171,7 @@ const WiFiView = ({ searchTerm = '', selectedSecurityFilter = null, highlightId 
       {/* Stats */}
       <div className="grid grid-cols-4 gap-4 mb-6">
         {[
-          { label: 'Total Networks', value: networks.length, color: '#0055ff' },
+          { label: 'Total Networks', value: networks.length, color: '#3366ff' },
           { label: 'Enabled', value: enabledCount, color: '#10b981' },
           { label: 'Guest Networks', value: guestCount, color: '#f59e0b' },
           { label: 'Disabled', value: networks.length - enabledCount, color: '#94a3b8' },

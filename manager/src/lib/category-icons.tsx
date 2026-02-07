@@ -161,7 +161,7 @@ export const ICON_MAP: Record<string, LucideIcon> = {
 export const ICON_OPTIONS = Object.keys(ICON_MAP)
 
 export const COLOR_OPTIONS = [
-  '#0055ff', '#3b82f6', '#06b6d4', '#10b981', '#22c55e',
+  '#3366ff', '#3b82f6', '#06b6d4', '#10b981', '#22c55e',
   '#84cc16', '#eab308', '#f97316', '#ef4444', '#dc2626',
   '#ec4899', '#d946ef', '#a855f7', '#7c3aed', '#6366f1',
   '#5e6670', '#94a3b8', '#1e293b',

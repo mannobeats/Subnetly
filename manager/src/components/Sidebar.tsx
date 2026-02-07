@@ -220,7 +220,7 @@ const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selecte
             <h3>Filters</h3>
             <div className="flex flex-col gap-1 mb-6">
               <div className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-colors duration-150 ${selectedCategory === null ? 'text-(--blue) bg-(--blue-bg)' : 'text-(--text) hover:text-(--blue) hover:bg-(--hover)'}`} onClick={() => setSelectedCategory(null)}>
-                <Server size={14} color={selectedCategory === null ? '#0055ff' : '#5e6670'} /> <span>All Devices</span>
+                <Server size={14} color={selectedCategory === null ? '#3366ff' : '#5e6670'} /> <span>All Devices</span>
               </div>
             </div>
             <h3>Categories</h3>
@@ -229,16 +229,16 @@ const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selecte
                 const Icon = getCategoryIcon(cat.icon)
                 return (
                   <div key={cat.id} className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-colors duration-150 ${selectedCategory === cat.name ? 'text-(--blue) bg-(--blue-bg)' : 'text-(--text) hover:text-(--blue) hover:bg-(--hover)'}`} onClick={() => setSelectedCategory(selectedCategory === cat.name ? null : cat.name)}>
-                    <Icon size={14} color={selectedCategory === cat.name ? '#0055ff' : cat.color} /> <span>{cat.name}</span>
+                    <Icon size={14} color={selectedCategory === cat.name ? '#3366ff' : cat.color} /> <span>{cat.name}</span>
                   </div>
                 )
               }) : (
                 <>
                   <div className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-colors duration-150 ${selectedCategory === 'Server' ? 'text-(--blue) bg-(--blue-bg)' : 'text-(--text) hover:text-(--blue) hover:bg-(--hover)'}`} onClick={() => setSelectedCategory('Server')}>
-                    <Server size={14} color={selectedCategory === 'Server' ? '#0055ff' : '#5e6670'} /> <span>Servers</span>
+                    <Server size={14} color={selectedCategory === 'Server' ? '#3366ff' : '#5e6670'} /> <span>Servers</span>
                   </div>
                   <div className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-colors duration-150 ${selectedCategory === 'Networking' ? 'text-(--blue) bg-(--blue-bg)' : 'text-(--text) hover:text-(--blue) hover:bg-(--hover)'}`} onClick={() => setSelectedCategory('Networking')}>
-                    <Network size={14} color={selectedCategory === 'Networking' ? '#0055ff' : '#5e6670'} /> <span>Networking</span>
+                    <Network size={14} color={selectedCategory === 'Networking' ? '#3366ff' : '#5e6670'} /> <span>Networking</span>
                   </div>
                 </>
               )}
@@ -270,13 +270,13 @@ const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selecte
             <h3>Filters</h3>
             <div className="flex flex-col gap-1 mb-6">
               <div className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-colors duration-150 ${selectedIpFilter === null ? 'text-(--blue) bg-(--blue-bg)' : 'text-(--text) hover:text-(--blue) hover:bg-(--hover)'}`} onClick={() => setSelectedIpFilter(null)}>
-                <Globe size={14} color={selectedIpFilter === null ? '#0055ff' : '#5e6670'} /> <span>All Addresses</span>
+                <Globe size={14} color={selectedIpFilter === null ? '#3366ff' : '#5e6670'} /> <span>All Addresses</span>
               </div>
             </div>
             <h3>Address Types</h3>
             <div className="flex flex-col gap-1">
               <div className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-colors duration-150 ${selectedIpFilter === 'gateway' ? 'text-(--blue) bg-(--blue-bg)' : 'text-(--text) hover:text-(--blue) hover:bg-(--hover)'}`} onClick={() => setSelectedIpFilter(selectedIpFilter === 'gateway' ? null : 'gateway')}><div className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ background: '#10b981' }} /> <span>Gateway</span></div>
-              <div className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-colors duration-150 ${selectedIpFilter === 'assigned' ? 'text-(--blue) bg-(--blue-bg)' : 'text-(--text) hover:text-(--blue) hover:bg-(--hover)'}`} onClick={() => setSelectedIpFilter(selectedIpFilter === 'assigned' ? null : 'assigned')}><div className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ background: '#0055ff' }} /> <span>Assigned</span></div>
+              <div className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-colors duration-150 ${selectedIpFilter === 'assigned' ? 'text-(--blue) bg-(--blue-bg)' : 'text-(--text) hover:text-(--blue) hover:bg-(--hover)'}`} onClick={() => setSelectedIpFilter(selectedIpFilter === 'assigned' ? null : 'assigned')}><div className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ background: '#3366ff' }} /> <span>Assigned</span></div>
               <div className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-colors duration-150 ${selectedIpFilter === 'dhcp' ? 'text-(--blue) bg-(--blue-bg)' : 'text-(--text) hover:text-(--blue) hover:bg-(--hover)'}`} onClick={() => setSelectedIpFilter(selectedIpFilter === 'dhcp' ? null : 'dhcp')}><div className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ background: '#f59e0b' }} /> <span>DHCP Pool</span></div>
               <div className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-colors duration-150 ${selectedIpFilter === 'reserved' ? 'text-(--blue) bg-(--blue-bg)' : 'text-(--text) hover:text-(--blue) hover:bg-(--hover)'}`} onClick={() => setSelectedIpFilter(selectedIpFilter === 'reserved' ? null : 'reserved')}><div className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ background: '#8b5cf6' }} /> <span>Reserved</span></div>
               <div className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-colors duration-150 ${selectedIpFilter === 'infrastructure' ? 'text-(--blue) bg-(--blue-bg)' : 'text-(--text) hover:text-(--blue) hover:bg-(--hover)'}`} onClick={() => setSelectedIpFilter(selectedIpFilter === 'infrastructure' ? null : 'infrastructure')}><div className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ background: '#06b6d4' }} /> <span>Infrastructure</span></div>
@@ -290,7 +290,7 @@ const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selecte
             <h3>Filters</h3>
             <div className="flex flex-col gap-1 mb-6">
               <div className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-colors duration-150 ${selectedCategory === null ? 'text-(--blue) bg-(--blue-bg)' : 'text-(--text) hover:text-(--blue) hover:bg-(--hover)'}`} onClick={() => setSelectedCategory(null)}>
-                <Share2 size={14} color={selectedCategory === null ? '#0055ff' : '#5e6670'} /> <span>All Devices</span>
+                <Share2 size={14} color={selectedCategory === null ? '#3366ff' : '#5e6670'} /> <span>All Devices</span>
               </div>
             </div>
             <h3>Device Types</h3>
@@ -302,7 +302,7 @@ const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selecte
               )) : (
                 <>
                   <div className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-colors duration-150 ${selectedCategory === 'Server' ? 'text-(--blue) bg-(--blue-bg)' : 'text-(--text) hover:text-(--blue) hover:bg-(--hover)'}`} onClick={() => setSelectedCategory(selectedCategory === 'Server' ? null : 'Server')}><div className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ background: '#10b981' }} /> <span>Server</span></div>
-                  <div className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-colors duration-150 ${selectedCategory === 'Networking' ? 'text-(--blue) bg-(--blue-bg)' : 'text-(--text) hover:text-(--blue) hover:bg-(--hover)'}`} onClick={() => setSelectedCategory(selectedCategory === 'Networking' ? null : 'Networking')}><div className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ background: '#0055ff' }} /> <span>Networking</span></div>
+                  <div className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-colors duration-150 ${selectedCategory === 'Networking' ? 'text-(--blue) bg-(--blue-bg)' : 'text-(--text) hover:text-(--blue) hover:bg-(--hover)'}`} onClick={() => setSelectedCategory(selectedCategory === 'Networking' ? null : 'Networking')}><div className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ background: '#3366ff' }} /> <span>Networking</span></div>
                 </>
               )}
             </div>
@@ -320,14 +320,14 @@ const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selecte
             <h3>Filters</h3>
             <div className="flex flex-col gap-1 mb-6">
               <div className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-colors duration-150 ${selectedServiceFilter === null ? 'text-(--blue) bg-(--blue-bg)' : 'text-(--text) hover:text-(--blue) hover:bg-(--hover)'}`} onClick={() => setSelectedServiceFilter(null)}>
-                <Wifi size={14} color={selectedServiceFilter === null ? '#0055ff' : '#5e6670'} /> <span>All Networks</span>
+                <Wifi size={14} color={selectedServiceFilter === null ? '#3366ff' : '#5e6670'} /> <span>All Networks</span>
               </div>
             </div>
             <h3>Security</h3>
             <div className="flex flex-col gap-1 mb-6">
-              <div className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-colors duration-150 ${selectedServiceFilter === 'wpa2' ? 'text-(--blue) bg-(--blue-bg)' : 'text-(--text) hover:text-(--blue) hover:bg-(--hover)'}`} onClick={() => setSelectedServiceFilter(selectedServiceFilter === 'wpa2' ? null : 'wpa2')}><Lock size={14} color={selectedServiceFilter === 'wpa2' ? '#0055ff' : '#5e6670'} /> <span>WPA2</span></div>
-              <div className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-colors duration-150 ${selectedServiceFilter === 'wpa3' ? 'text-(--blue) bg-(--blue-bg)' : 'text-(--text) hover:text-(--blue) hover:bg-(--hover)'}`} onClick={() => setSelectedServiceFilter(selectedServiceFilter === 'wpa3' ? null : 'wpa3')}><Shield size={14} color={selectedServiceFilter === 'wpa3' ? '#0055ff' : '#5e6670'} /> <span>WPA3</span></div>
-              <div className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-colors duration-150 ${selectedServiceFilter === 'open' ? 'text-(--blue) bg-(--blue-bg)' : 'text-(--text) hover:text-(--blue) hover:bg-(--hover)'}`} onClick={() => setSelectedServiceFilter(selectedServiceFilter === 'open' ? null : 'open')}><Wifi size={14} color={selectedServiceFilter === 'open' ? '#0055ff' : '#5e6670'} /> <span>Open</span></div>
+              <div className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-colors duration-150 ${selectedServiceFilter === 'wpa2' ? 'text-(--blue) bg-(--blue-bg)' : 'text-(--text) hover:text-(--blue) hover:bg-(--hover)'}`} onClick={() => setSelectedServiceFilter(selectedServiceFilter === 'wpa2' ? null : 'wpa2')}><Lock size={14} color={selectedServiceFilter === 'wpa2' ? '#3366ff' : '#5e6670'} /> <span>WPA2</span></div>
+              <div className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-colors duration-150 ${selectedServiceFilter === 'wpa3' ? 'text-(--blue) bg-(--blue-bg)' : 'text-(--text) hover:text-(--blue) hover:bg-(--hover)'}`} onClick={() => setSelectedServiceFilter(selectedServiceFilter === 'wpa3' ? null : 'wpa3')}><Shield size={14} color={selectedServiceFilter === 'wpa3' ? '#3366ff' : '#5e6670'} /> <span>WPA3</span></div>
+              <div className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-colors duration-150 ${selectedServiceFilter === 'open' ? 'text-(--blue) bg-(--blue-bg)' : 'text-(--text) hover:text-(--blue) hover:bg-(--hover)'}`} onClick={() => setSelectedServiceFilter(selectedServiceFilter === 'open' ? null : 'open')}><Wifi size={14} color={selectedServiceFilter === 'open' ? '#3366ff' : '#5e6670'} /> <span>Open</span></div>
             </div>
             <h3>Band</h3>
             <div className="flex flex-col gap-1">
@@ -343,13 +343,13 @@ const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selecte
             <h3>Filters</h3>
             <div className="flex flex-col gap-1 mb-6">
               <div className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-colors duration-150 ${selectedServiceFilter === null ? 'text-(--blue) bg-(--blue-bg)' : 'text-(--text) hover:text-(--blue) hover:bg-(--hover)'}`} onClick={() => setSelectedServiceFilter(null)}>
-                <Wifi size={14} color={selectedServiceFilter === null ? '#0055ff' : '#5e6670'} /> <span>All Services</span>
+                <Wifi size={14} color={selectedServiceFilter === null ? '#3366ff' : '#5e6670'} /> <span>All Services</span>
               </div>
             </div>
             <h3>Protocol</h3>
             <div className="flex flex-col gap-1 mb-6">
-              <div className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-colors duration-150 ${selectedServiceFilter === 'tcp' ? 'text-(--blue) bg-(--blue-bg)' : 'text-(--text) hover:text-(--blue) hover:bg-(--hover)'}`} onClick={() => setSelectedServiceFilter(selectedServiceFilter === 'tcp' ? null : 'tcp')}><Globe size={14} color={selectedServiceFilter === 'tcp' ? '#0055ff' : '#5e6670'} /> <span>TCP</span></div>
-              <div className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-colors duration-150 ${selectedServiceFilter === 'udp' ? 'text-(--blue) bg-(--blue-bg)' : 'text-(--text) hover:text-(--blue) hover:bg-(--hover)'}`} onClick={() => setSelectedServiceFilter(selectedServiceFilter === 'udp' ? null : 'udp')}><Globe size={14} color={selectedServiceFilter === 'udp' ? '#0055ff' : '#5e6670'} /> <span>UDP</span></div>
+              <div className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-colors duration-150 ${selectedServiceFilter === 'tcp' ? 'text-(--blue) bg-(--blue-bg)' : 'text-(--text) hover:text-(--blue) hover:bg-(--hover)'}`} onClick={() => setSelectedServiceFilter(selectedServiceFilter === 'tcp' ? null : 'tcp')}><Globe size={14} color={selectedServiceFilter === 'tcp' ? '#3366ff' : '#5e6670'} /> <span>TCP</span></div>
+              <div className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-colors duration-150 ${selectedServiceFilter === 'udp' ? 'text-(--blue) bg-(--blue-bg)' : 'text-(--text) hover:text-(--blue) hover:bg-(--hover)'}`} onClick={() => setSelectedServiceFilter(selectedServiceFilter === 'udp' ? null : 'udp')}><Globe size={14} color={selectedServiceFilter === 'udp' ? '#3366ff' : '#5e6670'} /> <span>UDP</span></div>
             </div>
             <h3>Common Ports</h3>
             <div className="flex flex-col gap-1">
@@ -367,7 +367,7 @@ const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selecte
             <h3>Filters</h3>
             <div className="flex flex-col gap-1 mb-6">
               <div className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-colors duration-150 ${selectedVlanRole === null ? 'text-(--blue) bg-(--blue-bg)' : 'text-(--text) hover:text-(--blue) hover:bg-(--hover)'}`} onClick={() => setSelectedVlanRole(null)}>
-                <Network size={14} color={selectedVlanRole === null ? '#0055ff' : '#5e6670'} /> <span>All VLANs</span>
+                <Network size={14} color={selectedVlanRole === null ? '#3366ff' : '#5e6670'} /> <span>All VLANs</span>
               </div>
             </div>
             <h3>VLAN Roles</h3>
@@ -378,7 +378,7 @@ const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selecte
                 </div>
               )) : (
                 <>
-                  <div className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-colors duration-150 ${selectedVlanRole === 'management' ? 'text-(--blue) bg-(--blue-bg)' : 'text-(--text) hover:text-(--blue) hover:bg-(--hover)'}`} onClick={() => setSelectedVlanRole(selectedVlanRole === 'management' ? null : 'management')}><div className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ background: '#0055ff' }} /> <span>Management</span></div>
+                  <div className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-colors duration-150 ${selectedVlanRole === 'management' ? 'text-(--blue) bg-(--blue-bg)' : 'text-(--text) hover:text-(--blue) hover:bg-(--hover)'}`} onClick={() => setSelectedVlanRole(selectedVlanRole === 'management' ? null : 'management')}><div className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ background: '#3366ff' }} /> <span>Management</span></div>
                   <div className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-colors duration-150 ${selectedVlanRole === 'production' ? 'text-(--blue) bg-(--blue-bg)' : 'text-(--text) hover:text-(--blue) hover:bg-(--hover)'}`} onClick={() => setSelectedVlanRole(selectedVlanRole === 'production' ? null : 'production')}><div className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ background: '#10b981' }} /> <span>Production</span></div>
                 </>
               )}
@@ -397,40 +397,40 @@ const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selecte
             <h3>Account</h3>
             <div className="flex flex-col gap-1 mb-6">
               <div className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-colors duration-150 ${settingsTab === 'profile' ? 'text-(--blue) bg-(--blue-bg)' : 'text-(--text) hover:text-(--blue) hover:bg-(--hover)'}`} onClick={() => setSettingsTab?.('profile')}>
-                <User size={14} color={settingsTab === 'profile' ? '#0055ff' : '#5e6670'} /> <span>Profile</span>
+                <User size={14} color={settingsTab === 'profile' ? '#3366ff' : '#5e6670'} /> <span>Profile</span>
               </div>
               <div className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-colors duration-150 ${settingsTab === 'security' ? 'text-(--blue) bg-(--blue-bg)' : 'text-(--text) hover:text-(--blue) hover:bg-(--hover)'}`} onClick={() => setSettingsTab?.('security')}>
-                <Lock size={14} color={settingsTab === 'security' ? '#0055ff' : '#5e6670'} /> <span>Security</span>
+                <Lock size={14} color={settingsTab === 'security' ? '#3366ff' : '#5e6670'} /> <span>Security</span>
               </div>
             </div>
             <h3>Preferences</h3>
             <div className="flex flex-col gap-1 mb-6">
               <div className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-colors duration-150 ${settingsTab === 'notifications' ? 'text-(--blue) bg-(--blue-bg)' : 'text-(--text) hover:text-(--blue) hover:bg-(--hover)'}`} onClick={() => setSettingsTab?.('notifications')}>
-                <Bell size={14} color={settingsTab === 'notifications' ? '#0055ff' : '#5e6670'} /> <span>Notifications</span>
+                <Bell size={14} color={settingsTab === 'notifications' ? '#3366ff' : '#5e6670'} /> <span>Notifications</span>
               </div>
               <div className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-colors duration-150 ${settingsTab === 'application' ? 'text-(--blue) bg-(--blue-bg)' : 'text-(--text) hover:text-(--blue) hover:bg-(--hover)'}`} onClick={() => setSettingsTab?.('application')}>
-                <Globe size={14} color={settingsTab === 'application' ? '#0055ff' : '#5e6670'} /> <span>Application</span>
+                <Globe size={14} color={settingsTab === 'application' ? '#3366ff' : '#5e6670'} /> <span>Application</span>
               </div>
             </div>
             <h3>Customization</h3>
             <div className="flex flex-col gap-1 mb-6">
               <div className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-colors duration-150 ${settingsTab === 'categories' ? 'text-(--blue) bg-(--blue-bg)' : 'text-(--text) hover:text-(--blue) hover:bg-(--hover)'}`} onClick={() => setSettingsTab?.('categories')}>
-                <Tag size={14} color={settingsTab === 'categories' ? '#0055ff' : '#5e6670'} /> <span>Categories</span>
+                <Tag size={14} color={settingsTab === 'categories' ? '#3366ff' : '#5e6670'} /> <span>Categories</span>
               </div>
               <div className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-colors duration-150 ${settingsTab === 'sites' ? 'text-(--blue) bg-(--blue-bg)' : 'text-(--text) hover:text-(--blue) hover:bg-(--hover)'}`} onClick={() => setSettingsTab?.('sites')}>
-                <MapPin size={14} color={settingsTab === 'sites' ? '#0055ff' : '#5e6670'} /> <span>Sites</span>
+                <MapPin size={14} color={settingsTab === 'sites' ? '#3366ff' : '#5e6670'} /> <span>Sites</span>
               </div>
               <div className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-colors duration-150 ${settingsTab === 'vlan-roles' ? 'text-(--blue) bg-(--blue-bg)' : 'text-(--text) hover:text-(--blue) hover:bg-(--hover)'}`} onClick={() => setSettingsTab?.('vlan-roles')}>
-                <Network size={14} color={settingsTab === 'vlan-roles' ? '#0055ff' : '#5e6670'} /> <span>VLAN Roles</span>
+                <Network size={14} color={settingsTab === 'vlan-roles' ? '#3366ff' : '#5e6670'} /> <span>VLAN Roles</span>
               </div>
             </div>
             <h3>System</h3>
             <div className="flex flex-col gap-1">
               <div className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-colors duration-150 ${settingsTab === 'data' ? 'text-(--blue) bg-(--blue-bg)' : 'text-(--text) hover:text-(--blue) hover:bg-(--hover)'}`} onClick={() => setSettingsTab?.('data')}>
-                <Database size={14} color={settingsTab === 'data' ? '#0055ff' : '#5e6670'} /> <span>Data & Storage</span>
+                <Database size={14} color={settingsTab === 'data' ? '#3366ff' : '#5e6670'} /> <span>Data & Storage</span>
               </div>
               <div className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-colors duration-150 ${settingsTab === 'about' ? 'text-(--blue) bg-(--blue-bg)' : 'text-(--text) hover:text-(--blue) hover:bg-(--hover)'}`} onClick={() => setSettingsTab?.('about')}>
-                <Shield size={14} color={settingsTab === 'about' ? '#0055ff' : '#5e6670'} /> <span>About</span>
+                <Shield size={14} color={settingsTab === 'about' ? '#3366ff' : '#5e6670'} /> <span>About</span>
               </div>
             </div>
           </>
@@ -440,23 +440,23 @@ const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selecte
             <h3>Filters</h3>
             <div className="flex flex-col gap-1 mb-6">
               <div className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-colors duration-150 ${selectedChangelogFilter === null ? 'text-(--blue) bg-(--blue-bg)' : 'text-(--text) hover:text-(--blue) hover:bg-(--hover)'}`} onClick={() => setSelectedChangelogFilter(null)}>
-                <History size={14} color={selectedChangelogFilter === null ? '#0055ff' : '#5e6670'} /> <span>All Changes</span>
+                <History size={14} color={selectedChangelogFilter === null ? '#3366ff' : '#5e6670'} /> <span>All Changes</span>
               </div>
             </div>
             <h3>Action Type</h3>
             <div className="flex flex-col gap-1 mb-6">
               <div className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-colors duration-150 ${selectedChangelogFilter === 'create' ? 'text-(--blue) bg-(--blue-bg)' : 'text-(--text) hover:text-(--blue) hover:bg-(--hover)'}`} onClick={() => setSelectedChangelogFilter(selectedChangelogFilter === 'create' ? null : 'create')}><div className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ background: '#10b981' }} /> <span>Created</span></div>
-              <div className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-colors duration-150 ${selectedChangelogFilter === 'update' ? 'text-(--blue) bg-(--blue-bg)' : 'text-(--text) hover:text-(--blue) hover:bg-(--hover)'}`} onClick={() => setSelectedChangelogFilter(selectedChangelogFilter === 'update' ? null : 'update')}><div className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ background: '#0055ff' }} /> <span>Updated</span></div>
+              <div className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-colors duration-150 ${selectedChangelogFilter === 'update' ? 'text-(--blue) bg-(--blue-bg)' : 'text-(--text) hover:text-(--blue) hover:bg-(--hover)'}`} onClick={() => setSelectedChangelogFilter(selectedChangelogFilter === 'update' ? null : 'update')}><div className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ background: '#3366ff' }} /> <span>Updated</span></div>
               <div className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-colors duration-150 ${selectedChangelogFilter === 'delete' ? 'text-(--blue) bg-(--blue-bg)' : 'text-(--text) hover:text-(--blue) hover:bg-(--hover)'}`} onClick={() => setSelectedChangelogFilter(selectedChangelogFilter === 'delete' ? null : 'delete')}><div className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ background: '#ef4444' }} /> <span>Deleted</span></div>
             </div>
             <h3>Object Type</h3>
             <div className="flex flex-col gap-1">
-              <div className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-colors duration-150 ${selectedChangelogFilter === 'Device' ? 'text-(--blue) bg-(--blue-bg)' : 'text-(--text) hover:text-(--blue) hover:bg-(--hover)'}`} onClick={() => setSelectedChangelogFilter(selectedChangelogFilter === 'Device' ? null : 'Device')}><Server size={12} color={selectedChangelogFilter === 'Device' ? '#0055ff' : '#5e6670'} /> <span>Device</span></div>
-              <div className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-colors duration-150 ${selectedChangelogFilter === 'Subnet' ? 'text-(--blue) bg-(--blue-bg)' : 'text-(--text) hover:text-(--blue) hover:bg-(--hover)'}`} onClick={() => setSelectedChangelogFilter(selectedChangelogFilter === 'Subnet' ? null : 'Subnet')}><Globe size={12} color={selectedChangelogFilter === 'Subnet' ? '#0055ff' : '#5e6670'} /> <span>Subnet</span></div>
-              <div className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-colors duration-150 ${selectedChangelogFilter === 'IPAddress' ? 'text-(--blue) bg-(--blue-bg)' : 'text-(--text) hover:text-(--blue) hover:bg-(--hover)'}`} onClick={() => setSelectedChangelogFilter(selectedChangelogFilter === 'IPAddress' ? null : 'IPAddress')}><Globe size={12} color={selectedChangelogFilter === 'IPAddress' ? '#0055ff' : '#5e6670'} /> <span>IP Address</span></div>
-              <div className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-colors duration-150 ${selectedChangelogFilter === 'VLAN' ? 'text-(--blue) bg-(--blue-bg)' : 'text-(--text) hover:text-(--blue) hover:bg-(--hover)'}`} onClick={() => setSelectedChangelogFilter(selectedChangelogFilter === 'VLAN' ? null : 'VLAN')}><Network size={12} color={selectedChangelogFilter === 'VLAN' ? '#0055ff' : '#5e6670'} /> <span>VLAN</span></div>
-              <div className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-colors duration-150 ${selectedChangelogFilter === 'Service' ? 'text-(--blue) bg-(--blue-bg)' : 'text-(--text) hover:text-(--blue) hover:bg-(--hover)'}`} onClick={() => setSelectedChangelogFilter(selectedChangelogFilter === 'Service' ? null : 'Service')}><Box size={12} color={selectedChangelogFilter === 'Service' ? '#0055ff' : '#5e6670'} /> <span>Service</span></div>
-              <div className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-colors duration-150 ${selectedChangelogFilter === 'IPRange' ? 'text-(--blue) bg-(--blue-bg)' : 'text-(--text) hover:text-(--blue) hover:bg-(--hover)'}`} onClick={() => setSelectedChangelogFilter(selectedChangelogFilter === 'IPRange' ? null : 'IPRange')}><Globe size={12} color={selectedChangelogFilter === 'IPRange' ? '#0055ff' : '#5e6670'} /> <span>IP Range</span></div>
+              <div className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-colors duration-150 ${selectedChangelogFilter === 'Device' ? 'text-(--blue) bg-(--blue-bg)' : 'text-(--text) hover:text-(--blue) hover:bg-(--hover)'}`} onClick={() => setSelectedChangelogFilter(selectedChangelogFilter === 'Device' ? null : 'Device')}><Server size={12} color={selectedChangelogFilter === 'Device' ? '#3366ff' : '#5e6670'} /> <span>Device</span></div>
+              <div className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-colors duration-150 ${selectedChangelogFilter === 'Subnet' ? 'text-(--blue) bg-(--blue-bg)' : 'text-(--text) hover:text-(--blue) hover:bg-(--hover)'}`} onClick={() => setSelectedChangelogFilter(selectedChangelogFilter === 'Subnet' ? null : 'Subnet')}><Globe size={12} color={selectedChangelogFilter === 'Subnet' ? '#3366ff' : '#5e6670'} /> <span>Subnet</span></div>
+              <div className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-colors duration-150 ${selectedChangelogFilter === 'IPAddress' ? 'text-(--blue) bg-(--blue-bg)' : 'text-(--text) hover:text-(--blue) hover:bg-(--hover)'}`} onClick={() => setSelectedChangelogFilter(selectedChangelogFilter === 'IPAddress' ? null : 'IPAddress')}><Globe size={12} color={selectedChangelogFilter === 'IPAddress' ? '#3366ff' : '#5e6670'} /> <span>IP Address</span></div>
+              <div className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-colors duration-150 ${selectedChangelogFilter === 'VLAN' ? 'text-(--blue) bg-(--blue-bg)' : 'text-(--text) hover:text-(--blue) hover:bg-(--hover)'}`} onClick={() => setSelectedChangelogFilter(selectedChangelogFilter === 'VLAN' ? null : 'VLAN')}><Network size={12} color={selectedChangelogFilter === 'VLAN' ? '#3366ff' : '#5e6670'} /> <span>VLAN</span></div>
+              <div className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-colors duration-150 ${selectedChangelogFilter === 'Service' ? 'text-(--blue) bg-(--blue-bg)' : 'text-(--text) hover:text-(--blue) hover:bg-(--hover)'}`} onClick={() => setSelectedChangelogFilter(selectedChangelogFilter === 'Service' ? null : 'Service')}><Box size={12} color={selectedChangelogFilter === 'Service' ? '#3366ff' : '#5e6670'} /> <span>Service</span></div>
+              <div className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-colors duration-150 ${selectedChangelogFilter === 'IPRange' ? 'text-(--blue) bg-(--blue-bg)' : 'text-(--text) hover:text-(--blue) hover:bg-(--hover)'}`} onClick={() => setSelectedChangelogFilter(selectedChangelogFilter === 'IPRange' ? null : 'IPRange')}><Globe size={12} color={selectedChangelogFilter === 'IPRange' ? '#3366ff' : '#5e6670'} /> <span>IP Range</span></div>
             </div>
           </>
         )}

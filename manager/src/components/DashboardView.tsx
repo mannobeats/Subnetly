@@ -47,7 +47,7 @@ const DashboardView = ({ categories = [] }: DashboardViewProps) => {
   const healthyCount = data.healthBreakdown?.healthy || 0
   const downCount = data.healthBreakdown?.down || 0
   const statCards = [
-    { label: 'Devices', value: data.counts.devices, icon: Server, color: '#0055ff', sub: `${data.statusBreakdown['active'] || 0} active` },
+    { label: 'Devices', value: data.counts.devices, icon: Server, color: '#3366ff', sub: `${data.statusBreakdown['active'] || 0} active` },
     { label: 'Subnets', value: data.counts.subnets, icon: Globe, color: '#10b981', sub: `${data.counts.ipAddresses} IPs tracked` },
     { label: 'VLANs', value: data.counts.vlans, icon: Network, color: '#7c3aed', sub: 'Configured' },
     { label: 'WiFi', value: data.counts.wifiNetworks || 0, icon: Wifi, color: '#06b6d4', sub: `${wifiEnabled} enabled` },
@@ -185,7 +185,7 @@ const DashboardView = ({ categories = [] }: DashboardViewProps) => {
             ) : (
               <div className="flex flex-col gap-2">
                 {(data.wifiNetworks || []).map(w => {
-                  const secColor = w.security.startsWith('wpa3') ? '#10b981' : w.security.startsWith('wpa2') ? '#0055ff' : w.security === 'open' ? '#ef4444' : '#64748b'
+                  const secColor = w.security.startsWith('wpa3') ? '#10b981' : w.security.startsWith('wpa2') ? '#3366ff' : w.security === 'open' ? '#ef4444' : '#64748b'
                   return (
                     <div key={w.id} className="flex items-center gap-3 px-3 py-2 rounded-lg bg-(--surface-alt) border border-border" style={{ opacity: w.enabled ? 1 : 0.5 }}>
                       <Wifi size={16} style={{ color: secColor }} />

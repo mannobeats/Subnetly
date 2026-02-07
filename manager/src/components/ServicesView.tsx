@@ -259,7 +259,7 @@ const ServicesView = ({ searchTerm, selectedProtocol = null, highlightId = null 
       {/* Stats Cards */}
       <div className="grid grid-cols-[repeat(auto-fit,minmax(140px,1fr))] gap-4 mb-6">
         {[
-          { label: 'Total Services', value: services.length, color: '#0055ff' },
+          { label: 'Total Services', value: services.length, color: '#3366ff' },
           { label: 'Healthy', value: healthyCount, color: '#10b981' },
           { label: 'Docker', value: dockerCount, color: '#2563eb' },
           { label: 'TCP / UDP', value: `${tcpCount} / ${udpCount}`, color: '#7c3aed' },
@@ -397,7 +397,7 @@ const ServicesView = ({ searchTerm, selectedProtocol = null, highlightId = null 
                           </div>
                           <code className="text-[10px] bg-(--muted-bg) px-2 py-1 rounded shrink-0 font-mono">{s.protocol.toUpperCase()}:{s.ports}</code>
                           <div className="flex gap-0.5 shrink-0">
-                            {s.url && <a href={s.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center h-7 w-7 rounded-md text-[#0055ff] hover:bg-accent" title="Open URL"><ExternalLink size={12} /></a>}
+                            {s.url && <a href={s.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center h-7 w-7 rounded-md text-[#3366ff] hover:bg-accent" title="Open URL"><ExternalLink size={12} /></a>}
                             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(s)}><Edit2 size={12} /></Button>
                             <Button variant="ghost" size="icon" className="h-7 w-7 text-[#ef4444] hover:text-[#ef4444]" onClick={() => { setDeleteTarget(s.id); setDeleteModalOpen(true) }}><Trash2 size={12} /></Button>
                           </div>
@@ -452,14 +452,14 @@ const ServicesView = ({ searchTerm, selectedProtocol = null, highlightId = null 
                           <div className="flex items-center gap-1">
                             {s.name}
                             {s.version && <span className="text-[9px] text-(--text-light)">v{s.version}</span>}
-                            {s.url && <a href={s.url} target="_blank" rel="noopener noreferrer" className="text-[#0055ff] inline-flex"><ExternalLink size={10} /></a>}
+                            {s.url && <a href={s.url} target="_blank" rel="noopener noreferrer" className="text-[#3366ff] inline-flex"><ExternalLink size={10} /></a>}
                           </div>
                         </td>
                         <td><span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-(--blue-bg) text-(--blue)">{s.protocol.toUpperCase()}</span></td>
                         <td><code className="text-[11px] bg-(--muted-bg) px-1.5 py-0.5 rounded">{s.ports}</code></td>
                         <td>
                           <div className="flex items-center gap-1">
-                            <Server size={11} className="text-[#0055ff]" />
+                            <Server size={11} className="text-[#3366ff]" />
                             <span className="text-xs">{s.device?.name}</span>
                           </div>
                         </td>

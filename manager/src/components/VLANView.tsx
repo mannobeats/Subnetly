@@ -20,7 +20,7 @@ interface VLANData {
 }
 
 const defaultRoleColors: Record<string, string> = {
-  management: '#0055ff',
+  management: '#3366ff',
   production: '#10b981',
   iot: '#f97316',
   guest: '#8b5cf6',
