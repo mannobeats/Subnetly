@@ -14,7 +14,7 @@ interface SearchResult {
 }
 
 interface CommandPaletteProps {
-  onNavigate: (view: string) => void
+  onNavigate: (view: string, itemId?: string) => void
 }
 
 const CommandPalette = ({ onNavigate }: CommandPaletteProps) => {
@@ -97,7 +97,7 @@ const CommandPalette = ({ onNavigate }: CommandPaletteProps) => {
   }, [open])
 
   const handleSelect = (result: SearchResult) => {
-    onNavigate(result.view)
+    onNavigate(result.view, result.id)
     setOpen(false)
   }
 

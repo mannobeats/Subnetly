@@ -60,9 +60,10 @@ const emptyForm = {
 interface WiFiViewProps {
   searchTerm?: string
   selectedSecurityFilter?: string | null
+  highlightId?: string | null
 }
 
-const WiFiView = ({ searchTerm = '', selectedSecurityFilter = null }: WiFiViewProps) => {
+const WiFiView = ({ searchTerm = '', selectedSecurityFilter = null, highlightId = null }: WiFiViewProps) => {
   const [networks, setNetworks] = useState<WifiData[]>([])
   const [vlans, setVlans] = useState<WifiVlan[]>([])
   const [subnets, setSubnets] = useState<WifiSubnet[]>([])
@@ -353,7 +354,7 @@ const WiFiView = ({ searchTerm = '', selectedSecurityFilter = null }: WiFiViewPr
               </thead>
               <tbody>
                 {filtered.map(n => (
-                  <tr key={n.id} style={{ opacity: n.enabled ? 1 : 0.5 }}>
+                  <tr key={n.id} data-highlight-id={n.id} className={highlightId === n.id ? 'highlight-flash' : ''} style={{ opacity: n.enabled ? 1 : 0.5 }}>
                     <td style={{ fontWeight: 500 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <Wifi size={13} color={securityColors[n.security] || '#64748b'} />

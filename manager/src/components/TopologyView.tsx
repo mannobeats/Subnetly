@@ -490,6 +490,9 @@ const TopologyView = ({ selectedCategory = null }: TopologyViewProps) => {
                   style={{ cursor: 'move' }}
                   onMouseDown={(e) => handleSubnetMouseDown(e, cloud.id)}
                 />
+                <clipPath id={`clip-label-${cloud.id}`}>
+                  <rect x={cloud.x + 8} y={cloud.y + 4} width={Math.max(cloud.w - 80, 40)} height={22} />
+                </clipPath>
                 <text
                   x={cloud.x + 12}
                   y={cloud.y + 18}
@@ -498,6 +501,7 @@ const TopologyView = ({ selectedCategory = null }: TopologyViewProps) => {
                   fill={cloud.color}
                   opacity={0.8}
                   style={{ pointerEvents: 'none' }}
+                  clipPath={`url(#clip-label-${cloud.id})`}
                 >
                   {cloud.subnet.prefix}/{cloud.subnet.mask}
                   {cloud.subnet.vlan ? ` · VLAN ${cloud.subnet.vlan.vid}` : ''}

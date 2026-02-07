@@ -52,7 +52,7 @@ const emptyForm = {
   dependencies: '', tags: '', healthCheckEnabled: false,
 }
 
-const ServicesView = ({ searchTerm, selectedProtocol = null }: { searchTerm: string; selectedProtocol?: string | null }) => {
+const ServicesView = ({ searchTerm, selectedProtocol = null, highlightId = null }: { searchTerm: string; selectedProtocol?: string | null; highlightId?: string | null }) => {
   const [services, setServices] = useState<ServiceData[]>([])
   const [devices, setDevices] = useState<Device[]>([])
   const [loading, setLoading] = useState(true)
@@ -454,7 +454,7 @@ const ServicesView = ({ searchTerm, selectedProtocol = null }: { searchTerm: str
                     const hc = healthColors[s.healthStatus || 'unknown']
                     const ec = envColors[s.environment || 'production'] || envColors.production
                     return (
-                      <tr key={s.id}>
+                      <tr key={s.id} data-highlight-id={s.id} className={highlightId === s.id ? 'highlight-flash' : ''}>
                         <td><div style={{ width: '8px', height: '8px', borderRadius: '50%', background: hc.dot }} title={s.healthStatus || 'unknown'} /></td>
                         <td style={{ fontWeight: 500 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>

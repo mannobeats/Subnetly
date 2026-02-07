@@ -26,11 +26,12 @@ interface VLANViewProps {
   searchTerm?: string
   selectedRole?: string | null
   vlanRoles?: CustomCategory[]
+  highlightId?: string | null
 }
 
 const emptyForm = { vid: '', name: '', status: 'active', role: '', description: '' }
 
-const VLANView = ({ searchTerm = '', selectedRole = null, vlanRoles = [] }: VLANViewProps) => {
+const VLANView = ({ searchTerm = '', selectedRole = null, vlanRoles = [], highlightId = null }: VLANViewProps) => {
   const [vlans, setVlans] = useState<VLANData[]>([])
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
@@ -184,7 +185,7 @@ const VLANView = ({ searchTerm = '', selectedRole = null, vlanRoles = [] }: VLAN
               </thead>
               <tbody>
                 {filteredVlans.map(v => (
-                  <tr key={v.id}>
+                  <tr key={v.id} data-highlight-id={v.id} className={highlightId === v.id ? 'highlight-flash' : ''}>
                     <td><code style={{ fontSize: '12px', fontWeight: 600, color: (vlanRoles.find(r => r.slug === v.role)?.color || defaultRoleColors[v.role || ''] || '#64748b') }}>{v.vid}</code></td>
                     <td style={{ fontWeight: 500 }}>{v.name}</td>
                     <td><span className="badge" style={{ background: `${(vlanRoles.find(r => r.slug === v.role)?.color || defaultRoleColors[v.role || ''] || '#64748b')}14`, color: vlanRoles.find(r => r.slug === v.role)?.color || defaultRoleColors[v.role || ''] || '#64748b' }}>{v.role || '—'}</span></td>

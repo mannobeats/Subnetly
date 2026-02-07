@@ -128,6 +128,7 @@ export default function Home() {
   const [devices, setDevices] = useState<Device[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
+  const [highlightId, setHighlightId] = useState<string | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [deviceToDelete, setDeviceToDelete] = useState<string | null>(null)
@@ -172,6 +173,20 @@ export default function Home() {
     if (activeView === 'devices') { fetchDevices(); fetchSubnets() }
     if (activeView === 'dashboard') { fetchDevices() }
   }, [activeView, isAuthenticated])
+
+  // Scroll to highlighted item from command palette
+  useEffect(() => {
+    if (!highlightId) return
+    const timer = setTimeout(() => {
+      const el = document.querySelector(`[data-highlight-id="${highlightId}"]`)
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        el.classList.add('highlight-flash')
+        setTimeout(() => el.classList.remove('highlight-flash'), 3000)
+      }
+    }, 400)
+    return () => clearTimeout(timer)
+  }, [highlightId, activeView])
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -461,7 +476,7 @@ export default function Home() {
               ) : filteredDevices.length === 0 ? (
                 <tr><td colSpan={8} style={{ textAlign: 'center', height: '100px', color: 'var(--unifi-text-muted)' }}>No devices match your search.</td></tr>
               ) : filteredDevices.map((device) => (
-                <tr key={device.id}>
+                <tr key={device.id} data-highlight-id={device.id} className={highlightId === device.id ? 'highlight-flash' : ''}>
                   <td style={{ textAlign: 'center' }}>
                     {(() => {
                       const cat = categories.find(c => c.name === device.category)
@@ -548,17 +563,23 @@ export default function Home() {
 
         {activeView === 'dashboard' && <div className="table-wrapper" key={`dash-${siteKey}`}><DashboardView categories={categories} /></div>}
         {activeView === 'devices' && renderDevicesView()}
-        {activeView === 'ipam' && <div className="table-wrapper" key={`ipam-${siteKey}`}><IPPlannerView searchTerm={searchTerm} selectedIpFilter={selectedIpFilter} /></div>}
-        {activeView === 'vlans' && <div className="table-wrapper" key={`vlans-${siteKey}`}><VLANView searchTerm={searchTerm} selectedRole={selectedVlanRole} vlanRoles={vlanRoles} /></div>}
-        {activeView === 'wifi' && <div className="table-wrapper" key={`wifi-${siteKey}`}><WiFiView searchTerm={searchTerm} selectedSecurityFilter={selectedServiceFilter} /></div>}
+        {activeView === 'ipam' && <div className="table-wrapper" key={`ipam-${siteKey}`}><IPPlannerView searchTerm={searchTerm} selectedIpFilter={selectedIpFilter} highlightId={highlightId} /></div>}
+        {activeView === 'vlans' && <div className="table-wrapper" key={`vlans-${siteKey}`}><VLANView searchTerm={searchTerm} selectedRole={selectedVlanRole} vlanRoles={vlanRoles} highlightId={highlightId} /></div>}
+        {activeView === 'wifi' && <div className="table-wrapper" key={`wifi-${siteKey}`}><WiFiView searchTerm={searchTerm} selectedSecurityFilter={selectedServiceFilter} highlightId={highlightId} /></div>}
         {activeView === 'topology' && <div className="table-wrapper" key={`topo-${siteKey}`}><TopologyView selectedCategory={selectedCategory} /></div>}
-        {activeView === 'services' && <div className="table-wrapper" key={`svc-${siteKey}`}><ServicesView searchTerm={searchTerm} selectedProtocol={selectedServiceFilter} /></div>}
+        {activeView === 'services' && <div className="table-wrapper" key={`svc-${siteKey}`}><ServicesView searchTerm={searchTerm} selectedProtocol={selectedServiceFilter} highlightId={highlightId} /></div>}
         {activeView === 'changelog' && <div className="table-wrapper" key={`log-${siteKey}`}><ChangelogView searchTerm={searchTerm} selectedFilter={selectedChangelogFilter} /></div>}
         {activeView === 'settings' && <div className="table-wrapper"><SettingsView activeTab={settingsTab as 'profile' | 'security' | 'notifications' | 'application' | 'data' | 'about' | 'categories' | 'sites' | 'vlan-roles'} categories={categories} vlanRoles={vlanRoles} onCategoriesChange={fetchSitesAndCategories} sites={sites} activeSiteId={activeSiteId} onSitesChange={fetchSitesAndCategories} /></div>}
       </div>
 
       {/* Global Command Palette (Cmd+K) */}
-      <CommandPalette onNavigate={(view) => setActiveView(view as ViewType)} />
+      <CommandPalette onNavigate={(view, itemId) => {
+        setActiveView(view as ViewType)
+        if (itemId) {
+          setHighlightId(itemId)
+          setTimeout(() => setHighlightId(null), 4000)
+        }
+      }} />
 
       {/* Add/Edit Device Modal */}
       {isModalOpen && (
