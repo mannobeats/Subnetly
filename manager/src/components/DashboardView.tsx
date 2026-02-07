@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Server, Globe, Network, Box, Activity, ArrowUpRight, ArrowDownRight, Wifi } from 'lucide-react'
+import { Server, Globe, Network, Box, Activity, ArrowUpRight, ArrowDownRight, Wifi, FileDown } from 'lucide-react'
 import { CustomCategory } from '@/types'
 
 interface DashboardData {
@@ -43,8 +43,17 @@ const DashboardView = ({ categories = [] }: DashboardViewProps) => {
     { label: 'Services', value: data.counts.services, icon: Box, color: '#f97316', sub: 'Running' },
   ]
 
+  const handleExport = () => {
+    window.open('/api/export', '_blank')
+  }
+
   return (
     <div className="dashboard-view animate-fade-in">
+      {/* Export button */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
+        <button className="btn" onClick={handleExport} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px' }}><FileDown size={14} /> Export Documentation</button>
+      </div>
+
       {/* Stat Cards */}
       <div className="dash-stat-grid">
         {statCards.map((s, i) => (

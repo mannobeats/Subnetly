@@ -250,17 +250,28 @@ model WifiNetwork {
 // ─── SERVICES ────────────────────────────────────────────────
 
 model Service {
-  id          String   @id @default(cuid())
-  name        String
-  deviceId    String
-  device      Device   @relation(fields: [deviceId], references: [id], onDelete: Cascade)
-  protocol    String   @default("tcp")
-  ports       String
-  description String?
-  siteId      String?
-  site        Site?    @relation(fields: [siteId], references: [id], onDelete: SetNull)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            String   @id @default(cuid())
+  name          String
+  deviceId      String
+  device        Device   @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  protocol      String   @default("tcp")
+  ports         String
+  description   String?
+  siteId        String?
+  site          Site?    @relation(fields: [siteId], references: [id], onDelete: SetNull)
+  // Enhanced fields
+  url           String?                          // Access URL (e.g. https://proxmox.local:8006)
+  environment   String   @default("production")  // production, staging, development, testing
+  isDocker      Boolean  @default(false)          // Running in Docker container?
+  dockerImage   String?                           // e.g. nginx:latest, portainer/portainer-ce
+  dockerCompose Boolean  @default(false)          // Part of docker-compose stack?
+  stackName     String?                           // Docker stack / compose project name
+  healthStatus  String   @default("unknown")      // healthy, degraded, down, unknown
+  version       String?                           // Service version (e.g. 2.19.0)
+  dependencies  String?                           // Comma-separated service names this depends on
+  tags          String?                           // Comma-separated tags for grouping
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 // ─── AUDIT ───────────────────────────────────────────────────

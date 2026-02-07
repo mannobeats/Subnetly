@@ -852,20 +852,20 @@ body {
 
 .ipam-toolbar {
   display: flex;
-  align-items: flex-end;
-  gap: 2rem;
+  align-items: center;
+  gap: 1.5rem;
   margin-bottom: 1rem;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 1rem 1.25rem;
+  padding: 0.875rem 1.25rem;
 }
 
 .ipam-subnet-selector {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  min-width: 320px;
+  gap: 0.25rem;
+  min-width: 280px;
 }
 
 .ipam-select-wrap {

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { IPAddress, IPRange, Device } from '@/types'
-import { Info, Plus, Trash2, Globe, Server, LayoutGrid, List, BarChart3, Edit2, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Info, Plus, Trash2, Globe, Server, LayoutGrid, List, BarChart3, Edit2, ChevronLeft, ChevronRight, AlertTriangle } from 'lucide-react'
 
 interface SubnetWithRelations {
   id: string
@@ -226,6 +226,31 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
     const used = allCellStats.assignedCount
     return { used, total, pct: total > 0 ? Math.round((used / total) * 100) : 0 }
   }, [subnet, allCellStats])
+
+  // Subnet overlap detection
+  const subnetOverlaps = useMemo(() => {
+    const overlaps: { a: string; b: string; aDesc: string; bDesc: string }[] = []
+    for (let i = 0; i < subnets.length; i++) {
+      for (let j = i + 1; j < subnets.length; j++) {
+        const sa = subnets[i], sb = subnets[j]
+        const partsA = sa.prefix.split('.').map(Number)
+        const partsB = sb.prefix.split('.').map(Number)
+        const intA = ((partsA[0] << 24) | (partsA[1] << 16) | (partsA[2] << 8) | partsA[3]) >>> 0
+        const intB = ((partsB[0] << 24) | (partsB[1] << 16) | (partsB[2] << 8) | partsB[3]) >>> 0
+        const sizeA = Math.pow(2, 32 - sa.mask)
+        const sizeB = Math.pow(2, 32 - sb.mask)
+        const endA = intA + sizeA - 1
+        const endB = intB + sizeB - 1
+        if (intA <= endB && intB <= endA) {
+          overlaps.push({
+            a: `${sa.prefix}/${sa.mask}`, b: `${sb.prefix}/${sb.mask}`,
+            aDesc: sa.description || 'Unnamed', bDesc: sb.description || 'Unnamed',
+          })
+        }
+      }
+    }
+    return overlaps
+  }, [subnets])
 
   // Subnet CRUD
   const handleSaveSubnet = async (e: React.FormEvent) => {
@@ -518,6 +543,27 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
           {subnet && <button className="btn" onClick={() => setDeleteSubnetModal(true)} style={{ color: '#ef4444' }}><Trash2 size={14} /></button>}
         </div>
       </div>
+
+      {/* Subnet Overlap Warnings */}
+      {subnetOverlaps.length > 0 && (
+        <div style={{ marginBottom: '0.75rem', padding: '0.75rem 1rem', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+            <AlertTriangle size={16} color="#dc2626" />
+            <span style={{ fontWeight: 600, fontSize: '13px', color: '#dc2626' }}>Subnet Overlap Detected ({subnetOverlaps.length})</span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            {subnetOverlaps.map((o, i) => (
+              <div key={i} style={{ fontSize: '12px', color: '#991b1b', display: 'flex', gap: '6px', alignItems: 'center' }}>
+                <code style={{ background: '#fee2e2', padding: '1px 5px', borderRadius: '3px', fontSize: '11px' }}>{o.a}</code>
+                <span>({o.aDesc})</span>
+                <span style={{ color: '#dc2626' }}>overlaps with</span>
+                <code style={{ background: '#fee2e2', padding: '1px 5px', borderRadius: '3px', fontSize: '11px' }}>{o.b}</code>
+                <span>({o.bDesc})</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* IP Range Legend */}
       {subnet && subnet.ipRanges.length > 0 && (
