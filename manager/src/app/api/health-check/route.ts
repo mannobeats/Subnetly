@@ -2,66 +2,78 @@ import { NextResponse } from 'next/server'
 import prisma from '@/lib/db'
 import { getActiveSite } from '@/lib/site-context'
 
+async function pingUrl(url: string, timeoutMs: number): Promise<{ status: number; responseTime: number }> {
+  const start = Date.now()
+
+  // Accept self-signed certs (extremely common in homelabs — Proxmox, TrueNAS, etc.)
+  const prevTls = process.env.NODE_TLS_REJECT_UNAUTHORIZED
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
+
+  try {
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), timeoutMs)
+
+    const headers = { 'User-Agent': 'HomelabManager/1.0 HealthCheck' }
+    let res: Response
+    try {
+      // Try HEAD first (lighter)
+      res = await fetch(url, { method: 'HEAD', signal: controller.signal, redirect: 'follow', headers })
+    } catch {
+      // Fallback to GET if HEAD is rejected
+      res = await fetch(url, { method: 'GET', signal: controller.signal, redirect: 'follow', headers })
+    }
+    clearTimeout(timer)
+    return { status: res.status, responseTime: Date.now() - start }
+  } finally {
+    // Restore original TLS setting
+    if (prevTls === undefined) delete process.env.NODE_TLS_REJECT_UNAUTHORIZED
+    else process.env.NODE_TLS_REJECT_UNAUTHORIZED = prevTls
+  }
+}
+
+function determineStatus(httpStatus: number, responseTime: number): string {
+  // Any HTTP response means the service is reachable.
+  // "down" is only for connection failures (timeout, DNS, refused) — handled in the catch block.
+  if (httpStatus >= 200 && httpStatus < 400 || httpStatus === 401 || httpStatus === 403) {
+    return responseTime > 5000 ? 'degraded' : 'healthy'
+  }
+  // 5xx or Cloudflare errors (520-530) = server is reachable but having issues
+  if (httpStatus >= 500) return 'degraded'
+  // 4xx other than auth = service is up but misconfigured
+  return 'degraded'
+}
+
 // POST — Run health checks for all enabled services
 export async function POST() {
   try {
     const { siteId } = await getActiveSite()
     if (!siteId) return NextResponse.json({ error: 'No active site' }, { status: 401 })
 
-    // Get site settings
     const settings = await prisma.siteSettings.findUnique({ where: { siteId } })
     if (!settings?.healthCheckEnabled) {
       return NextResponse.json({ message: 'Health checks disabled', checked: 0 })
     }
 
-    // Get all services with health check enabled AND a URL
     const services = await prisma.service.findMany({
       where: { siteId, healthCheckEnabled: true, url: { not: null } },
     })
 
-    const timeout = (settings.healthCheckTimeout || 10) * 1000
-    const results: { id: string; name: string; status: string; responseTime: number | null; error?: string }[] = []
+    const timeoutMs = (settings.healthCheckTimeout || 10) * 1000
+    const results: { id: string; name: string; status: string; previousStatus: string; responseTime: number | null; error?: string }[] = []
 
     for (const svc of services) {
       if (!svc.url) continue
-      const start = Date.now()
       let newStatus = 'down'
       let responseTime: number | null = null
       let errorMsg: string | undefined
+      const previousStatus = svc.healthStatus
 
       try {
-        const controller = new AbortController()
-        const timer = setTimeout(() => controller.abort(), timeout)
-        const res = await fetch(svc.url, {
-          method: 'HEAD',
-          signal: controller.signal,
-          redirect: 'follow',
-          // @ts-expect-error Node fetch option
-          rejectUnauthorized: false,
-        }).catch(() =>
-          // Fallback to GET if HEAD fails
-          fetch(svc.url!, {
-            method: 'GET',
-            signal: controller.signal,
-            redirect: 'follow',
-            // @ts-expect-error Node fetch option
-            rejectUnauthorized: false,
-          })
-        )
-        clearTimeout(timer)
-        responseTime = Date.now() - start
-
-        if (res.ok || res.status === 401 || res.status === 403 || res.status === 302 || res.status === 301) {
-          // Service is reachable (even if auth-protected)
-          newStatus = responseTime > 5000 ? 'degraded' : 'healthy'
-        } else if (res.status >= 500) {
-          newStatus = 'down'
-        } else {
-          // 4xx other than auth = degraded (service is up but misconfigured)
-          newStatus = 'degraded'
-        }
+        const ping = await pingUrl(svc.url, timeoutMs)
+        responseTime = ping.responseTime
+        newStatus = determineStatus(ping.status, ping.responseTime)
       } catch (err) {
-        responseTime = Date.now() - start
+        responseTime = null
         newStatus = 'down'
         errorMsg = err instanceof Error ? err.message : 'Connection failed'
       }
@@ -82,7 +94,27 @@ export async function POST() {
         },
       })
 
-      results.push({ id: svc.id, name: svc.name, status: newStatus, responseTime, error: errorMsg })
+      // Log health status changes to changelog
+      if (previousStatus !== newStatus) {
+        await prisma.changeLog.create({
+          data: {
+            objectType: 'Service',
+            objectId: svc.id,
+            action: 'update',
+            changes: JSON.stringify({
+              healthCheck: true,
+              name: svc.name,
+              from: previousStatus,
+              to: newStatus,
+              responseTime,
+              ...(errorMsg ? { error: errorMsg } : {}),
+            }),
+            siteId,
+          },
+        })
+      }
+
+      results.push({ id: svc.id, name: svc.name, status: newStatus, previousStatus, responseTime, error: errorMsg })
     }
 
     return NextResponse.json({ checked: results.length, results })

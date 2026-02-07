@@ -5,13 +5,21 @@ import { Server, Globe, Network, Box, Activity, ArrowUpRight, ArrowDownRight, Wi
 import { CustomCategory } from '@/types'
 
 interface DashboardData {
-  counts: { devices: number; subnets: number; vlans: number; ipAddresses: number; services: number; wifiNetworks: number }
+  counts: { devices: number; subnets: number; vlans: number; ipAddresses: number; services: number; wifiNetworks: number; monitored: number }
   categoryBreakdown: Record<string, number>
   statusBreakdown: Record<string, number>
+  healthBreakdown: Record<string, number>
   subnetStats: { id: string; prefix: string; description: string; gateway: string; vlan: { vid: number; name: string } | null; totalIps: number; usedIps: number; utilization: number; ranges: { role: string; startAddr: string; endAddr: string }[] }[]
   recentChanges: { id: string; objectType: string; action: string; changes: string; timestamp: string }[]
-  services: { id: string; name: string; protocol: string; ports: string; device: { name: string; ipAddress: string } }[]
+  services: { id: string; name: string; protocol: string; ports: string; device: { name: string; ipAddress: string }; healthStatus: string; uptimePercent: number | null; lastResponseTime: number | null; healthCheckEnabled: boolean; url: string | null; environment: string; isDocker: boolean }[]
   wifiNetworks: { id: string; ssid: string; security: string; band: string; enabled: boolean; guestNetwork: boolean; vlan: { vid: number; name: string } | null; subnet: { prefix: string; mask: number } | null }[]
+}
+
+const healthDotColors: Record<string, string> = {
+  healthy: '#22c55e',
+  degraded: '#f59e0b',
+  down: '#ef4444',
+  unknown: '#94a3b8',
 }
 
 interface DashboardViewProps {
@@ -35,12 +43,15 @@ const DashboardView = ({ categories = [] }: DashboardViewProps) => {
   if (loading || !data) return <div className="view-loading">Loading dashboard...</div>
 
   const wifiEnabled = (data.wifiNetworks || []).filter(w => w.enabled).length
+  const healthyCount = data.healthBreakdown?.healthy || 0
+  const downCount = data.healthBreakdown?.down || 0
   const statCards = [
     { label: 'Devices', value: data.counts.devices, icon: Server, color: '#0055ff', sub: `${data.statusBreakdown['active'] || 0} active` },
     { label: 'Subnets', value: data.counts.subnets, icon: Globe, color: '#10b981', sub: `${data.counts.ipAddresses} IPs tracked` },
     { label: 'VLANs', value: data.counts.vlans, icon: Network, color: '#7c3aed', sub: 'Configured' },
     { label: 'WiFi', value: data.counts.wifiNetworks || 0, icon: Wifi, color: '#06b6d4', sub: `${wifiEnabled} enabled` },
-    { label: 'Services', value: data.counts.services, icon: Box, color: '#f97316', sub: 'Running' },
+    { label: 'Services', value: data.counts.services, icon: Box, color: '#f97316', sub: `${healthyCount} healthy${downCount > 0 ? ` · ${downCount} down` : ''}` },
+    { label: 'Monitored', value: data.counts.monitored || 0, icon: Activity, color: '#22c55e', sub: `${healthyCount} healthy` },
   ]
 
   const handleExport = () => {
@@ -200,22 +211,35 @@ const DashboardView = ({ categories = [] }: DashboardViewProps) => {
           </div>
         </div>
 
-        {/* Services Overview */}
+        {/* Services Overview — Health Aware */}
         <div className="dash-section">
           <div className="dash-section-header">
-            <h2>Running Services</h2>
+            <h2>Services Health</h2>
             <span className="dash-section-badge">{data.services.length} services</span>
           </div>
           <div className="dash-services-grid" style={{ maxHeight: '280px', overflowY: 'auto' }}>
-            {data.services.map((s) => (
-              <div key={s.id} className="dash-service-card">
-                <div className="dash-service-name">{s.name}</div>
-                <div className="dash-service-detail">
-                  <code>{s.protocol.toUpperCase()}:{s.ports}</code>
-                  <span className="dash-service-device">{s.device.name}</span>
+            {data.services.map((s) => {
+              const dotColor = healthDotColors[s.healthStatus] || healthDotColors.unknown
+              return (
+                <div key={s.id} className="dash-service-card" style={{ position: 'relative' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: dotColor, flexShrink: 0 }} />
+                    <div className="dash-service-name" style={{ flex: 1, minWidth: 0 }}>{s.name}</div>
+                    {s.healthCheckEnabled && s.uptimePercent != null && (
+                      <span style={{ fontSize: '10px', fontWeight: 600, color: s.uptimePercent >= 99 ? '#22c55e' : s.uptimePercent >= 90 ? '#f59e0b' : '#ef4444' }}>
+                        {s.uptimePercent}%
+                      </span>
+                    )}
+                  </div>
+                  <div className="dash-service-detail" style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                    <code>{s.protocol.toUpperCase()}:{s.ports}</code>
+                    <span className="dash-service-device">{s.device.name}</span>
+                    {s.isDocker && <span style={{ fontSize: '9px', background: '#dbeafe', color: '#1e40af', padding: '1px 4px', borderRadius: '3px' }}>Docker</span>}
+                    {s.lastResponseTime != null && <span style={{ fontSize: '9px', color: '#94a3b8' }}>{s.lastResponseTime}ms</span>}
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       </div>

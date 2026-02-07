@@ -189,6 +189,19 @@ const ServicesView = ({ searchTerm, selectedProtocol = null }: { searchTerm: str
   const uniqueDevices = new Set(services.map(s => s.device?.id)).size
   const uniquePorts = new Set(services.flatMap(s => s.ports.split(',').map(p => p.trim()))).size
 
+  // Build dependency graph
+  const dependencyEdges: { from: string; to: string; fromName: string; toName: string }[] = []
+  services.forEach(s => {
+    if (s.dependencies) {
+      s.dependencies.split(',').map(d => d.trim()).filter(Boolean).forEach(depName => {
+        const target = services.find(t => t.name.toLowerCase() === depName.toLowerCase())
+        if (target) {
+          dependencyEdges.push({ from: s.id, to: target.id, fromName: s.name, toName: target.name })
+        }
+      })
+    }
+  })
+
   const grouped = filtered.reduce((acc: Record<string, { device: ServiceData['device']; services: ServiceData[] }>, s) => {
     if (!s.device) return acc
     if (!acc[s.device.id]) acc[s.device.id] = { device: s.device, services: [] }
@@ -281,6 +294,37 @@ const ServicesView = ({ searchTerm, selectedProtocol = null }: { searchTerm: str
                 <span>on <strong>{c.deviceName}</strong> — used by: {c.services.join(', ')}</span>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Dependency Map */}
+      {dependencyEdges.length > 0 && (
+        <div className="dash-section" style={{ marginBottom: '1.5rem' }}>
+          <div className="dash-section-header">
+            <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Zap size={16} /> Service Dependencies</h2>
+            <span className="dash-section-badge">{dependencyEdges.length} connections</span>
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', padding: '0.75rem' }}>
+            {dependencyEdges.map((edge, i) => {
+              const fromSvc = services.find(s => s.id === edge.from)
+              const toSvc = services.find(s => s.id === edge.to)
+              const fromHealth = healthColors[fromSvc?.healthStatus || 'unknown']
+              const toHealth = healthColors[toSvc?.healthStatus || 'unknown']
+              return (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 10px', background: 'var(--card-bg, #fff)', border: '1px solid var(--border, #e2e8f0)', borderRadius: '8px', fontSize: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: fromHealth.dot }} />
+                    <span style={{ fontWeight: 600 }}>{edge.fromName}</span>
+                  </div>
+                  <span style={{ color: '#94a3b8', fontSize: '10px' }}>depends on</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: toHealth.dot }} />
+                    <span style={{ fontWeight: 600 }}>{edge.toName}</span>
+                  </div>
+                </div>
+              )
+            })}
           </div>
         </div>
       )}

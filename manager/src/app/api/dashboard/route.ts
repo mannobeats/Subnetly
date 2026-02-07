@@ -19,7 +19,20 @@ export async function GET() {
 
     const subnetStats = subnets.map((s) => {
       const totalIps = Math.pow(2, 32 - s.mask) - 2
-      const usedIps = s.ipAddresses.length
+      // Count both IPAM entries AND devices whose IP falls in this subnet
+      const ipamIps = new Set(s.ipAddresses.map(ip => ip.address))
+      const prefix = s.prefix
+      const mask = s.mask
+      const toNum = (addr: string) => addr.split('.').reduce((acc, oct) => (acc << 8) + parseInt(oct), 0) >>> 0
+      const prefixNum = toNum(prefix)
+      const maskBits = (0xFFFFFFFF << (32 - mask)) >>> 0
+      devices.forEach(d => {
+        try {
+          const devIp = toNum(d.ipAddress)
+          if ((devIp & maskBits) === (prefixNum & maskBits)) ipamIps.add(d.ipAddress)
+        } catch { /* skip invalid */ }
+      })
+      const usedIps = ipamIps.size
       return {
         id: s.id,
         prefix: `${s.prefix}/${s.mask}`,
@@ -43,6 +56,14 @@ export async function GET() {
       return acc
     }, {})
 
+    // Health breakdown for services
+    const healthBreakdown = services.reduce((acc: Record<string, number>, s) => {
+      const status = (s as Record<string, unknown>).healthStatus as string || 'unknown'
+      acc[status] = (acc[status] || 0) + 1
+      return acc
+    }, {})
+    const monitoredCount = services.filter(s => (s as Record<string, unknown>).healthCheckEnabled).length
+
     return NextResponse.json({
       counts: {
         devices: devices.length,
@@ -51,12 +72,27 @@ export async function GET() {
         ipAddresses: ipAddresses.length,
         services: services.length,
         wifiNetworks: wifiNetworks.length,
+        monitored: monitoredCount,
       },
       categoryBreakdown,
       statusBreakdown,
+      healthBreakdown,
       subnetStats,
       recentChanges: changelog,
-      services,
+      services: services.map(s => {
+        const svc = s as Record<string, unknown>
+        return {
+          id: s.id, name: s.name, protocol: s.protocol, ports: s.ports,
+          device: s.device,
+          healthStatus: svc.healthStatus || 'unknown',
+          uptimePercent: svc.uptimePercent ?? null,
+          lastResponseTime: svc.lastResponseTime ?? null,
+          healthCheckEnabled: svc.healthCheckEnabled || false,
+          url: svc.url || null,
+          environment: svc.environment || 'production',
+          isDocker: svc.isDocker || false,
+        }
+      }),
       wifiNetworks: wifiNetworks.map(w => ({
         id: w.id, ssid: w.ssid, security: w.security, band: w.band,
         enabled: w.enabled, guestNetwork: w.guestNetwork,

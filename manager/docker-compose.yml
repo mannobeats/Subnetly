@@ -23,6 +23,13 @@ services:
     restart: unless-stopped
     ports:
       - "3000:3000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    # For health checks to reach LAN services on Linux, uncomment the next line
+    # and remove the "ports" section above (host networking exposes port 3000 directly):
+    # network_mode: host
+    # Then also change DATABASE_URL below to use 127.0.0.1 instead of db:
+    # DATABASE_URL: "postgresql://homelab:homelab@127.0.0.1:5432/homelab?schema=public"
     environment:
       DATABASE_URL: "postgresql://homelab:homelab@db:5432/homelab?schema=public"
       NODE_ENV: production
