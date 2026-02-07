@@ -23,6 +23,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         version: body.version,
         dependencies: body.dependencies,
         tags: body.tags,
+        healthCheckEnabled: body.healthCheckEnabled,
       },
       include: { device: true },
     })

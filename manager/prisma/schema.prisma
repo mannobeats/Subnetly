@@ -29,6 +29,7 @@ model Site {
   changeLogs   ChangeLog[]
   categories   CustomCategory[]
   wifiNetworks WifiNetwork[]
+  settings     SiteSettings?
 
   @@index([userId])
 }
@@ -270,8 +271,26 @@ model Service {
   version       String?                           // Service version (e.g. 2.19.0)
   dependencies  String?                           // Comma-separated service names this depends on
   tags          String?                           // Comma-separated tags for grouping
+  // Health check fields
+  healthCheckEnabled Boolean  @default(false)     // Auto health check enabled for this service?
+  lastCheckedAt      DateTime?                    // Last time health was checked
+  lastResponseTime   Int?                         // Last response time in ms
+  uptimePercent      Float?                       // Uptime percentage (0-100)
+  checkCount         Int      @default(0)         // Total checks performed
+  successCount       Int      @default(0)         // Total successful checks
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+}
+
+// ─── SITE SETTINGS ──────────────────────────────────────────
+
+model SiteSettings {
+  id                    String  @id @default(cuid())
+  siteId                String  @unique
+  site                  Site    @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  healthCheckEnabled    Boolean @default(false)    // Global toggle for auto health checks
+  healthCheckInterval   Int     @default(300)      // Interval in seconds (default 5 min)
+  healthCheckTimeout    Int     @default(10)       // Timeout per request in seconds
 }
 
 // ─── AUDIT ───────────────────────────────────────────────────

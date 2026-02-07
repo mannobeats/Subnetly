@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { authClient } from '@/lib/auth-client'
-import { Lock, Database, Save, Check, AlertCircle, Loader2, Plus, Trash2, Edit2, MapPin } from 'lucide-react'
+import { Lock, Database, Save, Check, AlertCircle, Loader2, Plus, Trash2, Edit2, MapPin, Activity } from 'lucide-react'
 import { CustomCategory, Site } from '@/types'
 import { renderCategoryIcon } from '@/lib/category-icons'
 import IconPicker from '@/components/IconPicker'
@@ -55,6 +55,13 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
   const [confirmDeletes, setConfirmDeletes] = useState(true)
   const [changelogEnabled, setChangelogEnabled] = useState(true)
 
+  // Health check settings (stored in DB via API)
+  const [hcEnabled, setHcEnabled] = useState(false)
+  const [hcInterval, setHcInterval] = useState(300)
+  const [hcTimeout, setHcTimeout] = useState(10)
+  const [hcSaving, setHcSaving] = useState(false)
+  const [hcSuccess, setHcSuccess] = useState(false)
+
   useEffect(() => {
     const fetchSession = async () => {
       try {
@@ -71,6 +78,15 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
       }
     }
     fetchSession()
+
+    // Load health check settings from API
+    fetch('/api/settings').then(r => r.ok ? r.json() : null).then(s => {
+      if (s) {
+        setHcEnabled(s.healthCheckEnabled ?? false)
+        setHcInterval(s.healthCheckInterval ?? 300)
+        setHcTimeout(s.healthCheckTimeout ?? 10)
+      }
+    }).catch(() => {})
 
     // Load app settings from localStorage
     const saved = localStorage.getItem('homelab-settings')
@@ -97,6 +113,22 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
     saveAppSettings()
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoRefresh, compactMode, showTooltips, defaultView, itemsPerPage, confirmDeletes, changelogEnabled])
+
+  const handleHealthCheckSave = async () => {
+    setHcSaving(true)
+    setHcSuccess(false)
+    try {
+      await fetch('/api/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ healthCheckEnabled: hcEnabled, healthCheckInterval: hcInterval, healthCheckTimeout: hcTimeout }),
+      })
+      setHcSuccess(true)
+      setTimeout(() => setHcSuccess(false), 3000)
+    } catch { /* */ } finally {
+      setHcSaving(false)
+    }
+  }
 
   const handleProfileSave = async () => {
     setProfileSaving(true)
@@ -406,6 +438,70 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
                     className={`settings-toggle ${confirmDeletes ? 'active' : ''}`}
                     onClick={() => setConfirmDeletes(!confirmDeletes)}
                   />
+                </div>
+              </div>
+
+              <div className="settings-section">
+                <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Activity size={16} color="#22c55e" /> Health Checks</h3>
+                <p style={{ fontSize: '12px', color: 'var(--text-light)', marginBottom: '1rem' }}>
+                  Automatically monitor your services by pinging their URLs at regular intervals. Services must have a URL and health check enabled individually.
+                </p>
+                <div className="settings-row">
+                  <div>
+                    <div className="settings-row-label">Enable Auto Health Checks</div>
+                    <div className="settings-row-desc">Globally enable or disable automatic health monitoring</div>
+                  </div>
+                  <button
+                    className={`settings-toggle ${hcEnabled ? 'active' : ''}`}
+                    onClick={() => setHcEnabled(!hcEnabled)}
+                  />
+                </div>
+                {hcEnabled && (
+                  <>
+                    <div className="settings-row">
+                      <div>
+                        <div className="settings-row-label">Check Interval</div>
+                        <div className="settings-row-desc">How often to ping service URLs</div>
+                      </div>
+                      <select
+                        className="unifi-input"
+                        style={{ width: '160px' }}
+                        value={hcInterval}
+                        onChange={e => setHcInterval(parseInt(e.target.value))}
+                      >
+                        <option value="60">Every 1 minute</option>
+                        <option value="120">Every 2 minutes</option>
+                        <option value="300">Every 5 minutes</option>
+                        <option value="600">Every 10 minutes</option>
+                        <option value="900">Every 15 minutes</option>
+                        <option value="1800">Every 30 minutes</option>
+                        <option value="3600">Every 1 hour</option>
+                      </select>
+                    </div>
+                    <div className="settings-row">
+                      <div>
+                        <div className="settings-row-label">Request Timeout</div>
+                        <div className="settings-row-desc">Max seconds to wait for a response before marking as down</div>
+                      </div>
+                      <select
+                        className="unifi-input"
+                        style={{ width: '120px' }}
+                        value={hcTimeout}
+                        onChange={e => setHcTimeout(parseInt(e.target.value))}
+                      >
+                        <option value="5">5 seconds</option>
+                        <option value="10">10 seconds</option>
+                        <option value="15">15 seconds</option>
+                        <option value="30">30 seconds</option>
+                      </select>
+                    </div>
+                  </>
+                )}
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
+                  <button className="btn btn-primary" onClick={handleHealthCheckSave} disabled={hcSaving} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    {hcSaving ? <Loader2 size={14} className="spin" /> : hcSuccess ? <Check size={14} /> : <Save size={14} />}
+                    {hcSaving ? 'Saving...' : hcSuccess ? 'Saved!' : 'Save Health Check Settings'}
+                  </button>
                 </div>
               </div>
             </>

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Globe, Radio, Plus, Edit2, Trash2, Zap, AlertTriangle, ExternalLink, Container, Server } from 'lucide-react'
+import { Globe, Radio, Plus, Edit2, Trash2, Zap, AlertTriangle, ExternalLink, Container, Server, Activity, RefreshCw } from 'lucide-react'
 import { Device } from '@/types'
 
 interface ServiceData {
@@ -21,6 +21,12 @@ interface ServiceData {
   version?: string | null
   dependencies?: string | null
   tags?: string | null
+  healthCheckEnabled?: boolean
+  lastCheckedAt?: string | null
+  lastResponseTime?: number | null
+  uptimePercent?: number | null
+  checkCount?: number
+  successCount?: number
 }
 
 const protocolIcons: Record<string, React.ElementType> = { tcp: Globe, udp: Radio }
@@ -43,7 +49,7 @@ const emptyForm = {
   name: '', protocol: 'tcp', ports: '', description: '', deviceId: '',
   url: '', environment: 'production', isDocker: false, dockerImage: '',
   dockerCompose: false, stackName: '', healthStatus: 'unknown', version: '',
-  dependencies: '', tags: '',
+  dependencies: '', tags: '', healthCheckEnabled: false,
 }
 
 const ServicesView = ({ searchTerm, selectedProtocol = null }: { searchTerm: string; selectedProtocol?: string | null }) => {
@@ -55,6 +61,7 @@ const ServicesView = ({ searchTerm, selectedProtocol = null }: { searchTerm: str
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState(emptyForm)
+  const [healthChecking, setHealthChecking] = useState(false)
 
   const fetchData = () => {
     Promise.all([
@@ -66,7 +73,40 @@ const ServicesView = ({ searchTerm, selectedProtocol = null }: { searchTerm: str
     }).finally(() => setLoading(false))
   }
 
+  const runHealthCheck = async () => {
+    setHealthChecking(true)
+    try {
+      await fetch('/api/health-check', { method: 'POST' })
+      fetchData()
+    } finally {
+      setHealthChecking(false)
+    }
+  }
+
   useEffect(() => { fetchData() }, [])
+
+  // Auto health check timer
+  useEffect(() => {
+    let timer: NodeJS.Timeout | null = null
+    const startAutoCheck = async () => {
+      try {
+        const res = await fetch('/api/settings')
+        if (!res.ok) return
+        const settings = await res.json()
+        if (settings.healthCheckEnabled && settings.healthCheckInterval > 0) {
+          // Run immediately on mount
+          fetch('/api/health-check', { method: 'POST' }).then(() => fetchData())
+          // Then set interval
+          timer = setInterval(async () => {
+            await fetch('/api/health-check', { method: 'POST' })
+            fetchData()
+          }, settings.healthCheckInterval * 1000)
+        }
+      } catch { /* settings not configured yet */ }
+    }
+    startAutoCheck()
+    return () => { if (timer) clearInterval(timer) }
+  }, [])
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -91,6 +131,7 @@ const ServicesView = ({ searchTerm, selectedProtocol = null }: { searchTerm: str
       dockerCompose: s.dockerCompose || false, stackName: s.stackName || '',
       healthStatus: s.healthStatus || 'unknown', version: s.version || '',
       dependencies: s.dependencies || '', tags: s.tags || '',
+      healthCheckEnabled: s.healthCheckEnabled || false,
     })
     setModalOpen(true)
   }
@@ -106,6 +147,7 @@ const ServicesView = ({ searchTerm, selectedProtocol = null }: { searchTerm: str
       stackName: form.isDocker && form.dockerCompose ? (form.stackName || null) : null,
       healthStatus: form.healthStatus, version: form.version || null,
       dependencies: form.dependencies || null, tags: form.tags || null,
+      healthCheckEnabled: form.healthCheckEnabled,
     }
     const method = editingId ? 'PATCH' : 'POST'
     const url = editingId ? `/api/services/${editingId}` : '/api/services'
@@ -187,9 +229,12 @@ const ServicesView = ({ searchTerm, selectedProtocol = null }: { searchTerm: str
 
   return (
     <div className="services-view animate-fade-in">
-      {/* Action button */}
+      {/* Action buttons */}
       {services.length > 0 && devices.length > 0 && (
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginBottom: '1rem' }}>
+          <button className="btn" onClick={runHealthCheck} disabled={healthChecking} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px' }}>
+            <RefreshCw size={14} className={healthChecking ? 'spin' : ''} /> {healthChecking ? 'Checking...' : 'Run Health Check'}
+          </button>
           <button className="btn btn-primary" onClick={openCreate}><Plus size={14} /> Add Service</button>
         </div>
       )}
@@ -348,12 +393,13 @@ const ServicesView = ({ searchTerm, selectedProtocol = null }: { searchTerm: str
                 <thead>
                   <tr>
                     <th style={{ width: '30px' }}></th>
-                    <th style={{ width: '160px' }}>Service</th>
+                    <th>Service</th>
                     <th style={{ width: '80px' }}>Protocol</th>
-                    <th style={{ width: '90px' }}>Port(s)</th>
-                    <th style={{ width: '140px' }}>Device</th>
-                    <th style={{ width: '80px' }}>Env</th>
-                    <th style={{ width: '80px' }}>Health</th>
+                    <th style={{ width: '80px' }}>Port(s)</th>
+                    <th>Device</th>
+                    <th style={{ width: '110px' }}>Env</th>
+                    <th style={{ width: '120px' }}>Health</th>
+                    <th style={{ width: '90px' }}>Uptime</th>
                     <th style={{ width: '100px' }}>Type</th>
                     <th>Description</th>
                     <th style={{ width: '70px', textAlign: 'right', paddingRight: '1rem' }}>Actions</th>
@@ -381,18 +427,33 @@ const ServicesView = ({ searchTerm, selectedProtocol = null }: { searchTerm: str
                             <span style={{ fontSize: '12px' }}>{s.device?.name}</span>
                           </div>
                         </td>
-                        <td><span className="badge" style={{ background: ec.bg, color: ec.color, fontSize: '9px' }}>{s.environment || 'prod'}</span></td>
-                        <td>
+                        <td style={{ overflow: 'visible' }}><span className="badge" style={{ background: ec.bg, color: ec.color, fontSize: '9px', whiteSpace: 'nowrap' }}>{s.environment || 'production'}</span></td>
+                        <td style={{ overflow: 'visible' }}>
                           <select
                             value={s.healthStatus || 'unknown'}
                             onChange={e => handleHealthToggle(s, e.target.value)}
-                            style={{ fontSize: '10px', padding: '2px 4px', border: `1px solid ${hc.dot}`, borderRadius: '4px', background: hc.bg, color: hc.color, cursor: 'pointer', outline: 'none' }}
+                            style={{ fontSize: '10px', padding: '2px 6px', border: `1px solid ${hc.dot}`, borderRadius: '4px', background: hc.bg, color: hc.color, cursor: 'pointer', outline: 'none', whiteSpace: 'nowrap', width: '100%' }}
                           >
                             <option value="healthy">Healthy</option>
                             <option value="degraded">Degraded</option>
                             <option value="down">Down</option>
                             <option value="unknown">Unknown</option>
                           </select>
+                        </td>
+                        <td style={{ overflow: 'visible' }}>
+                          {s.healthCheckEnabled ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <Activity size={10} color={s.uptimePercent != null && s.uptimePercent >= 99 ? '#22c55e' : s.uptimePercent != null && s.uptimePercent >= 90 ? '#f59e0b' : '#ef4444'} />
+                                <span style={{ fontSize: '11px', fontWeight: 600 }}>{s.uptimePercent != null ? `${s.uptimePercent}%` : '—'}</span>
+                              </div>
+                              {s.lastResponseTime != null && (
+                                <span style={{ fontSize: '9px', color: '#94a3b8' }}>{s.lastResponseTime}ms</span>
+                              )}
+                            </div>
+                          ) : (
+                            <span style={{ fontSize: '10px', color: '#cbd5e1' }}>—</span>
+                          )}
                         </td>
                         <td>
                           {s.isDocker ? (
@@ -509,6 +570,21 @@ const ServicesView = ({ searchTerm, selectedProtocol = null }: { searchTerm: str
                   </div>
                 )}
               </div>
+
+              {/* Health Check Section */}
+              {form.url && (
+                <div style={{ marginTop: '1rem', padding: '1rem', background: '#f0fdf4', borderRadius: '8px', border: '1px solid #bbf7d0' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '13px', fontWeight: 600 }}>
+                    <input type="checkbox" checked={form.healthCheckEnabled} onChange={e => setForm({ ...form, healthCheckEnabled: e.target.checked })} style={{ accentColor: '#22c55e' }} />
+                    <Activity size={14} color="#22c55e" /> Enable Auto Health Check
+                  </label>
+                  {form.healthCheckEnabled && (
+                    <p style={{ fontSize: '11px', color: '#64748b', marginTop: '0.5rem', marginBottom: 0 }}>
+                      This service&apos;s URL will be automatically pinged at the interval configured in Settings. Health status will update to healthy, degraded, or down based on response.
+                    </p>
+                  )}
+                </div>
+              )}
 
               <div className="input-group" style={{ marginTop: '1rem' }}>
                 <label className="input-label">Dependencies (comma-separated service names)</label>

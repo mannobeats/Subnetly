@@ -41,6 +41,7 @@ export async function POST(request: Request) {
         version: body.version || null,
         dependencies: body.dependencies || null,
         tags: body.tags || null,
+        healthCheckEnabled: body.healthCheckEnabled || false,
         siteId,
       },
       include: { device: true },

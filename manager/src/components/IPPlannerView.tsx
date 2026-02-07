@@ -747,27 +747,27 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
         })
         return (
           <div className="ipam-summary-view">
-            {/* Stats Cards */}
-            <div className="ipam-summary-cards">
-              <div className="ipam-summary-card">
-                <div className="ipam-summary-card-value" style={{ color: '#0055ff' }}>{utilization.used}</div>
-                <div className="ipam-summary-card-label">Used Addresses</div>
-                <div className="ipam-summary-card-sub">{utilization.pct}% of {utilization.total}</div>
+            {/* Stats Cards — consistent with all views */}
+            <div className="dash-stat-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+              <div className="dash-stat-card">
+                <div className="dash-stat-label">Used Addresses</div>
+                <div className="dash-stat-value" style={{ color: '#0055ff' }}>{utilization.used}</div>
+                <div style={{ fontSize: '10px', color: 'var(--text-light)' }}>{utilization.pct}% of {utilization.total}</div>
               </div>
-              <div className="ipam-summary-card">
-                <div className="ipam-summary-card-value" style={{ color: '#10b981' }}>{statusCounts['available'] || 0}</div>
-                <div className="ipam-summary-card-label">Available</div>
-                <div className="ipam-summary-card-sub">Ready to assign</div>
+              <div className="dash-stat-card">
+                <div className="dash-stat-label">Available</div>
+                <div className="dash-stat-value" style={{ color: '#10b981' }}>{statusCounts['available'] || 0}</div>
+                <div style={{ fontSize: '10px', color: 'var(--text-light)' }}>Ready to assign</div>
               </div>
-              <div className="ipam-summary-card">
-                <div className="ipam-summary-card-value" style={{ color: '#7c3aed' }}>{deviceCount}</div>
-                <div className="ipam-summary-card-label">Devices</div>
-                <div className="ipam-summary-card-sub">Linked to IPs</div>
+              <div className="dash-stat-card">
+                <div className="dash-stat-label">Devices</div>
+                <div className="dash-stat-value" style={{ color: '#7c3aed' }}>{deviceCount}</div>
+                <div style={{ fontSize: '10px', color: 'var(--text-light)' }}>Linked to IPs</div>
               </div>
-              <div className="ipam-summary-card">
-                <div className="ipam-summary-card-value" style={{ color: '#f59e0b' }}>{ipamCount}</div>
-                <div className="ipam-summary-card-label">Manual IPs</div>
-                <div className="ipam-summary-card-sub">No device linked</div>
+              <div className="dash-stat-card">
+                <div className="dash-stat-label">Manual IPs</div>
+                <div className="dash-stat-value" style={{ color: '#f59e0b' }}>{ipamCount}</div>
+                <div style={{ fontSize: '10px', color: 'var(--text-light)' }}>No device linked</div>
               </div>
             </div>
 
