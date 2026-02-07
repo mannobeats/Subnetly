@@ -48,7 +48,6 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
 
   // App settings (stored in localStorage)
   const [autoRefresh, setAutoRefresh] = useState(true)
-  const [compactMode, setCompactMode] = useState(false)
   const [showTooltips, setShowTooltips] = useState(true)
   const [defaultView, setDefaultView] = useState('dashboard')
   const [itemsPerPage, setItemsPerPage] = useState('50')
@@ -101,7 +100,6 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
       try {
         const s = JSON.parse(saved)
         if (s.autoRefresh !== undefined) setAutoRefresh(s.autoRefresh)
-        if (s.compactMode !== undefined) setCompactMode(s.compactMode)
         if (s.showTooltips !== undefined) setShowTooltips(s.showTooltips)
         if (s.defaultView) setDefaultView(s.defaultView)
         if (s.itemsPerPage) setItemsPerPage(s.itemsPerPage)
@@ -112,14 +110,14 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
   }, [])
 
   const saveAppSettings = () => {
-    const settings = { autoRefresh, compactMode, showTooltips, defaultView, itemsPerPage, confirmDeletes, changelogEnabled }
+    const settings = { autoRefresh, showTooltips, defaultView, itemsPerPage, confirmDeletes, changelogEnabled }
     localStorage.setItem('homelab-settings', JSON.stringify(settings))
   }
 
   useEffect(() => {
     saveAppSettings()
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoRefresh, compactMode, showTooltips, defaultView, itemsPerPage, confirmDeletes, changelogEnabled])
+  }, [autoRefresh, showTooltips, defaultView, itemsPerPage, confirmDeletes, changelogEnabled])
 
   const handleHealthCheckSave = async () => {
     setHcSaving(true)
@@ -410,16 +408,6 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
                   <button
                     className={`settings-toggle ${autoRefresh ? 'active' : ''}`}
                     onClick={() => setAutoRefresh(!autoRefresh)}
-                  />
-                </div>
-                <div className="settings-row">
-                  <div>
-                    <div className="settings-row-label">Compact Mode</div>
-                    <div className="settings-row-desc">Reduce spacing for denser information display</div>
-                  </div>
-                  <button
-                    className={`settings-toggle ${compactMode ? 'active' : ''}`}
-                    onClick={() => setCompactMode(!compactMode)}
                   />
                 </div>
                 <div className="settings-row">

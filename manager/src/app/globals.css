@@ -2241,69 +2241,6 @@ body {
   color: var(--red);
 }
 
-/* ── Compact Mode ── */
-
-.compact-mode .top-nav {
-  height: 44px;
-}
-
-.compact-mode .table-wrapper {
-  padding: 0.75rem 1.25rem;
-}
-
-.compact-mode .unifi-table th,
-.compact-mode .unifi-table td {
-  padding: 0.35rem 0.75rem;
-  font-size: 12px;
-}
-
-.compact-mode .stats-ribbon {
-  padding: 0.5rem 1.25rem;
-  gap: 1.5rem;
-}
-
-.compact-mode .stat-item .stat-value {
-  font-size: 16px;
-}
-
-.compact-mode .stat-item .stat-label {
-  font-size: 10px;
-}
-
-.compact-mode .ip-grid {
-  gap: 3px;
-}
-
-.compact-mode .ip-cell {
-  padding: 4px 2px;
-  font-size: 10px;
-  min-height: 28px;
-}
-
-.compact-mode .settings-section {
-  padding: 1rem;
-}
-
-.compact-mode .settings-row {
-  padding: 0.5rem 0;
-}
-
-.compact-mode .modal-content {
-  padding: 1.25rem;
-}
-
-.compact-mode .dash-stat-card {
-  padding: 0.75rem;
-}
-
-.compact-mode .dash-stat-value {
-  font-size: 22px;
-}
-
-.compact-mode .changelog-entry {
-  padding: 0.5rem 0;
-}
-
 /* ── Responsive ── */
 
 /* Tablet: hide secondary sidebar, stack dashboard */

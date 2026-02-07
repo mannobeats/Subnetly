@@ -99,7 +99,6 @@ export default function Home() {
   }
 
   // App settings from localStorage
-  const [compactMode, setCompactMode] = useState(false)
   const [confirmDeletes, setConfirmDeletes] = useState(true)
   const [autoRefresh, setAutoRefresh] = useState(true)
 
@@ -122,7 +121,6 @@ export default function Home() {
       const saved = localStorage.getItem('homelab-settings')
       if (saved) {
         const s = JSON.parse(saved)
-        if (s.compactMode !== undefined) setCompactMode(s.compactMode)
         if (s.confirmDeletes !== undefined) setConfirmDeletes(s.confirmDeletes)
         if (s.autoRefresh !== undefined) setAutoRefresh(s.autoRefresh)
       }
@@ -210,7 +208,6 @@ export default function Home() {
         const saved = localStorage.getItem('homelab-settings')
         if (saved) {
           const s = JSON.parse(saved)
-          if (s.compactMode !== undefined) setCompactMode(s.compactMode)
           if (s.confirmDeletes !== undefined) setConfirmDeletes(s.confirmDeletes)
           if (s.autoRefresh !== undefined) setAutoRefresh(s.autoRefresh)
         }
@@ -571,7 +568,7 @@ export default function Home() {
   }
 
   return (
-    <div className={`app-container${compactMode ? ' compact-mode' : ''}`}>
+    <div className="app-container">
       <Sidebar
         activeView={activeView}
         setActiveView={setActiveView}
