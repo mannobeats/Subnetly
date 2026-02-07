@@ -7,6 +7,7 @@ import IPPlannerView from '@/components/IPPlannerView'
 import VLANView from '@/components/VLANView'
 import TopologyView from '@/components/TopologyView'
 import ServicesView from '@/components/ServicesView'
+import WiFiView from '@/components/WiFiView'
 import ChangelogView from '@/components/ChangelogView'
 import SettingsView from '@/components/SettingsView'
 import LoginPage from '@/components/LoginPage'
@@ -111,7 +112,7 @@ export default function Home() {
   // Restore view from URL hash after hydration
   useEffect(() => {
     const hash = window.location.hash.replace('#', '')
-    const valid: ViewType[] = ['dashboard', 'devices', 'ipam', 'vlans', 'topology', 'services', 'changelog', 'settings']
+    const valid: ViewType[] = ['dashboard', 'devices', 'ipam', 'vlans', 'wifi', 'topology', 'services', 'changelog', 'settings']
     if (hash.startsWith('settings')) {
       setActiveViewRaw('settings')
       const sub = hash.split('/')[1]
@@ -381,6 +382,7 @@ export default function Home() {
     devices: 'Devices',
     ipam: 'IP Address Management',
     vlans: 'VLAN Management',
+    wifi: 'WiFi Networks',
     topology: 'Network Topology',
     services: 'Services',
     changelog: 'Change Log',
@@ -547,6 +549,7 @@ export default function Home() {
         {activeView === 'devices' && renderDevicesView()}
         {activeView === 'ipam' && <div className="table-wrapper" key={`ipam-${siteKey}`}><IPPlannerView searchTerm={searchTerm} selectedIpFilter={selectedIpFilter} /></div>}
         {activeView === 'vlans' && <div className="table-wrapper" key={`vlans-${siteKey}`}><VLANView searchTerm={searchTerm} selectedRole={selectedVlanRole} vlanRoles={vlanRoles} /></div>}
+        {activeView === 'wifi' && <div className="table-wrapper" key={`wifi-${siteKey}`}><WiFiView searchTerm={searchTerm} /></div>}
         {activeView === 'topology' && <div className="table-wrapper" key={`topo-${siteKey}`}><TopologyView selectedCategory={selectedCategory} /></div>}
         {activeView === 'services' && <div className="table-wrapper" key={`svc-${siteKey}`}><ServicesView searchTerm={searchTerm} selectedProtocol={selectedServiceFilter} /></div>}
         {activeView === 'changelog' && <div className="table-wrapper" key={`log-${siteKey}`}><ChangelogView searchTerm={searchTerm} selectedFilter={selectedChangelogFilter} /></div>}

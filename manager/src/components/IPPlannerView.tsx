@@ -33,6 +33,35 @@ const emptySubnetForm = { prefix: '', mask: '24', description: '', gateway: '', 
 const emptyRangeForm = { startOctet: '', endOctet: '', role: 'dhcp', description: '' }
 const emptyIpForm = { address: '', dnsName: '', description: '', status: 'active', deviceId: '' }
 
+// ─── Subnet math helpers ────────────────────────────────────
+function subnetSize(mask: number): number {
+  return Math.pow(2, 32 - mask)
+}
+function usableHosts(mask: number): number {
+  if (mask >= 31) return mask === 31 ? 2 : 1 // /31 point-to-point, /32 host route
+  return subnetSize(mask) - 2 // subtract network + broadcast
+}
+function getSubnetBlock(prefix: string, mask: number): { base: string; startOctet: number; blockSize: number } {
+  const parts = prefix.split('.').map(Number)
+  if (mask >= 24) {
+    const blockSize = subnetSize(mask)
+    // The last octet of the prefix tells us the block start
+    const startOctet = parts[3] || 0
+    const base = parts.slice(0, 3).join('.')
+    return { base, startOctet, blockSize }
+  }
+  // Large subnets — just use first 256
+  const base = parts.slice(0, 3).join('.')
+  return { base, startOctet: 0, blockSize: 256 }
+}
+function gridColumns(mask: number): number {
+  if (mask >= 28) return 4   // /28 = 16 addresses → 4 cols
+  if (mask >= 27) return 8   // /27 = 32 addresses → 8 cols
+  if (mask >= 26) return 8   // /26 = 64 addresses → 8 cols
+  if (mask >= 25) return 16  // /25 = 128 addresses → 16 cols
+  return 16                   // /24 and larger → 16 cols
+}
+
 const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) => {
   const [subnets, setSubnets] = useState<SubnetWithRelations[]>([])
   const [selectedSubnet, setSelectedSubnet] = useState<string | null>(null)
@@ -98,8 +127,15 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
     return map
   }, [devices])
 
+  // Compute subnet block info
+  const subnetBlock = useMemo(() => {
+    if (!subnet) return { base: '', startOctet: 0, blockSize: 256 }
+    return getSubnetBlock(subnet.prefix, subnet.mask)
+  }, [subnet])
+
   const cellData = useMemo(() => {
     if (!subnet) return []
+    const { base, startOctet, blockSize } = subnetBlock
     const cells = []
     const ipMap = new Map<number, IPAddress>()
     subnet.ipAddresses.forEach(ip => {
@@ -112,15 +148,17 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
       const end = parseInt(range.endAddr.split('.').pop() || '0')
       for (let i = start; i <= end; i++) rangeMap.set(i, range)
     })
-    const gatewayOctet = subnet.gateway ? parseInt(subnet.gateway.split('.').pop() || '1') : 1
-    for (let i = 0; i < 256; i++) {
+    const gatewayOctet = subnet.gateway ? parseInt(subnet.gateway.split('.').pop() || '1') : (startOctet + 1)
+    const networkOctet = startOctet
+    const broadcastOctet = startOctet + blockSize - 1
+    for (let i = startOctet; i < startOctet + blockSize; i++) {
       const ip = ipMap.get(i)
       const range = rangeMap.get(i)
-      const fullIp = `${subnet.prefix.split('.').slice(0, 3).join('.')}.${i}`
+      const fullIp = `${base}.${i}`
       const device = ipToDevice.get(fullIp)
-      const isGateway = i === gatewayOctet && subnet.gateway
-      const isNetwork = i === 0
-      const isBroadcast = i === 255
+      const isGateway = i === gatewayOctet && !!subnet.gateway
+      const isNetwork = i === networkOctet && subnet.mask < 31
+      const isBroadcast = i === broadcastOctet && subnet.mask < 31
       let status: string
       if (isNetwork) status = 'network'
       else if (isBroadcast) status = 'broadcast'
@@ -129,10 +167,10 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
       else if (device) status = 'assigned'
       else if (range) status = range.role
       else status = 'available'
-      cells.push({ octet: i, fullIp, status, ip, range, device, isGateway: !!isGateway })
+      cells.push({ octet: i, fullIp, status, ip, range, device, isGateway })
     }
     return cells
-  }, [subnet, ipToDevice])
+  }, [subnet, ipToDevice, subnetBlock])
 
   const filteredCells = useMemo(() => {
     if (!searchTerm) return cellData
@@ -147,8 +185,9 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
 
   const utilization = useMemo(() => {
     if (!subnet) return { used: 0, total: 254, pct: 0 }
+    const total = usableHosts(subnet.mask)
     const assignedCount = cellData.filter(c => c.status === 'assigned' || c.status === 'gateway').length
-    return { used: assignedCount, total: 254, pct: Math.round((assignedCount / 254) * 100) }
+    return { used: assignedCount, total, pct: total > 0 ? Math.round((assignedCount / total) * 100) : 0 }
   }, [subnet, cellData])
 
   // Subnet CRUD
@@ -302,6 +341,7 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
   }
 
   const openAssignFromGrid = (fullIp: string) => {
+    setEditingIpId(null)
     setIpForm({ address: fullIp, dnsName: '', description: '', status: 'active', deviceId: '' })
     setIpModalOpen(true)
   }
@@ -350,13 +390,18 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
               <div className="input-group">
                 <label className="input-label">Mask</label>
                 <select className="unifi-input" value={subnetForm.mask} onChange={e => setSubnetForm({ ...subnetForm, mask: e.target.value })}>
-                  <option value="8">/8</option>
-                  <option value="16">/16</option>
-                  <option value="24">/24</option>
-                  <option value="25">/25</option>
-                  <option value="26">/26</option>
-                  <option value="27">/27</option>
-                  <option value="28">/28</option>
+                  <option value="8">/8 (16.7M hosts)</option>
+                  <option value="16">/16 (65,534 hosts)</option>
+                  <option value="20">/20 (4,094 hosts)</option>
+                  <option value="22">/22 (1,022 hosts)</option>
+                  <option value="23">/23 (510 hosts)</option>
+                  <option value="24">/24 (254 hosts)</option>
+                  <option value="25">/25 (126 hosts)</option>
+                  <option value="26">/26 (62 hosts)</option>
+                  <option value="27">/27 (30 hosts)</option>
+                  <option value="28">/28 (14 hosts)</option>
+                  <option value="29">/29 (6 hosts)</option>
+                  <option value="30">/30 (2 hosts)</option>
                 </select>
               </div>
             </div>
@@ -459,7 +504,7 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
       {viewMode === 'grid' && subnet && (
         <>
           <div className="ipam-grid-container">
-            <div className="ipam-grid">
+            <div className="ipam-grid" style={{ gridTemplateColumns: `repeat(${gridColumns(subnet.mask)}, 1fr)` }}>
               {filteredCells.map((cell) => {
                 const colors = getCellColor(cell.status)
                 const isHighlighted = 'highlighted' in cell && cell.highlighted
@@ -500,7 +545,7 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
 
           {/* Hover Tooltip */}
           {hoveredCell !== null && (() => {
-            const cell = cellData[hoveredCell]
+            const cell = cellData.find(c => c.octet === hoveredCell)
             if (!cell) return null
             return (
               <div className="ipam-tooltip">
@@ -718,12 +763,14 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
       {viewMode === 'grid' && subnet && (() => {
         // Build combined assigned list: IPAM records + device-only IPs on this subnet
         const ipamAddresses = new Set(subnet.ipAddresses.map(ip => ip.address))
-        const base = subnet.prefix.split('.').slice(0, 3).join('.')
+        const { base, startOctet, blockSize } = subnetBlock
         const deviceOnlyEntries = devices.filter(d => {
           if (!d.ipAddress) return false
           if (ipamAddresses.has(d.ipAddress)) return false
           const parts = d.ipAddress.split('.')
-          return parts.slice(0, 3).join('.') === base
+          if (parts.slice(0, 3).join('.') !== base) return false
+          const lastOctet = parseInt(parts[3] || '0')
+          return lastOctet >= startOctet && lastOctet < startOctet + blockSize
         })
         const totalAssigned = subnet.ipAddresses.length + deviceOnlyEntries.length
         return (

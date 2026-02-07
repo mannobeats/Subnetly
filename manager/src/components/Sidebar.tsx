@@ -10,7 +10,7 @@ import { RefObject, useState, useRef, useEffect } from 'react'
 import { Site, CustomCategory } from '@/types'
 import { getCategoryIcon } from '@/lib/category-icons'
 
-export type ViewType = 'dashboard' | 'devices' | 'ipam' | 'vlans' | 'topology' | 'services' | 'changelog' | 'settings'
+export type ViewType = 'dashboard' | 'devices' | 'ipam' | 'vlans' | 'wifi' | 'topology' | 'services' | 'changelog' | 'settings'
 
 interface SidebarProps {
   activeView: ViewType
@@ -46,6 +46,7 @@ const navItems: { id: ViewType; icon: React.ElementType; label: string }[] = [
   { id: 'devices', icon: Server, label: 'Devices' },
   { id: 'ipam', icon: Globe, label: 'IP Planner' },
   { id: 'vlans', icon: Network, label: 'VLANs' },
+  { id: 'wifi', icon: Wifi, label: 'WiFi' },
   { id: 'topology', icon: Share2, label: 'Topology' },
   { id: 'services', icon: Box, label: 'Services' },
   { id: 'changelog', icon: History, label: 'Changelog' },
@@ -311,6 +312,29 @@ const Sidebar = ({ activeView, setActiveView, searchTerm, setSearchTerm, selecte
               <div className="filter-item" style={{ fontSize: '11px', color: '#5e6670' }}><span style={{ fontFamily: 'monospace', background: '#f1f3f5', padding: '1px 5px', borderRadius: '3px', marginRight: '6px' }}>Scroll</span> <span>Zoom in/out</span></div>
               <div className="filter-item" style={{ fontSize: '11px', color: '#5e6670' }}><span style={{ fontFamily: 'monospace', background: '#f1f3f5', padding: '1px 5px', borderRadius: '3px', marginRight: '6px' }}>Drag</span> <span>Pan canvas</span></div>
               <div className="filter-item" style={{ fontSize: '11px', color: '#5e6670' }}><span style={{ fontFamily: 'monospace', background: '#f1f3f5', padding: '1px 5px', borderRadius: '3px', marginRight: '6px' }}>Drag node</span> <span>Move device</span></div>
+            </div>
+          </>
+        )}
+
+        {activeView === 'wifi' && (
+          <>
+            <h3>Filters</h3>
+            <div className="filter-list" style={{ marginBottom: '1.5rem' }}>
+              <div className={`filter-item ${selectedServiceFilter === null ? 'active-filter' : ''}`} onClick={() => setSelectedServiceFilter(null)}>
+                <Wifi size={14} color={selectedServiceFilter === null ? '#0055ff' : '#5e6670'} /> <span>All Networks</span>
+              </div>
+            </div>
+            <h3>Security</h3>
+            <div className="filter-list" style={{ marginBottom: '1.5rem' }}>
+              <div className={`filter-item ${selectedServiceFilter === 'wpa2' ? 'active-filter' : ''}`} onClick={() => setSelectedServiceFilter(selectedServiceFilter === 'wpa2' ? null : 'wpa2')}><Lock size={14} color={selectedServiceFilter === 'wpa2' ? '#0055ff' : '#5e6670'} /> <span>WPA2</span></div>
+              <div className={`filter-item ${selectedServiceFilter === 'wpa3' ? 'active-filter' : ''}`} onClick={() => setSelectedServiceFilter(selectedServiceFilter === 'wpa3' ? null : 'wpa3')}><Shield size={14} color={selectedServiceFilter === 'wpa3' ? '#0055ff' : '#5e6670'} /> <span>WPA3</span></div>
+              <div className={`filter-item ${selectedServiceFilter === 'open' ? 'active-filter' : ''}`} onClick={() => setSelectedServiceFilter(selectedServiceFilter === 'open' ? null : 'open')}><Wifi size={14} color={selectedServiceFilter === 'open' ? '#0055ff' : '#5e6670'} /> <span>Open</span></div>
+            </div>
+            <h3>Band</h3>
+            <div className="filter-list">
+              <div className="filter-item" style={{ fontSize: '11px', color: '#5e6670' }}><span style={{ fontFamily: 'monospace', background: '#f1f3f5', padding: '1px 5px', borderRadius: '3px', marginRight: '6px' }}>2.4 GHz</span> <span>Legacy devices</span></div>
+              <div className="filter-item" style={{ fontSize: '11px', color: '#5e6670' }}><span style={{ fontFamily: 'monospace', background: '#f1f3f5', padding: '1px 5px', borderRadius: '3px', marginRight: '6px' }}>5 GHz</span> <span>High speed</span></div>
+              <div className="filter-item" style={{ fontSize: '11px', color: '#5e6670' }}><span style={{ fontFamily: 'monospace', background: '#f1f3f5', padding: '1px 5px', borderRadius: '3px', marginRight: '6px' }}>6 GHz</span> <span>WiFi 6E</span></div>
             </div>
           </>
         )}
