@@ -1,6 +1,6 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -48,13 +48,21 @@
   --toggle-off: #d1d5db;
   --text-faint: #adb5bd;
   --gradient-blue: linear-gradient(135deg, var(--blue), var(--blue-light));
-  --gradient-login-bg: linear-gradient(135deg, #f8fafc 0%, #eef2ff 50%, #f0f9ff 100%);
+  --gradient-login-bg: linear-gradient(
+    135deg,
+    #f8fafc 0%,
+    #eef2ff 50%,
+    #f0f9ff 100%
+  );
   --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.06);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 20px 25px -5px rgba(0, 0, 0, 0.08);
-  --shadow-popup: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 4px 10px -3px rgba(0, 0, 0, 0.1);
+  --shadow-xl:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --shadow-card:
+    0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 20px 25px -5px rgba(0, 0, 0, 0.08);
+  --shadow-popup:
+    0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 4px 10px -3px rgba(0, 0, 0, 0.1);
   --shadow-tooltip: 0 8px 24px rgba(0, 0, 0, 0.2);
   --radius: 0.375rem;
   --sidebar-w: 64px;
@@ -139,13 +147,21 @@
   --toggle-off: #3f3f46;
   --text-faint: #52525b;
   --gradient-blue: linear-gradient(135deg, #3366ff, #3b82f6);
-  --gradient-login-bg: linear-gradient(135deg, #000000 0%, #0a0a0a 50%, #000000 100%);
+  --gradient-login-bg: linear-gradient(
+    135deg,
+    #000000 0%,
+    #0a0a0a 50%,
+    #000000 100%
+  );
   --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.4);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
-  --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 20px 25px -5px rgba(0, 0, 0, 0.4);
-  --shadow-popup: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 4px 10px -3px rgba(0, 0, 0, 0.4);
+  --shadow-xl:
+    0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
+  --shadow-card:
+    0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 20px 25px -5px rgba(0, 0, 0, 0.4);
+  --shadow-popup:
+    0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 4px 10px -3px rgba(0, 0, 0, 0.4);
   --shadow-tooltip: 0 8px 24px rgba(0, 0, 0, 0.6);
 
   /* shadcn/ui theme — dark */
@@ -237,7 +253,15 @@
    BASE STYLES
    ═══════════════════════════════════════════════════════════ */
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family:
+    "Inter",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    Helvetica,
+    Arial,
+    sans-serif;
   font-size: 13px;
   -webkit-font-smoothing: antialiased;
 }
@@ -245,12 +269,44 @@ body {
 /* ═══════════════════════════════════════════════════════════
    ANIMATIONS
    ═══════════════════════════════════════════════════════════ */
-@keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
-.animate-fade-in { animation: fadeIn 0.3s ease-out; }
-@keyframes highlightFlash { 0% { background: rgba(51, 102, 255, 0.15); } 50% { background: rgba(51, 102, 255, 0.08); } 100% { background: transparent; } }
-.highlight-flash { animation: highlightFlash 3s ease-out; }
-@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-.spin { animation: spin 1s linear infinite; }
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+@keyframes highlightFlash {
+  0% {
+    background: rgba(51, 102, 255, 0.15);
+  }
+  50% {
+    background: rgba(51, 102, 255, 0.08);
+  }
+  100% {
+    background: transparent;
+  }
+}
+.highlight-flash {
+  animation: highlightFlash 3s ease-out;
+}
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+.spin {
+  animation: spin 1s linear infinite;
+}
 
 /* ═══════════════════════════════════════════════════════════
    TABLE STYLES — Premium UniFi-inspired rows
@@ -293,29 +349,154 @@ table.table-fixed tbody tr:hover {
 /* ═══════════════════════════════════════════════════════════
    SETTINGS TOGGLE (requires ::after pseudo-element)
    ═══════════════════════════════════════════════════════════ */
-.settings-toggle { width: 40px; height: 22px; border-radius: 11px; background: var(--toggle-off); border: none; cursor: pointer; position: relative; transition: background 0.2s; }
-.settings-toggle.active { background: var(--blue); }
-.settings-toggle::after { content: ''; position: absolute; width: 18px; height: 18px; border-radius: 50%; background: var(--surface); top: 2px; left: 2px; transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); }
-.settings-toggle.active::after { transform: translateX(18px); }
+.settings-toggle {
+  width: 40px;
+  height: 22px;
+  border-radius: 11px;
+  background: var(--toggle-off);
+  border: none;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.2s;
+}
+.settings-toggle.active {
+  background: var(--blue);
+}
+.settings-toggle::after {
+  content: "";
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--surface);
+  top: 2px;
+  left: 2px;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+.settings-toggle.active::after {
+  transform: translateX(18px);
+}
 
 /* ═══════════════════════════════════════════════════════════
    IP PLANNER — Interactive Grid & Tooltip (kept as CSS)
    ═══════════════════════════════════════════════════════════ */
-.ipam-grid { display: grid; grid-template-columns: repeat(16, 1fr); gap: 3px; }
-.ipam-cell { aspect-ratio: 1; border-radius: 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s ease; position: relative; min-height: 42px; }
-.ipam-cell:hover { transform: scale(1.15); z-index: 10; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); }
-.ipam-cell.highlighted { box-shadow: 0 0 0 2px var(--blue), 0 4px 12px var(--blue-ring); z-index: 11; }
-.ipam-cell.dimmed { pointer-events: none; }
-.ipam-cell-num { font-size: 13px; font-weight: 600; line-height: 1; }
-.ipam-cell-label { font-size: 9px; line-height: 1; margin-top: 2px; opacity: 0.85; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ipam-tooltip { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); background: var(--dark-bg); color: var(--white); padding: 0.75rem 1.25rem; border-radius: 8px; display: flex; align-items: center; gap: 0.75rem; font-size: 12px; z-index: 100; box-shadow: var(--shadow-tooltip); }
-.ipam-tooltip-content { display: flex; align-items: center; gap: 0.75rem; }
-.ipam-tooltip-content strong { font-family: monospace; font-size: 13px; }
-.ipam-tooltip-desc { color: var(--text-light); font-size: 11px; }
-.ipam-tooltip-action { color: var(--blue-light); font-size: 11px; font-weight: 500; }
-.ipam-view-toggle { display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--surface); }
-.ipam-toggle-btn { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: none; background: transparent; cursor: pointer; color: var(--text-light); transition: all 0.15s; }
-.ipam-toggle-btn:hover { background: var(--muted-bg-alt); color: var(--text-slate); }
-.ipam-toggle-btn.active { background: var(--blue); color: var(--white); }
-.ipam-toggle-btn + .ipam-toggle-btn { border-left: 1px solid var(--border); }
-.ipam-list-status { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
+.ipam-grid {
+  display: grid;
+  grid-template-columns: repeat(16, 1fr);
+  gap: 3px;
+}
+.ipam-cell {
+  aspect-ratio: 1;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+  min-height: 42px;
+}
+.ipam-cell:hover {
+  transform: scale(1.15);
+  z-index: 10;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+.ipam-cell.highlighted {
+  box-shadow:
+    0 0 0 2px var(--blue),
+    0 4px 12px var(--blue-ring);
+  z-index: 11;
+}
+.ipam-cell.dimmed {
+  pointer-events: none;
+}
+.ipam-cell-num {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+}
+.ipam-cell-label {
+  font-size: 9px;
+  line-height: 1;
+  margin-top: 2px;
+  opacity: 0.85;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ipam-tooltip {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--dark-bg);
+  color: var(--white);
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 12px;
+  z-index: 100;
+  box-shadow: var(--shadow-tooltip);
+}
+.ipam-tooltip-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.ipam-tooltip-content strong {
+  font-family: monospace;
+  font-size: 13px;
+}
+.ipam-tooltip-desc {
+  color: var(--text-light);
+  font-size: 11px;
+}
+.ipam-tooltip-action {
+  color: var(--blue-light);
+  font-size: 11px;
+  font-weight: 500;
+}
+.ipam-view-toggle {
+  display: flex;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--surface);
+}
+.ipam-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--text-light);
+  transition: all 0.15s;
+}
+.ipam-toggle-btn:hover {
+  background: var(--muted-bg-alt);
+  color: var(--text-slate);
+}
+.ipam-toggle-btn.active {
+  background: var(--blue);
+  color: var(--white);
+}
+.ipam-toggle-btn + .ipam-toggle-btn {
+  border-left: 1px solid var(--border);
+}
+.ipam-list-status {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
