@@ -24,6 +24,7 @@ interface SubnetWithRelations {
 interface IPPlannerProps {
   searchTerm: string
   selectedIpFilter?: string | null
+  onPlatformOptionsChange?: () => void
 }
 
 interface SubnetTemplateOption {
@@ -212,7 +213,7 @@ function getSuggestedRangeStartOctet(subnet: SubnetWithRelations, devices: Devic
   return ''
 }
 
-const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) => {
+const IPPlannerView = ({ searchTerm, selectedIpFilter = null, onPlatformOptionsChange }: IPPlannerProps) => {
   const [subnets, setSubnets] = useState<SubnetWithRelations[]>([])
   const [selectedSubnet, setSelectedSubnet] = useState<string | null>(null)
   const [hoveredCell, setHoveredCell] = useState<number | null>(null)
@@ -223,8 +224,8 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
   const [devices, setDevices] = useState<Device[]>([])
   const [customSubnetTemplates, setCustomSubnetTemplates] = useState<PersistedSubnetTemplate[]>([])
   const [rangeSchemes, setRangeSchemes] = useState<IPRangeScheme[]>([])
-  const [subnetRoleCategories, setSubnetRoleCategories] = useState<Array<{ id: string; name: string; slug: string }>>([])
-  const [ipRangeRoleCategories, setIpRangeRoleCategories] = useState<Array<{ id: string; name: string; slug: string }>>([])
+  const [subnetRoleCategories, setSubnetRoleCategories] = useState<Array<{ id: string; name: string; slug: string; color?: string }>>([])
+  const [ipRangeRoleCategories, setIpRangeRoleCategories] = useState<Array<{ id: string; name: string; slug: string; color?: string }>>([])
 
   // Modals
   const [subnetModalOpen, setSubnetModalOpen] = useState(false)
@@ -355,13 +356,40 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
 
   const persistCustomRoleCategory = useCallback(async (name: string, type: 'subnet_role' | 'ip_range_role') => {
     const trimmed = name.trim()
-    if (!trimmed) return
-    await fetch('/api/categories', {
+    if (!trimmed) return false
+    const res = await fetch('/api/categories', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: trimmed, color: '#5e6670', icon: 'tag', type }),
-    }).catch(() => undefined)
+    }).catch(() => null)
+
+    if (!res) return false
+    return res.ok || res.status === 409
   }, [])
+
+  const normalizeRangeRoleKey = useCallback((value: string) => value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''), [])
+
+  const getRangeRoleVisual = useCallback((role: string) => {
+    const normalized = normalizeRangeRoleKey(role)
+    const category = ipRangeRoleCategories.find((item) => item.slug === normalized || item.name.toLowerCase() === role.toLowerCase())
+    const builtIn = rangeColors[normalized]
+
+    if (builtIn) {
+      return {
+        bg: builtIn.bg,
+        border: builtIn.border,
+        label: category?.name || builtIn.label,
+      }
+    }
+
+    const color = category?.color || '#94a3b8'
+    const bg = /^#[0-9a-f]{6}$/i.test(color) ? `${color}22` : '#f1f5f9'
+    return {
+      bg,
+      border: color,
+      label: category?.name || role || 'General',
+    }
+  }, [ipRangeRoleCategories, normalizeRangeRoleKey])
 
   // Build a map of IP address -> device for quick lookup
   const ipToDevice = useMemo(() => {
@@ -425,12 +453,12 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
       else if (isGateway) status = 'gateway'
       else if (ip) status = 'assigned'
       else if (device) status = 'assigned'
-      else if (range) status = range.role
+      else if (range) status = normalizeRangeRoleKey(range.role) || range.role
       else status = 'available'
       cells.push({ octet: i, fullIp, status, ip, range, device, isGateway })
     }
     return cells
-  }, [subnet, ipToDevice, subnetBlock, subnetMaps, gridPage])
+  }, [subnet, ipToDevice, subnetBlock, subnetMaps, gridPage, normalizeRangeRoleKey])
 
   // All cells for utilization/summary (computed from maps, not full array)
   const allCellStats = useMemo(() => {
@@ -505,7 +533,8 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
     }
 
     if (isCustomSubnetRole && normalizedRole) {
-      await persistCustomRoleCategory(normalizedRole, 'subnet_role')
+      const persisted = await persistCustomRoleCategory(normalizedRole, 'subnet_role')
+      if (persisted) onPlatformOptionsChange?.()
     }
 
     const method = editingSubnetId ? 'PATCH' : 'POST'
@@ -686,7 +715,8 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
     }
 
     if (isCustomRangeRole && normalizedRole) {
-      await persistCustomRoleCategory(normalizedRole, 'ip_range_role')
+      const persisted = await persistCustomRoleCategory(normalizedRole, 'ip_range_role')
+      if (persisted) onPlatformOptionsChange?.()
     }
 
     const base = subnet.prefix.split('.').slice(0, 3).join('.')
@@ -858,7 +888,13 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
       case 'dhcp': return { bg: isDark ? 'rgba(251, 191, 36, 0.15)' : '#fef3c7', color: isDark ? '#fbbf24' : '#92400e' }
       case 'reserved': return { bg: isDark ? 'rgba(167, 139, 250, 0.15)' : '#ede9fe', color: isDark ? '#a78bfa' : '#5b21b6' }
       case 'infrastructure': return { bg: isDark ? 'rgba(34, 211, 238, 0.15)' : '#cffafe', color: isDark ? '#22d3ee' : '#155e75' }
-      default: return { bg: root?.getPropertyValue('--muted-bg').trim() || '#f1f3f5', color: root?.getPropertyValue('--text-faint').trim() || '#adb5bd' }
+      default: {
+        const custom = ipRangeRoleCategories.find((item) => item.slug === normalizeRangeRoleKey(status) || item.name.toLowerCase() === status.toLowerCase())
+        if (custom?.color) {
+          return { bg: isDark ? `${custom.color}33` : `${custom.color}22`, color: custom.color }
+        }
+        return { bg: root?.getPropertyValue('--muted-bg').trim() || '#f1f3f5', color: root?.getPropertyValue('--text-faint').trim() || '#adb5bd' }
+      }
     }
   }
 
@@ -958,7 +994,7 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
                     }
                     if (e.target.value === '__custom__') {
                       setIsCustomSubnetRole(true)
-                      setSubnetForm({ ...subnetForm, role: subnetRoleSuggestions.includes(subnetForm.role) ? '' : subnetForm.role })
+                      setSubnetForm({ ...subnetForm, role: '' })
                       return
                     }
                     setIsCustomSubnetRole(false)
@@ -1084,7 +1120,7 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
       {subnet && subnet.ipRanges.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-4">
           {subnet.ipRanges.map((r, i) => {
-            const rc = rangeColors[r.role] || rangeColors.general
+            const rc = getRangeRoleVisual(r.role)
             return (
               <div key={i} className="flex items-center gap-2 py-1.5 px-3 rounded-md border text-[11px] font-medium" style={{ background: rc.bg, borderColor: rc.border }}>
                 <div className="w-1.5 h-1.5 rounded-full" style={{ background: rc.border }} />
@@ -1143,7 +1179,7 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
                     onMouseEnter={() => setHoveredCell(cell.octet)}
                     onMouseLeave={() => setHoveredCell(null)}
                     onClick={() => {
-                      if (cell.status === 'available' || cell.status === 'dhcp' || cell.status === 'reserved' || cell.status === 'infrastructure') {
+                      if (cell.status === 'available' || (!!cell.range && !cell.ip && !cell.device)) {
                         openAssignFromGrid(cell.fullIp)
                       } else if (cell.ip) {
                         const linkedDev = cell.device || devices.find(d => d.ipAddress === cell.ip!.address)
@@ -1180,8 +1216,11 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
                   {cell.device && <span><Server size={10} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />{cell.device.name}</span>}
                   {cell.ip && !cell.device && <span>{cell.ip.dnsName || cell.ip.assignedTo || 'Unnamed'}</span>}
                   {cell.ip?.description && <span className="ipam-tooltip-desc">{cell.ip.description}</span>}
-                  {!cell.ip && !cell.device && cell.range && <span className={`px-2 py-0.5 rounded text-[11px] font-semibold ${cell.range.role === 'dhcp' ? 'bg-(--orange-bg) text-(--orange)' : cell.range.role === 'reserved' ? 'bg-(--purple-bg) text-(--purple)' : 'bg-(--blue-bg) text-(--blue)'}`}>{cell.range.role} range</span>}
-                  {(cell.status === 'available' || cell.status === 'dhcp' || cell.status === 'reserved' || cell.status === 'infrastructure') && !cell.ip && !cell.device && <span className="ipam-tooltip-action">Click to assign</span>}
+                  {!cell.ip && !cell.device && cell.range && (() => {
+                    const rc = getRangeRoleVisual(cell.range.role)
+                    return <span className="px-2 py-0.5 rounded text-[11px] font-semibold" style={{ background: rc.bg, color: rc.border }}>{rc.label} range</span>
+                  })()}
+                  {(cell.status === 'available' || (!!cell.range && !cell.ip && !cell.device)) && <span className="ipam-tooltip-action">Click to assign</span>}
                   {(cell.ip || cell.device) && cell.status === 'assigned' && <span className="ipam-tooltip-action">Click to edit / unassign</span>}
                 </div>
               </div>
@@ -1217,7 +1256,7 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
                     <td><code className="text-[11px] bg-(--muted-bg) px-1.5 py-px rounded">{cell.fullIp}</code></td>
                     <td>
                       <span className="ipam-list-status" style={{ background: colors.bg, color: colors.color }}>
-                        {cell.status === 'gateway' ? 'Gateway' : cell.status === 'assigned' ? 'Assigned' : cell.status === 'network' ? 'Network' : cell.status === 'broadcast' ? 'Broadcast' : cell.range ? rangeColors[cell.range.role]?.label || cell.range.role : 'Available'}
+                        {cell.status === 'gateway' ? 'Gateway' : cell.status === 'assigned' ? 'Assigned' : cell.status === 'network' ? 'Network' : cell.status === 'broadcast' ? 'Broadcast' : cell.range ? getRangeRoleVisual(cell.range.role).label : 'Available'}
                       </span>
                     </td>
                     <td className="font-medium">
@@ -1229,7 +1268,7 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
                       ) : label ? label : '—'}
                     </td>
                     <td className="text-[11px] text-(--text-light)">
-                      {cell.range ? `${rangeColors[cell.range.role]?.label || cell.range.role}: .${cell.range.startAddr.split('.').pop()}–.${cell.range.endAddr.split('.').pop()}` : '—'}
+                      {cell.range ? `${getRangeRoleVisual(cell.range.role).label}: .${cell.range.startAddr.split('.').pop()}–.${cell.range.endAddr.split('.').pop()}` : '—'}
                     </td>
                     <td className="text-muted-foreground text-xs">{cell.ip?.description || '—'}</td>
                     <td className="text-right">
@@ -1357,7 +1396,7 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
               <div className="bg-(--surface) border border-border rounded-[10px] p-5">
                 <h3 className="text-[13px] font-semibold text-(--text) mb-4">Range Utilization</h3>
                 {rangeSummary.map((r, i) => {
-                  const rc = rangeColors[r.role] || rangeColors.general
+                  const rc = getRangeRoleVisual(r.role)
                   return (
                     <div key={i} className="mb-3 last:mb-0">
                       <div className="flex justify-between items-center mb-1">
@@ -1518,7 +1557,7 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
                     }
                     if (e.target.value === '__custom__') {
                       setIsCustomRangeRole(true)
-                      setRangeForm({ ...rangeForm, role: rangeRoleSuggestions.includes(rangeForm.role) ? '' : rangeForm.role })
+                      setRangeForm({ ...rangeForm, role: '' })
                       return
                     }
                     setIsCustomRangeRole(false)

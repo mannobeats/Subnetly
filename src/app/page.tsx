@@ -665,7 +665,7 @@ export default function Home() {
 
         {activeView === 'dashboard' && <div className="flex-1 overflow-auto p-4 px-6" key={`dash-${siteKey}`}><DashboardView categories={categories} /></div>}
         {activeView === 'devices' && renderDevicesView()}
-        {activeView === 'ipam' && <div className="flex-1 overflow-auto p-4 px-6" key={`ipam-${siteKey}`}><IPPlannerView searchTerm={searchTerm} selectedIpFilter={selectedIpFilter} /></div>}
+        {activeView === 'ipam' && <div className="flex-1 overflow-auto p-4 px-6" key={`ipam-${siteKey}`}><IPPlannerView searchTerm={searchTerm} selectedIpFilter={selectedIpFilter} onPlatformOptionsChange={fetchSitesAndCategories} /></div>}
         {activeView === 'vlans' && <div className="flex-1 overflow-auto p-4 px-6" key={`vlans-${siteKey}`}><VLANView searchTerm={searchTerm} selectedRole={selectedVlanRole} vlanRoles={vlanRoles} vlanStatuses={vlanStatuses} highlightId={highlightId} /></div>}
         {activeView === 'wifi' && <div className="flex-1 overflow-auto p-4 px-6" key={`wifi-${siteKey}`}><WiFiView searchTerm={searchTerm} selectedSecurityFilter={selectedServiceFilter} securityOptions={wifiSecurities} highlightId={highlightId} /></div>}
         {activeView === 'topology' && <div className="flex-1 overflow-auto p-4 px-6" key={`topo-${siteKey}`}><TopologyView selectedCategory={selectedCategory} /></div>}
