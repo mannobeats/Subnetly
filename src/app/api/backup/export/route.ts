@@ -150,7 +150,7 @@ export async function GET() {
     }
 
     const json = JSON.stringify(backup, null, 2)
-    const filename = `homelab-backup-${site.slug}-${new Date().toISOString().split('T')[0]}.json`
+    const filename = `subnetly-backup-${site.slug}-${new Date().toISOString().split('T')[0]}.json`
 
     return new NextResponse(json, {
       headers: {

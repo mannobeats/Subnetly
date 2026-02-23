@@ -34,6 +34,8 @@ interface SettingsViewProps {
 }
 
 export default function SettingsView({ activeTab = 'profile', categories = [], vlanRoles = [], onCategoriesChange, sites = [], activeSiteId, onSitesChange }: SettingsViewProps) {
+  const APP_SETTINGS_KEY = 'subnetly-settings'
+  const LEGACY_APP_SETTINGS_KEY = 'homelab-settings'
   const [session, setSession] = useState<UserSession | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -103,7 +105,7 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
     }).catch(() => {})
 
     // Load app settings from localStorage
-    const saved = localStorage.getItem('homelab-settings')
+    const saved = localStorage.getItem(APP_SETTINGS_KEY) ?? localStorage.getItem(LEGACY_APP_SETTINGS_KEY)
     if (saved) {
       try {
         const s = JSON.parse(saved)
@@ -119,7 +121,7 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
 
   const saveAppSettings = () => {
     const settings = { autoRefresh, showTooltips, defaultView, itemsPerPage, confirmDeletes, changelogEnabled }
-    localStorage.setItem('homelab-settings', JSON.stringify(settings))
+    localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(settings))
   }
 
   useEffect(() => {
@@ -577,7 +579,7 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
                       const blob = await res.blob()
                       const url = URL.createObjectURL(blob)
                       const disposition = res.headers.get('Content-Disposition')
-                      const filename = disposition?.match(/filename="(.+)"/)?.[1] || `homelab-backup-${new Date().toISOString().split('T')[0]}.json`
+                      const filename = disposition?.match(/filename="(.+)"/)?.[1] || `subnetly-backup-${new Date().toISOString().split('T')[0]}.json`
                       const a = document.createElement('a')
                       a.href = url
                       a.download = filename
@@ -968,7 +970,7 @@ function SitesTab({ sites, activeSiteId, onSitesChange }: { sites: Site[], activ
   return (
     <>
       <h2 className="text-lg font-bold text-(--text)">Sites</h2>
-      <p className="text-[13px] text-(--text-muted) mb-8">Manage your sites (projects/homelabs). Each site has its own devices, subnets, VLANs, and categories.</p>
+      <p className="text-[13px] text-(--text-muted) mb-8">Manage your sites (projects/environments). Each site has its own devices, subnets, VLANs, and categories.</p>
 
       <div className="bg-(--surface) border border-border rounded-lg p-6 mb-6">
         <h3 className="text-sm font-semibold text-(--text) mb-5">Create New Site</h3>

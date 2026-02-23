@@ -104,7 +104,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
             <div>
               <strong className="block mb-1">{setupMessage}</strong>
               <span className="block mt-1 text-[11px] text-(--info-accent) leading-relaxed">
-                Email: <code className="rounded bg-(--info-code-bg) px-1.5 py-px text-[11px]">{process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'admin@homelab.local'}</code><br />
+                Email: <code className="rounded bg-(--info-code-bg) px-1.5 py-px text-[11px]">{process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'admin@subnetly.local'}</code><br />
                 Password: <code className="rounded bg-(--info-code-bg) px-1.5 py-px text-[11px]">{process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'admin123'}</code>
               </span>
             </div>
@@ -126,7 +126,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@homelab.local"
+              placeholder="admin@subnetly.local"
               required
               autoFocus
               autoComplete="email"

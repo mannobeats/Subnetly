@@ -9,8 +9,8 @@ export async function POST() {
       return NextResponse.json({ setup: false, message: 'Admin already exists' })
     }
 
-    const email = process.env.ADMIN_EMAIL || 'admin@homelab.local'
-    const password = process.env.ADMIN_PASSWORD || 'admin'
+    const email = process.env.ADMIN_EMAIL || 'admin@subnetly.local'
+    const password = process.env.ADMIN_PASSWORD || 'admin123'
     const name = process.env.ADMIN_NAME || 'Administrator'
 
     await auth.api.signUpEmail({

@@ -13,7 +13,7 @@ async function pingUrl(url: string, timeoutMs: number): Promise<{ status: number
     const controller = new AbortController()
     const timer = setTimeout(() => controller.abort(), timeoutMs)
 
-    const headers = { 'User-Agent': 'HomelabManager/1.0 HealthCheck' }
+    const headers = { 'User-Agent': 'Subnetly/1.0 HealthCheck' }
     let res: Response
     try {
       // Try HEAD first (lighter)

@@ -105,6 +105,8 @@ export default function Home() {
   // App settings from localStorage
   const [confirmDeletes, setConfirmDeletes] = useState(true)
   const [autoRefresh, setAutoRefresh] = useState(true)
+  const APP_SETTINGS_KEY = 'subnetly-settings'
+  const LEGACY_APP_SETTINGS_KEY = 'homelab-settings'
 
   const [activeView, setActiveViewRaw] = useState<ViewType>('dashboard')
   const settingsTabRef = useRef('profile')
@@ -122,7 +124,7 @@ export default function Home() {
   useEffect(() => {
     // Load app settings from localStorage
     try {
-      const saved = localStorage.getItem('homelab-settings')
+      const saved = localStorage.getItem(APP_SETTINGS_KEY) ?? localStorage.getItem(LEGACY_APP_SETTINGS_KEY)
       if (saved) {
         const s = JSON.parse(saved)
         if (s.confirmDeletes !== undefined) setConfirmDeletes(s.confirmDeletes)
@@ -144,7 +146,7 @@ export default function Home() {
     } else {
       // No hash — use defaultView from settings
       try {
-        const saved = localStorage.getItem('homelab-settings')
+        const saved = localStorage.getItem(APP_SETTINGS_KEY) ?? localStorage.getItem(LEGACY_APP_SETTINGS_KEY)
         if (saved) {
           const s = JSON.parse(saved)
           if (s.defaultView && valid.includes(s.defaultView as ViewType)) {
@@ -209,7 +211,7 @@ export default function Home() {
   useEffect(() => {
     const onStorage = () => {
       try {
-        const saved = localStorage.getItem('homelab-settings')
+        const saved = localStorage.getItem(APP_SETTINGS_KEY) ?? localStorage.getItem(LEGACY_APP_SETTINGS_KEY)
         if (saved) {
           const s = JSON.parse(saved)
           if (s.confirmDeletes !== undefined) setConfirmDeletes(s.confirmDeletes)
@@ -484,7 +486,7 @@ export default function Home() {
           <div className="flex flex-col items-center justify-center py-16 text-center bg-card border border-border rounded-lg">
             <Server size={40} className="text-[#cbd5e1]" />
             <h3 className="text-base font-semibold mt-4 mb-2">No devices yet</h3>
-            <p className="text-[13px] text-muted-foreground mb-6 max-w-[360px]">Add your first device to start managing your homelab infrastructure.</p>
+            <p className="text-[13px] text-muted-foreground mb-6 max-w-[360px]">Add your first device to start managing your infrastructure.</p>
             <Button onClick={() => { setEditingDevice(null); setFormData({ name: '', macAddress: '', ipAddress: '', category: 'Server', notes: '', platform: '', status: 'active' }); setSelectedSubnetId(''); setAvailableIps([]); fetchSubnets(); setIsModalOpen(true); }}>
               <Plus size={14} /> Add Device
             </Button>

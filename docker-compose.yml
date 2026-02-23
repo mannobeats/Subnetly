@@ -3,15 +3,15 @@ services:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_USER: homelab
-      POSTGRES_PASSWORD: homelab
-      POSTGRES_DB: homelab
+      POSTGRES_USER: subnetly
+      POSTGRES_PASSWORD: subnetly
+      POSTGRES_DB: subnetly
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U homelab -d homelab"]
+      test: ["CMD-SHELL", "pg_isready -U subnetly -d subnetly"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -29,13 +29,13 @@ services:
     # and remove the "ports" section above (host networking exposes port 3000 directly):
     # network_mode: host
     # Then also change DATABASE_URL below to use 127.0.0.1 instead of db:
-    # DATABASE_URL: "postgresql://homelab:homelab@127.0.0.1:5432/homelab?schema=public"
+    # DATABASE_URL: "postgresql://subnetly:subnetly@127.0.0.1:5432/subnetly?schema=public"
     environment:
-      DATABASE_URL: "postgresql://homelab:homelab@db:5432/homelab?schema=public"
+      DATABASE_URL: "postgresql://subnetly:subnetly@db:5432/subnetly?schema=public"
       NODE_ENV: production
       BETTER_AUTH_SECRET: "${BETTER_AUTH_SECRET:-change-me-to-a-random-32-char-secret-key!}"
       BETTER_AUTH_URL: "${BETTER_AUTH_URL:-http://localhost:3000}"
-      ADMIN_EMAIL: "${ADMIN_EMAIL:-admin@homelab.local}"
+      ADMIN_EMAIL: "${ADMIN_EMAIL:-admin@subnetly.local}"
       ADMIN_PASSWORD: "${ADMIN_PASSWORD:-admin123}"
       ADMIN_NAME: "${ADMIN_NAME:-Administrator}"
     depends_on:
