@@ -986,7 +986,7 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
                   <div>
                     <div className="text-[13px] font-medium text-(--text)">Database</div>
                   </div>
-                  <span className="text-[13px] text-(--text-muted)">PostgreSQL 16</span>
+                  <span className="text-[13px] text-(--text-muted)">PostgreSQL 18</span>
                 </div>
                 <div className="flex items-center justify-between py-3 border-b border-(--muted-bg-alt) last:border-b-0">
                   <div>

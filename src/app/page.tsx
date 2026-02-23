@@ -11,26 +11,24 @@ import WiFiView from '@/components/WiFiView'
 import CommandPalette from '@/components/CommandPalette'
 import ChangelogView from '@/components/ChangelogView'
 import SettingsView from '@/components/SettingsView'
+import DevicesPanel from '@/components/devices/DevicesPanel'
+import DeviceFormDialog, { DeviceFormData, SubnetOption } from '@/components/devices/DeviceFormDialog'
+import DeviceDeleteDialog from '@/components/devices/DeviceDeleteDialog'
 import LoginPage from '@/components/LoginPage'
 import SetupPage from '@/components/SetupPage'
-import { Plus, Trash2, Edit2, ChevronRight, Loader2, Server } from 'lucide-react'
+import { Plus, ChevronRight, Loader2 } from 'lucide-react'
 import { Device, Site, CustomCategory } from '@/types'
 import { authClient } from '@/lib/auth-client'
-import { renderCategoryIcon } from '@/lib/category-icons'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 
-interface SubnetOption {
-  id: string
-  prefix: string
-  mask: number
-  role?: string | null
-  description?: string | null
-  gateway?: string | null
-  vlan?: { vid: number; name: string } | null
-  ipAddresses: { address: string }[]
+const emptyDeviceFormData: DeviceFormData = {
+  name: '',
+  macAddress: '',
+  ipAddress: '',
+  category: 'Server',
+  notes: '',
+  platform: '',
+  status: 'active',
 }
 
 export default function Home() {
@@ -98,6 +96,7 @@ export default function Home() {
     await fetchSubnets()
     // Force re-mount all child views so they re-fetch their own data
     setSiteKey(k => k + 1)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchSitesAndCategories])
 
   const handleCreateSite = useCallback(async (name: string) => {
@@ -230,15 +229,7 @@ export default function Home() {
   const [selectedSubnetId, setSelectedSubnetId] = useState<string>('')
   const [availableIps, setAvailableIps] = useState<string[]>([])
 
-  const [formData, setFormData] = useState({
-    name: '',
-    macAddress: '',
-    ipAddress: '',
-    category: 'Server',
-    notes: '',
-    platform: '',
-    status: 'active',
-  })
+  const [formData, setFormData] = useState<DeviceFormData>(emptyDeviceFormData)
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -246,6 +237,7 @@ export default function Home() {
       fetchDevices()
       fetchSubnets()
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, fetchSitesAndCategories])
 
   // Re-fetch data when switching views (respects autoRefresh setting)
@@ -254,6 +246,7 @@ export default function Home() {
     if (!autoRefresh) return
     if (activeView === 'devices') { fetchDevices(); fetchSubnets() }
     if (activeView === 'dashboard') { fetchDevices() }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeView, isAuthenticated, autoRefresh])
 
   // Listen for settings changes from SettingsView (via localStorage)
@@ -329,12 +322,7 @@ export default function Home() {
       if (e.key === 'n' || e.key === 'N') {
         if (activeView === 'devices') {
           e.preventDefault()
-          setEditingDevice(null)
-          setFormData({ name: '', macAddress: '', ipAddress: '', category: 'Server', notes: '', platform: '', status: 'active' })
-          setSelectedSubnetId('')
-          setAvailableIps([])
-          fetchSubnets()
-          setIsModalOpen(true)
+          openCreateDeviceModal()
         }
         return
       }
@@ -343,6 +331,7 @@ export default function Home() {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeView, isModalOpen, isDeleteModalOpen, setActiveView])
 
   const fetchDevices = async () => {
@@ -358,7 +347,7 @@ export default function Home() {
     }
   }
 
-  const fetchSubnets = async () => {
+  const fetchSubnets = useCallback(async () => {
     try {
       const res = await fetch('/api/subnets')
       const data = await res.json()
@@ -366,7 +355,7 @@ export default function Home() {
     } catch (err) {
       console.error(err)
     }
-  }
+  }, [])
 
   const computeAvailableIps = (subnetId: string, autoSelect = false) => {
     const sub = subnets.find(s => s.id === subnetId)
@@ -400,6 +389,15 @@ export default function Home() {
     }
   }
 
+  const openCreateDeviceModal = useCallback(() => {
+    setEditingDevice(null)
+    setFormData(emptyDeviceFormData)
+    setSelectedSubnetId('')
+    setAvailableIps([])
+    fetchSubnets()
+    setIsModalOpen(true)
+  }, [fetchSubnets])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!formData.ipAddress || formData.ipAddress.trim() === '') {
@@ -425,7 +423,7 @@ export default function Home() {
         setEditingDevice(null)
         setSelectedSubnetId('')
         setAvailableIps([])
-        setFormData({ name: '', macAddress: '', ipAddress: '', category: 'Server', notes: '', platform: '', status: 'active' })
+        setFormData(emptyDeviceFormData)
         await fetchDevices()
         await fetchSubnets()
       } else {
@@ -532,109 +530,18 @@ export default function Home() {
   }
 
   const renderDevicesView = () => {
-    if (loading) {
-      return (
-        <div className="flex-1 overflow-auto p-4 px-6">
-          <div className="flex items-center justify-center h-[220px] text-muted-foreground text-[13px]">
-            <Loader2 size={16} className="animate-spin mr-2" /> Loading devices...
-          </div>
-        </div>
-      )
-    }
-
-    if (!loading && devices.length === 0) {
-      return (
-        <div className="flex-1 overflow-auto p-4 px-6">
-          <div className="flex flex-col items-center justify-center py-16 text-center bg-card border border-border rounded-lg">
-            <Server size={40} className="text-[#cbd5e1]" />
-            <h3 className="text-base font-semibold mt-4 mb-2">No devices yet</h3>
-            <p className="text-[13px] text-muted-foreground mb-6 max-w-[360px]">Add your first device to start managing your infrastructure.</p>
-            <Button onClick={() => { setEditingDevice(null); setFormData({ name: '', macAddress: '', ipAddress: '', category: 'Server', notes: '', platform: '', status: 'active' }); setSelectedSubnetId(''); setAvailableIps([]); fetchSubnets(); setIsModalOpen(true); }}>
-              <Plus size={14} /> Add Device
-            </Button>
-          </div>
-        </div>
-      )
-    }
     return (
-    <>
-      <div className="flex gap-8 px-6 py-4 bg-card border-b border-border">
-        <div className="flex flex-col gap-1">
-          <span className="text-[11px] uppercase font-semibold text-muted-foreground">Total Devices</span>
-          <span className="text-lg font-bold text-(--blue)">{devices.length}</span>
-        </div>
-        <div className="flex flex-col gap-1">
-          <span className="text-[11px] uppercase font-semibold text-muted-foreground">Networking</span>
-          <span className="text-lg font-bold text-(--blue)">{devices.filter(d => d.category === 'Networking').length}</span>
-        </div>
-        <div className="flex flex-col gap-1">
-          <span className="text-[11px] uppercase font-semibold text-muted-foreground">VMs & Containers</span>
-          <span className="text-lg font-bold text-(--blue)">{devices.filter(d => ['VM', 'LXC'].includes(d.category)).length}</span>
-        </div>
-        <div className="flex flex-col gap-1">
-          <span className="text-[11px] uppercase font-semibold text-muted-foreground">Active</span>
-          <span className="text-lg font-bold text-(--blue)">{devices.filter(d => d.status === 'active').length}</span>
-        </div>
-      </div>
-      <div className="flex-1 overflow-auto p-4 px-6">
-        <div className="animate-in fade-in duration-300 bg-card border border-border rounded-lg overflow-hidden">
-          <table className="w-full border-collapse table-fixed">
-            <thead>
-              <tr>
-                <th className="w-10"></th>
-                <th className="w-[180px]">Name</th>
-                <th className="w-[120px]">IP Address</th>
-                <th className="w-[160px]">MAC Address</th>
-                <th className="w-[100px]">Category</th>
-                <th className="w-[100px]">Status</th>
-                <th className="w-[140px]">Platform</th>
-                <th className="w-20 text-right pr-6">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr><td colSpan={8} className="text-center h-[100px] text-muted-foreground">Loading...</td></tr>
-              ) : filteredDevices.length === 0 ? (
-                <tr><td colSpan={8} className="text-center h-[100px] text-muted-foreground">No devices match your search.</td></tr>
-              ) : filteredDevices.map((device) => (
-                <tr key={device.id} data-highlight-id={device.id} className={highlightId === device.id ? 'highlight-flash' : ''}>
-                  <td className="text-center">
-                    {(() => {
-                      const cat = categories.find(c => c.name === device.category)
-                      return cat ? renderCategoryIcon(cat.icon, 14, cat.color) : <Server size={14} className="text-(--text-slate)" />
-                    })()}
-                  </td>
-                  <td className="font-medium">{device.name}</td>
-                  <td><code className="text-[11px] bg-(--muted-bg) px-1.5 py-0.5 rounded">{device.ipAddress}</code></td>
-                  <td className="text-(--text-slate) font-mono text-xs">{device.macAddress}</td>
-                  <td>
-                    {(() => {
-                      const cat = categories.find(c => c.name === device.category)
-                      const color = cat?.color || '#5e6670'
-                      return <span className="px-2 py-0.5 rounded text-[11px] font-semibold" style={{ background: color + '18', color }}>{device.category}</span>
-                    })()}
-                  </td>
-                  <td>
-                    <div className="flex items-center gap-1.5">
-                      <span className="inline-block w-1.5 h-1.5 rounded-full shrink-0" style={{ background: device.status === 'active' ? '#22c55e' : device.status === 'offline' ? '#ef4444' : '#94a3b8' }} />
-                      <span className="text-xs">{device.status}</span>
-                    </div>
-                  </td>
-                  <td className="text-(--text-slate) text-xs">{device.platform || '—'}</td>
-                  <td className="text-right pr-4">
-                    <div className="flex gap-1 justify-end">
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditModal(device)} title="Edit"><Edit2 size={12} /></Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-[#ef4444] hover:text-[#ef4444]" onClick={() => confirmDelete(device.id)} title="Delete"><Trash2 size={12} /></Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </>
-  )
+      <DevicesPanel
+        loading={loading}
+        devices={devices}
+        filteredDevices={filteredDevices}
+        categories={categories}
+        highlightId={highlightId}
+        onAddDevice={openCreateDeviceModal}
+        onEditDevice={openEditModal}
+        onDeleteDevice={confirmDelete}
+      />
+    )
   }
 
   return (
@@ -680,7 +587,7 @@ export default function Home() {
           </div>
           <div className="flex gap-3">
             {activeView === 'devices' && (
-              <Button size="sm" onClick={() => { setEditingDevice(null); setFormData({ name: '', macAddress: '', ipAddress: '', category: 'Server', notes: '', platform: '', status: 'active' }); setSelectedSubnetId(''); setAvailableIps([]); fetchSubnets(); setIsModalOpen(true); }}>
+              <Button size="sm" onClick={openCreateDeviceModal}>
                 <Plus size={14} /> Add Device
               </Button>
             )}
@@ -707,116 +614,26 @@ export default function Home() {
         }
       }} />
 
-      {/* Add/Edit Device Modal */}
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="max-w-[480px]">
-          <DialogHeader>
-            <DialogTitle>{editingDevice ? 'Edit Device' : 'Add New Device'}</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4 mt-2">
-            <div>
-              <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Device Name</Label>
-              <Input required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="e.g. Proxmox-Node-01" className="h-9 text-[13px]" />
-            </div>
-            <div>
-              <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Category</Label>
-              <select className="w-full h-9 border border-border rounded bg-(--surface-alt) text-(--text) text-[13px] px-3 focus:outline-none focus:border-(--blue) focus:bg-(--surface)" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})}>
-                {categories.length > 0 ? categories.map(cat => (
-                  <option key={cat.id} value={cat.name}>{cat.name}</option>
-                )) : (
-                  <>
-                    <option value="Networking">Networking</option>
-                    <option value="Server">Server</option>
-                    <option value="VM">VM</option>
-                    <option value="LXC">LXC</option>
-                    <option value="Client">Client</option>
-                    <option value="IoT">IoT</option>
-                  </>
-                )}
-              </select>
-            </div>
-            {subnets.length > 0 && (
-              <div>
-                <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">{editingDevice ? 'Subnet' : 'Assign from Subnet (Optional)'}</Label>
-                <select className="w-full h-9 border border-border rounded bg-(--surface-alt) text-(--text) text-[13px] px-3 focus:outline-none focus:border-(--blue) focus:bg-(--surface)" value={selectedSubnetId} onChange={e => handleSubnetChange(e.target.value)}>
-                  <option value="">Manual IP entry</option>
-                  {subnets.map(s => (
-                    <option key={s.id} value={s.id}>{s.prefix}/{s.mask}{s.role ? ` • ${s.role}` : ''}{s.vlan ? ` • VLAN ${s.vlan.vid}` : ''}</option>
-                  ))}
-                </select>
-              </div>
-            )}
-            <div className="grid grid-cols-2 gap-5">
-              <div>
-                <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">IP Address</Label>
-                {selectedSubnetId && availableIps.length > 0 ? (
-                  <select required className="w-full h-9 border border-border rounded bg-(--surface-alt) text-(--text) text-[13px] px-3 focus:outline-none focus:border-(--blue) focus:bg-(--surface)" value={formData.ipAddress} onChange={e => setFormData({...formData, ipAddress: e.target.value})}>
-                    <option value="">Select available IP...</option>
-                    {editingDevice && formData.ipAddress && (
-                      <option value={formData.ipAddress}>{formData.ipAddress} (current)</option>
-                    )}
-                    {availableIps.slice(0, 50).map(ip => <option key={ip} value={ip}>{ip}</option>)}
-                    {availableIps.length > 50 && <option disabled>...and {availableIps.length - 50} more</option>}
-                  </select>
-                ) : (
-                  <Input required value={formData.ipAddress} onChange={e => setFormData({...formData, ipAddress: e.target.value})} placeholder="10.0.10.x" className="h-9 text-[13px]" />
-                )}
-              </div>
-              <div>
-                <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Platform</Label>
-                <Input value={formData.platform} onChange={e => setFormData({...formData, platform: e.target.value})} placeholder="e.g. Ubuntu 22.04" className="h-9 text-[13px]" />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-5">
-              <div>
-                <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">MAC Address</Label>
-                <Input required value={formData.macAddress} onChange={e => setFormData({...formData, macAddress: e.target.value.toUpperCase()})} placeholder="XX:XX:XX:XX:XX:XX" className="h-9 text-[13px]" />
-              </div>
-              <div>
-                <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Status</Label>
-                <select className="w-full h-9 border border-border rounded bg-(--surface-alt) text-(--text) text-[13px] px-3 focus:outline-none focus:border-(--blue) focus:bg-(--surface)" value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})}>
-                  {deviceStatuses.length > 0 ? deviceStatuses.map((status) => (
-                    <option key={status.id} value={status.slug}>{status.name}</option>
-                  )) : (
-                    <>
-                      <option value="active">Active</option>
-                      <option value="planned">Planned</option>
-                      <option value="staged">Staged</option>
-                      <option value="offline">Offline</option>
-                      <option value="decommissioned">Decommissioned</option>
-                    </>
-                  )}
-                </select>
-              </div>
-            </div>
-            <div>
-              <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Notes (Optional)</Label>
-              <textarea className="w-full border border-border rounded bg-(--surface-alt) text-(--text) text-[13px] px-3 pt-2 focus:outline-none focus:border-(--blue) focus:bg-(--surface)" value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value})} placeholder="Purpose or description" rows={3} />
-            </div>
-            <DialogFooter className="mt-6">
-              <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-              <Button type="submit">{editingDevice ? 'Apply Changes' : 'Save Device'}</Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+      <DeviceFormDialog
+        open={isModalOpen}
+        onOpenChange={setIsModalOpen}
+        editingDevice={editingDevice}
+        formData={formData}
+        setFormData={setFormData}
+        categories={categories}
+        deviceStatuses={deviceStatuses}
+        subnets={subnets}
+        selectedSubnetId={selectedSubnetId}
+        availableIps={availableIps}
+        onSubnetChange={handleSubnetChange}
+        onSubmit={handleSubmit}
+      />
 
-      {/* Delete Confirmation Modal */}
-      <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
-        <DialogContent className="max-w-[400px] text-center">
-          <DialogHeader className="flex flex-col items-center">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-(--red-bg-subtle) text-(--red)">
-              <Trash2 size={24} />
-            </div>
-            <DialogTitle className="text-lg font-semibold">Delete Device?</DialogTitle>
-            <DialogDescription className="mt-2">This action cannot be undone.</DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="flex justify-center gap-4 sm:justify-center">
-            <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)}>Cancel</Button>
-            <Button variant="destructive" onClick={handleDelete}>Delete Device</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <DeviceDeleteDialog
+        open={isDeleteModalOpen}
+        onOpenChange={setIsDeleteModalOpen}
+        onConfirm={handleDelete}
+      />
     </div>
   )
 }

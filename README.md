@@ -69,10 +69,10 @@ npm install
 
 Create/update `.env` with at least:
 
-You can start from `.env.example`:
+You can start from `example.env`:
 
 ```bash
-cp .env.example .env
+cp example.env .env
 ```
 
 ```env
@@ -107,13 +107,13 @@ If `SETUP_TOKEN` is configured, you must enter it during initial setup.
 
 ## Docker (Optional)
 
-If using Docker Compose:
+If using Docker Compose (PostgreSQL 18):
 
 ```bash
 docker compose up --build
 ```
 
-The app runs on `http://localhost:3000` and PostgreSQL on `localhost:5432`.
+The app runs on `http://localhost:3000` and PostgreSQL 18 on `localhost:5432`.
 
 ## Data Safety Notes
 
