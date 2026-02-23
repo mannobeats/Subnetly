@@ -24,7 +24,6 @@ interface SubnetWithRelations {
 interface IPPlannerProps {
   searchTerm: string
   selectedIpFilter?: string | null
-  highlightId?: string | null
 }
 
 const rangeColors: Record<string, { bg: string; border: string; label: string }> = {
@@ -68,7 +67,7 @@ function gridColumns(mask: number): number {
   return 16                   // /24 and larger → 16 cols
 }
 
-const IPPlannerView = ({ searchTerm, selectedIpFilter = null, highlightId: _highlightId = null }: IPPlannerProps) => {
+const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) => {
   const [subnets, setSubnets] = useState<SubnetWithRelations[]>([])
   const [selectedSubnet, setSelectedSubnet] = useState<string | null>(null)
   const [hoveredCell, setHoveredCell] = useState<number | null>(null)

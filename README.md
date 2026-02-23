@@ -1,4 +1,4 @@
-# Homelab IP Manager
+# Subnetly
 
 A sleek, UniFi-inspired web application to manage your homelab IP addresses and device MAC addresses.
 

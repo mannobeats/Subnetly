@@ -34,7 +34,7 @@ export async function GET() {
     md += `## Devices\n\n`
     md += `| Name | IP Address | MAC Address | Category | Status | Platform |\n`
     md += `|------|-----------|-------------|----------|--------|----------|\n`
-    devices.forEach((d: any) => {
+    devices.forEach((d) => {
       md += `| ${d.name} | ${d.ipAddress || '—'} | ${d.macAddress || '—'} | ${d.category} | ${d.status} | ${d.platform || '—'} |\n`
     })
     md += `\n`
@@ -43,15 +43,15 @@ export async function GET() {
     md += `## VLANs\n\n`
     md += `| VID | Name | Role | Status | Subnets |\n`
     md += `|-----|------|------|--------|---------|\n`
-    vlans.forEach((v: any) => {
-      const subnetList = v.subnets.map((s: any) => `${s.prefix}/${s.mask}`).join(', ') || '—'
+    vlans.forEach((v) => {
+      const subnetList = v.subnets.map((s: { prefix: string; mask: number }) => `${s.prefix}/${s.mask}`).join(', ') || '—'
       md += `| ${v.vid} | ${v.name} | ${v.role || '—'} | ${v.status} | ${subnetList} |\n`
     })
     md += `\n`
 
     // Subnets
     md += `## Subnets & IP Allocation\n\n`
-    subnets.forEach((s: any) => {
+    subnets.forEach((s) => {
       const totalIps = Math.pow(2, 32 - s.mask) - 2
       const usedIps = s.ipAddresses.length
       const pct = totalIps > 0 ? Math.round((usedIps / totalIps) * 100) : 0
@@ -63,7 +63,7 @@ export async function GET() {
       if (s.ipRanges.length > 0) {
         md += `**Ranges:**\n\n`
         md += `| Range | Role | Description |\n|-------|------|-------------|\n`
-        s.ipRanges.forEach((r: any) => {
+        s.ipRanges.forEach((r) => {
           md += `| ${r.startAddr} — ${r.endAddr} | ${r.role} | ${r.description || '—'} |\n`
         })
         md += `\n`
@@ -71,7 +71,7 @@ export async function GET() {
       if (s.ipAddresses.length > 0) {
         md += `**Assigned IPs:**\n\n`
         md += `| Address | DNS Name | Status | Description |\n|---------|----------|--------|-------------|\n`
-        s.ipAddresses.forEach((ip: any) => {
+        s.ipAddresses.forEach((ip) => {
           md += `| ${ip.address} | ${ip.dnsName || '—'} | ${ip.status} | ${ip.description || '—'} |\n`
         })
         md += `\n`
@@ -82,7 +82,7 @@ export async function GET() {
     md += `## Services\n\n`
     md += `| Service | Protocol | Port(s) | Device | Environment | Health | Docker | Version |\n`
     md += `|---------|----------|---------|--------|-------------|--------|--------|--------|\n`
-    services.forEach((s: any) => {
+    services.forEach((s) => {
       md += `| ${s.name} | ${s.protocol.toUpperCase()} | ${s.ports} | ${s.device?.name || '—'} | ${s.environment || 'production'} | ${s.healthStatus || 'unknown'} | ${s.isDocker ? `Yes (${s.dockerImage || '—'})` : 'No'} | ${s.version || '—'} |\n`
     })
     md += `\n`
@@ -91,7 +91,7 @@ export async function GET() {
     md += `## WiFi Networks\n\n`
     md += `| SSID | Security | Band | VLAN | Subnet | Status | Guest | Features |\n`
     md += `|------|----------|------|------|--------|--------|-------|----------|\n`
-    wifi.forEach((w: any) => {
+    wifi.forEach((w) => {
       const features = [w.bandSteering && 'Band Steering', w.clientIsolation && 'Client Isolation', w.pmf !== 'disabled' && `PMF: ${w.pmf}`].filter(Boolean).join(', ') || '—'
       md += `| ${w.ssid} | ${w.security} | ${w.band} | ${w.vlan ? `VLAN ${w.vlan.vid}` : '—'} | ${w.subnet ? `${w.subnet.prefix}/${w.subnet.mask}` : '—'} | ${w.enabled ? 'Enabled' : 'Disabled'} | ${w.guestNetwork ? 'Yes' : 'No'} | ${features} |\n`
     })
