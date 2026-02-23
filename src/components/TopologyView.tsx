@@ -94,6 +94,7 @@ const TopologyView = ({ selectedCategory = null }: TopologyViewProps) => {
   const [devices, setDevices] = useState<TopoDevice[]>([])
   const [subnets, setSubnets] = useState<TopoSubnet[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const [selectedNode, setSelectedNode] = useState<string | null>(null)
   const [posOverrides, setPosOverrides] = useState<Map<string, { x: number; y: number }>>(loadPositions)
   const [dragging, setDragging] = useState<string | null>(null)
@@ -108,13 +109,30 @@ const TopologyView = ({ selectedCategory = null }: TopologyViewProps) => {
   const dragMovedRef = useRef(false)
 
   useEffect(() => {
-    fetch('/api/topology')
-      .then(r => r.json())
-      .then(data => {
+    const controller = new AbortController()
+
+    async function loadTopology() {
+      try {
+        setLoadError(null)
+        const response = await fetch('/api/topology', { signal: controller.signal })
+        if (!response.ok) {
+          throw new Error(`Failed to load topology (${response.status})`)
+        }
+        const data = await response.json()
         setDevices(data.devices || data)
         setSubnets(data.subnets || [])
-      })
-      .finally(() => setLoading(false))
+      } catch (error) {
+        if ((error as Error).name === 'AbortError') return
+        setDevices([])
+        setSubnets([])
+        setLoadError('Failed to load topology data')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadTopology()
+    return () => controller.abort()
   }, [])
 
   // Map devices to their subnets
@@ -375,7 +393,7 @@ const TopologyView = ({ selectedCategory = null }: TopologyViewProps) => {
     zoomAtPoint(rect.left + rect.width / 2, rect.top + rect.height / 2, zoom + step)
   }, [zoom, zoomAtPoint])
 
-  const handleWheel = useCallback((e: React.WheelEvent) => {
+  const handleWheel = useCallback((e: WheelEvent) => {
     e.preventDefault()
     // Ctrl/Meta + wheel: zoom at cursor. Plain wheel: pan canvas.
     if (e.ctrlKey || e.metaKey) {
@@ -395,6 +413,18 @@ const TopologyView = ({ selectedCategory = null }: TopologyViewProps) => {
       y: prev.y - e.deltaY * speed,
     }))
   }, [zoom, zoomAtPoint])
+
+  useEffect(() => {
+    const svg = svgRef.current
+    if (!svg) return
+
+    const onWheel = (event: WheelEvent) => handleWheel(event)
+    svg.addEventListener('wheel', onWheel, { passive: false })
+
+    return () => {
+      svg.removeEventListener('wheel', onWheel)
+    }
+  }, [handleWheel])
 
   // Center the canvas on the content
   const centerCanvas = useCallback(() => {
@@ -432,6 +462,17 @@ const TopologyView = ({ selectedCategory = null }: TopologyViewProps) => {
 
   if (loading) return <div className="flex items-center justify-center h-[200px] gap-2 text-muted-foreground text-[13px]">Loading topology...</div>
 
+  if (loadError) {
+    return (
+      <div className="flex gap-0 h-full relative animate-fade-in">
+        <div className="flex flex-col items-center justify-center p-16 px-8 text-center bg-(--surface) border border-border rounded-lg flex-1">
+          <h3>Topology unavailable</h3>
+          <p>{loadError}</p>
+        </div>
+      </div>
+    )
+  }
+
   if (devices.length === 0) {
     return (
       <div className="flex gap-0 h-full relative animate-fade-in">
@@ -466,9 +507,11 @@ const TopologyView = ({ selectedCategory = null }: TopologyViewProps) => {
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
           onMouseDown={handleCanvasMouseDown}
-          onWheel={handleWheel}
           onClick={() => setSelectedNode(null)}
-          style={{ cursor: isPanning ? 'grabbing' : (dragging || draggingSubnet) ? 'grabbing' : 'grab' }}
+          style={{
+            cursor: isPanning ? 'grabbing' : (dragging || draggingSubnet) ? 'grabbing' : 'grab',
+            touchAction: 'none',
+          }}
         >
           <g transform={`translate(${pan.x}, ${pan.y}) scale(${zoom})`}>
             {/* Grid dots */}

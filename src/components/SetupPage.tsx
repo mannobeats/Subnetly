@@ -110,6 +110,7 @@ export default function SetupPage({ setupTokenRequired, onSetupComplete }: Setup
               placeholder="Your name"
               required
               autoFocus
+              autoComplete="name"
               className="h-9 text-[13px]"
             />
           </div>
@@ -123,6 +124,7 @@ export default function SetupPage({ setupTokenRequired, onSetupComplete }: Setup
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
               required
+              autoComplete="email"
               className="h-9 text-[13px]"
             />
           </div>
@@ -137,6 +139,7 @@ export default function SetupPage({ setupTokenRequired, onSetupComplete }: Setup
               placeholder="At least 10 characters"
               required
               minLength={10}
+              autoComplete="new-password"
               className="h-9 text-[13px]"
             />
           </div>
@@ -151,6 +154,7 @@ export default function SetupPage({ setupTokenRequired, onSetupComplete }: Setup
               placeholder="Confirm your password"
               required
               minLength={10}
+              autoComplete="new-password"
               className="h-9 text-[13px]"
             />
           </div>
@@ -164,6 +168,7 @@ export default function SetupPage({ setupTokenRequired, onSetupComplete }: Setup
                 onChange={(e) => setSetupToken(e.target.value)}
                 placeholder="Enter setup token"
                 required
+                autoComplete="one-time-code"
                 className="h-9 text-[13px]"
               />
             </div>
@@ -177,4 +182,3 @@ export default function SetupPage({ setupTokenRequired, onSetupComplete }: Setup
     </div>
   )
 }
-
