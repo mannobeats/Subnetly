@@ -69,10 +69,10 @@ npm install
 
 Create/update `.env` with at least:
 
-You can start from `example.env`:
+You can start from `.env.example`:
 
 ```bash
-cp example.env .env
+cp .env.example .env
 ```
 
 ```env

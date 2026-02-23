@@ -1,7 +1,10 @@
 'use client'
 
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
-import { Wifi, Server, Cpu, Database, Monitor, Network, Share2, ZoomIn, ZoomOut, Maximize2, Layers, RotateCcw } from 'lucide-react'
+import { Wifi, Server, Cpu, Database, Monitor, Share2 } from 'lucide-react'
+import TopologyControls from '@/components/topology/TopologyControls'
+import TopologyLegend from '@/components/topology/TopologyLegend'
+import TopologyDetailPanel from '@/components/topology/TopologyDetailPanel'
 
 interface TopoDevice {
   id: string
@@ -102,6 +105,7 @@ const TopologyView = ({ selectedCategory = null }: TopologyViewProps) => {
   const [panStart, setPanStart] = useState({ x: 0, y: 0 })
   const [showSubnetClouds, setShowSubnetClouds] = useState(true)
   const svgRef = useRef<SVGSVGElement>(null)
+  const dragMovedRef = useRef(false)
 
   useEffect(() => {
     fetch('/api/topology')
@@ -288,6 +292,7 @@ const TopologyView = ({ selectedCategory = null }: TopologyViewProps) => {
     const pos = positions.get(nodeId)
     if (!pos) return
     const pt = svgPoint(e.clientX, e.clientY)
+    dragMovedRef.current = false
     setDragging(nodeId)
     setDragOffset({ x: pt.x - pos.x, y: pt.y - pos.y })
   }, [positions, svgPoint])
@@ -296,12 +301,14 @@ const TopologyView = ({ selectedCategory = null }: TopologyViewProps) => {
   const handleSubnetMouseDown = useCallback((e: React.MouseEvent, subnetId: string) => {
     e.stopPropagation()
     const pt = svgPoint(e.clientX, e.clientY)
+    dragMovedRef.current = false
     setDraggingSubnet(subnetId)
     setDragOffset({ x: pt.x, y: pt.y })
   }, [svgPoint])
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (dragging) {
+      dragMovedRef.current = true
       const pt = svgPoint(e.clientX, e.clientY)
       setPosOverrides(prev => {
         const next = new Map(prev)
@@ -309,6 +316,7 @@ const TopologyView = ({ selectedCategory = null }: TopologyViewProps) => {
         return next
       })
     } else if (draggingSubnet) {
+      dragMovedRef.current = true
       const pt = svgPoint(e.clientX, e.clientY)
       const dx = pt.x - dragOffset.x
       const dy = pt.y - dragOffset.y
@@ -346,11 +354,47 @@ const TopologyView = ({ selectedCategory = null }: TopologyViewProps) => {
     }
   }, [pan])
 
+  const zoomAtPoint = useCallback((clientX: number, clientY: number, nextZoom: number) => {
+    if (!svgRef.current) return
+    const clampedZoom = Math.max(0.3, Math.min(3, nextZoom))
+    const rect = svgRef.current.getBoundingClientRect()
+    const localX = clientX - rect.left
+    const localY = clientY - rect.top
+    const worldX = (localX - pan.x) / zoom
+    const worldY = (localY - pan.y) / zoom
+    setZoom(clampedZoom)
+    setPan({
+      x: localX - worldX * clampedZoom,
+      y: localY - worldY * clampedZoom,
+    })
+  }, [pan, zoom])
+
+  const zoomByStep = useCallback((step: number) => {
+    if (!svgRef.current) return
+    const rect = svgRef.current.getBoundingClientRect()
+    zoomAtPoint(rect.left + rect.width / 2, rect.top + rect.height / 2, zoom + step)
+  }, [zoom, zoomAtPoint])
+
   const handleWheel = useCallback((e: React.WheelEvent) => {
     e.preventDefault()
-    const delta = e.deltaY > 0 ? -0.1 : 0.1
-    setZoom(z => Math.max(0.3, Math.min(3, z + delta)))
-  }, [])
+    // Ctrl/Meta + wheel: zoom at cursor. Plain wheel: pan canvas.
+    if (e.ctrlKey || e.metaKey) {
+      const delta = e.deltaY > 0 ? -0.12 : 0.12
+      zoomAtPoint(e.clientX, e.clientY, zoom + delta)
+      return
+    }
+
+    const speed = 0.8
+    if (e.shiftKey) {
+      setPan(prev => ({ ...prev, x: prev.x - e.deltaY * speed }))
+      return
+    }
+
+    setPan(prev => ({
+      x: prev.x - e.deltaX * speed,
+      y: prev.y - e.deltaY * speed,
+    }))
+  }, [zoom, zoomAtPoint])
 
   // Center the canvas on the content
   const centerCanvas = useCallback(() => {
@@ -402,38 +446,18 @@ const TopologyView = ({ selectedCategory = null }: TopologyViewProps) => {
 
   return (
     <div className="flex gap-0 h-full relative animate-fade-in">
-      <div className="flex-1 bg-(--surface) border border-border rounded-lg overflow-auto min-h-[500px] relative">
-        {/* Zoom Controls */}
-        <div className="absolute top-3 right-3 flex items-center gap-1 bg-(--surface) border border-border rounded-lg px-2 py-1 z-10 shadow-sm">
-          <button
-            className={`flex items-center justify-center w-7 h-7 border-none bg-transparent rounded-md cursor-pointer text-(--text-slate) transition-all hover:bg-(--muted-bg-alt) hover:text-(--text) ${showSubnetClouds ? 'bg-(--blue-bg)! text-(--blue-light)!' : ''}`}
-            onClick={() => setShowSubnetClouds(v => !v)}
-            title="Toggle Subnet Groups"
-          >
-            <Layers size={14} />
-          </button>
-          <div className="w-px h-4 bg-border" />
-          <button className="flex items-center justify-center w-7 h-7 border-none bg-transparent rounded-md cursor-pointer text-(--text-slate) transition-all hover:bg-(--muted-bg-alt) hover:text-(--text)" onClick={() => setZoom(z => Math.min(3, z + 0.2))} title="Zoom In"><ZoomIn size={14} /></button>
-          <button className="flex items-center justify-center w-7 h-7 border-none bg-transparent rounded-md cursor-pointer text-(--text-slate) transition-all hover:bg-(--muted-bg-alt) hover:text-(--text)" onClick={() => setZoom(z => Math.max(0.3, z - 0.2))} title="Zoom Out"><ZoomOut size={14} /></button>
-          <button className="flex items-center justify-center w-7 h-7 border-none bg-transparent rounded-md cursor-pointer text-(--text-slate) transition-all hover:bg-(--muted-bg-alt) hover:text-(--text)" onClick={resetView} title="Center View"><Maximize2 size={14} /></button>
-          <button className="flex items-center justify-center w-7 h-7 border-none bg-transparent rounded-md cursor-pointer text-(--text-slate) transition-all hover:bg-(--muted-bg-alt) hover:text-(--text)" onClick={resetLayout} title="Reset Layout"><RotateCcw size={14} /></button>
-          <span className="text-[10px] text-(--text-light) font-medium min-w-8 text-center">{Math.round(zoom * 100)}%</span>
-        </div>
+      <div className="flex-1 bg-(--surface) border border-border rounded-lg overflow-hidden min-h-[500px] relative">
+        <TopologyControls
+          showSubnetClouds={showSubnetClouds}
+          zoom={zoom}
+          onToggleSubnetClouds={() => setShowSubnetClouds(v => !v)}
+          onZoomIn={() => zoomByStep(0.2)}
+          onZoomOut={() => zoomByStep(-0.2)}
+          onCenterView={resetView}
+          onResetLayout={resetLayout}
+        />
 
-        {/* Subnet Legend */}
-        {showSubnetClouds && subnetClouds.length > 0 && (
-          <div className="absolute top-3 left-3 flex flex-col gap-1 bg-(--surface) border border-border rounded-lg px-3 py-2 z-10 shadow-sm">
-            {subnetClouds.map(cloud => (
-              <div key={cloud.id} className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-sm shrink-0" style={{ background: cloud.color }} />
-                <span className="text-[10px] font-medium text-(--text-slate) whitespace-nowrap">
-                  {cloud.subnet.prefix}/{cloud.subnet.mask}
-                  {cloud.subnet.vlan && <span className="opacity-60"> (VLAN {cloud.subnet.vlan.vid})</span>}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
+        {showSubnetClouds && <TopologyLegend clouds={subnetClouds} />}
 
         <svg
           ref={svgRef}
@@ -443,6 +467,7 @@ const TopologyView = ({ selectedCategory = null }: TopologyViewProps) => {
           onMouseLeave={handleMouseUp}
           onMouseDown={handleCanvasMouseDown}
           onWheel={handleWheel}
+          onClick={() => setSelectedNode(null)}
           style={{ cursor: isPanning ? 'grabbing' : (dragging || draggingSubnet) ? 'grabbing' : 'grab' }}
         >
           <g transform={`translate(${pan.x}, ${pan.y}) scale(${zoom})`}>
@@ -602,7 +627,14 @@ const TopologyView = ({ selectedCategory = null }: TopologyViewProps) => {
                   key={device.id}
                   transform={`translate(${pos.x}, ${pos.y})`}
                   onMouseDown={(e) => handleMouseDown(e, device.id)}
-                  onClick={(e) => { e.stopPropagation(); setSelectedNode(isSelected ? null : device.id) }}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    if (dragMovedRef.current) {
+                      dragMovedRef.current = false
+                      return
+                    }
+                    setSelectedNode(isSelected ? null : device.id)
+                  }}
                   style={{ cursor: dragging === device.id ? 'grabbing' : 'pointer', opacity: dimmed ? 0.15 : 1, transition: 'opacity 0.3s ease' }}
                 >
                   {/* Shadow */}
@@ -658,94 +690,21 @@ const TopologyView = ({ selectedCategory = null }: TopologyViewProps) => {
         </svg>
       </div>
 
-      {/* Detail Panel */}
       {selectedDevice && (
-        <div className="w-80 bg-(--surface) border border-border rounded-lg p-5 ml-4 overflow-y-auto max-h-full animate-fade-in">
-          <div className="flex items-center gap-4 mb-5 pb-4 border-b border-border">
-            <div className="w-10 h-10 rounded-[10px] flex items-center justify-center shrink-0" style={{ background: `${categoryColors[selectedDevice.category]}14`, color: categoryColors[selectedDevice.category] }}>
-              {(() => { const I = categoryIcons[selectedDevice.category] || Monitor; return <I size={20} /> })()}
-            </div>
-            <div>
-              <h3>{selectedDevice.name}</h3>
-              <code className="text-[11px] text-(--text-slate)">{selectedDevice.ipAddress}</code>
-            </div>
-          </div>
-          <div className="flex flex-col gap-3 mb-5">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] text-(--text-muted) font-semibold uppercase">Category</span>
-              <span className="px-2 py-0.5 rounded text-[11px] font-semibold" style={{ background: `${categoryColors[selectedDevice.category]}14`, color: categoryColors[selectedDevice.category] }}>{selectedDevice.category}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] text-(--text-muted) font-semibold uppercase">Status</span>
-              <span className={`px-2 py-0.5 rounded text-[11px] font-semibold ${selectedDevice.status === 'active' ? 'bg-(--green-bg) text-(--green)' : 'bg-(--orange-bg) text-(--orange)'}`}>{selectedDevice.status}</span>
-            </div>
-            {selectedDevice.platform && (
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] text-(--text-muted) font-semibold uppercase">Platform</span>
-                <span className="text-xs">{selectedDevice.platform}</span>
-              </div>
-            )}
-            {selectedDevice.deviceType && (
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] text-(--text-muted) font-semibold uppercase">Hardware</span>
-                <span className="text-xs">{selectedDevice.deviceType.manufacturer.name} {selectedDevice.deviceType.model}</span>
-              </div>
-            )}
-            {/* Show subnet info */}
-            {(() => {
-              const subId = deviceSubnetMap.get(selectedDevice.id)
-              const sub = subId ? subnets.find(s => s.id === subId) : null
-              if (!sub) return null
-              return (
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] text-(--text-muted) font-semibold uppercase">Network</span>
-                  <span className="text-xs">{sub.prefix}/{sub.mask}{sub.vlan ? ` (VLAN ${sub.vlan.vid})` : ''}</span>
-                </div>
-              )
-            })()}
-          </div>
-          {selectedDevice.interfaces.length > 0 && (
-            <div className="mt-4 pt-4 border-t border-border">
-              <h4>Interfaces</h4>
-              {selectedDevice.interfaces.map(iface => (
-                <div key={iface.id} className="flex items-center gap-2 py-1 text-xs">
-                  <Network size={12} color="#64748b" />
-                  <span>{iface.name}</span>
-                </div>
-              ))}
-            </div>
-          )}
-          {selectedDevice.services.length > 0 && (
-            <div className="mt-4 pt-4 border-t border-border">
-              <h4>Services</h4>
-              {selectedDevice.services.map(s => (
-                <div key={s.id} className="flex items-center justify-between py-1">
-                  <span className="text-xs font-medium">{s.name}</span>
-                  <code className="text-[10px] bg-(--muted-bg) px-1.5 py-0.5 rounded">{s.protocol}:{s.ports}</code>
-                </div>
-              ))}
-            </div>
-          )}
-          {/* Connected devices on same subnet */}
-          {(() => {
+        <TopologyDetailPanel
+          selectedDevice={selectedDevice}
+          categoryColors={categoryColors}
+          categoryIcons={categoryIcons}
+          selectedSubnet={(deviceSubnetMap.get(selectedDevice.id) ? subnets.find(s => s.id === deviceSubnetMap.get(selectedDevice.id)) : null) || null}
+          peers={(() => {
             const subId = deviceSubnetMap.get(selectedDevice.id)
-            if (!subId) return null
-            const peers = (subnetGroups.groups.get(subId) || []).filter(d => d.id !== selectedDevice.id)
-            if (peers.length === 0) return null
-            return (
-              <div className="mt-4 pt-4 border-t border-border">
-                <h4>Same Network</h4>
-                {peers.map(p => (
-                  <div key={p.id} className="flex items-center gap-2 py-1 text-xs cursor-pointer" onClick={() => setSelectedNode(p.id)}>
-                    <Server size={12} color="#64748b" />
-                    <span>{p.name}</span>
-                    <code className="text-[9px] text-(--text-light) ml-auto">{p.ipAddress}</code>
-                  </div>
-                ))}
-              </div>
-            )
+            if (!subId) return []
+            return (subnetGroups.groups.get(subId) || [])
+              .filter(d => d.id !== selectedDevice.id)
+              .map(d => ({ id: d.id, name: d.name, ipAddress: d.ipAddress }))
           })()}
-        </div>
+          onSelectPeer={(id) => setSelectedNode(id)}
+        />
       )}
     </div>
   )
