@@ -235,6 +235,8 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
   const [editingSubnetId, setEditingSubnetId] = useState<string | null>(null)
   const [rangeForm, setRangeForm] = useState(emptyRangeForm)
   const [editingRangeId, setEditingRangeId] = useState<string | null>(null)
+  const [isCustomSubnetRole, setIsCustomSubnetRole] = useState(false)
+  const [isCustomRangeRole, setIsCustomRangeRole] = useState(false)
   const [ipForm, setIpForm] = useState(emptyIpForm)
 
   const [editingIpId, setEditingIpId] = useState<string | null>(null)
@@ -338,18 +340,28 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
   }, [customSubnetTemplates])
 
   const rangeRoleSuggestions = useMemo(() => {
-    const roles = new Set<string>(ipRangeRoleCategories.map((role) => role.slug))
+    const roles = new Set<string>(ipRangeRoleCategories.map((role) => role.name))
     subnets.forEach((s) => s.ipRanges.forEach((r) => roles.add(r.role)))
     rangeSchemes.forEach((scheme) => scheme.entries.forEach((entry) => roles.add(entry.role)))
     return Array.from(roles)
   }, [subnets, rangeSchemes, ipRangeRoleCategories])
 
   const subnetRoleSuggestions = useMemo(() => {
-    const roles = new Set<string>(subnetRoleCategories.map((role) => role.slug))
+    const roles = new Set<string>(subnetRoleCategories.map((role) => role.name))
     subnets.forEach((s) => { if (s.role) roles.add(s.role) })
     subnetTemplateOptions.forEach((t) => { if (t.role) roles.add(t.role) })
     return Array.from(roles)
   }, [subnets, subnetTemplateOptions, subnetRoleCategories])
+
+  const persistCustomRoleCategory = useCallback(async (name: string, type: 'subnet_role' | 'ip_range_role') => {
+    const trimmed = name.trim()
+    if (!trimmed) return
+    await fetch('/api/categories', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: trimmed, color: '#5e6670', icon: 'tag', type }),
+    }).catch(() => undefined)
+  }, [])
 
   // Build a map of IP address -> device for quick lookup
   const ipToDevice = useMemo(() => {
@@ -485,17 +497,28 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
   // Subnet CRUD
   const handleSaveSubnet = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    const normalizedRole = subnetForm.role.trim()
+    if (isCustomSubnetRole && !normalizedRole) {
+      alert('Enter a custom subnet role or choose a predefined role.')
+      return
+    }
+
+    if (isCustomSubnetRole && normalizedRole) {
+      await persistCustomRoleCategory(normalizedRole, 'subnet_role')
+    }
+
+    const method = editingSubnetId ? 'PATCH' : 'POST'
+    const url = editingSubnetId ? `/api/subnets/${editingSubnetId}` : '/api/subnets'
     const payload = {
       prefix: subnetForm.prefix,
-      mask: parseInt(subnetForm.mask),
+      mask: parseInt(subnetForm.mask, 10),
       description: subnetForm.description || null,
       gateway: subnetForm.gateway || null,
       vlanId: subnetForm.vlanId || null,
-      role: subnetForm.role || null,
+      role: normalizedRole || null,
       status: 'active',
     }
-    const method = editingSubnetId ? 'PATCH' : 'POST'
-    const url = editingSubnetId ? `/api/subnets/${editingSubnetId}` : '/api/subnets'
     const res = await fetch(url, {
       method,
       headers: { 'Content-Type': 'application/json' },
@@ -525,6 +548,7 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
       setSubnetModalOpen(false)
       setSubnetForm(emptySubnetForm)
       setEditingSubnetId(null)
+      setIsCustomSubnetRole(false)
       setSaveAsTemplate(false)
       setTemplateName('')
       fetchData()
@@ -543,12 +567,14 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
       vlanId: subnet.vlan?.id || '',
       role: subnet.role || '',
     })
+    setIsCustomSubnetRole(!!subnet.role && !subnetRoleSuggestions.includes(subnet.role))
     setSubnetModalOpen(true)
   }
 
   const openCreateSubnet = () => {
     setEditingSubnetId(null)
     setSubnetForm(emptySubnetForm)
+    setIsCustomSubnetRole(false)
     setSelectedSubnetTemplate('')
     setSaveAsTemplate(false)
     setTemplateName('')
@@ -652,6 +678,17 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
   const handleSaveRange = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!subnet) return
+
+    const normalizedRole = rangeForm.role.trim()
+    if (isCustomRangeRole && !normalizedRole) {
+      alert('Enter a custom range role or choose a predefined role.')
+      return
+    }
+
+    if (isCustomRangeRole && normalizedRole) {
+      await persistCustomRoleCategory(normalizedRole, 'ip_range_role')
+    }
+
     const base = subnet.prefix.split('.').slice(0, 3).join('.')
     const method = editingRangeId ? 'PATCH' : 'POST'
     const url = editingRangeId ? `/api/ranges/${editingRangeId}` : '/api/ranges'
@@ -662,7 +699,7 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
         startAddr: `${base}.${rangeForm.startOctet}`,
         endAddr: `${base}.${rangeForm.endOctet}`,
         subnetId: subnet.id,
-        role: rangeForm.role,
+        role: normalizedRole,
         description: rangeForm.description || null,
       }),
     })
@@ -670,6 +707,7 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
       setRangeModalOpen(false)
       setRangeForm(emptyRangeForm)
       setEditingRangeId(null)
+      setIsCustomRangeRole(false)
       fetchData()
     } else { alert(editingRangeId ? 'Failed to update range' : 'Failed to create range') }
   }
@@ -687,11 +725,13 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
       role: range.role,
       description: range.description || '',
     })
+    setIsCustomRangeRole(!!range.role && !rangeRoleSuggestions.includes(range.role))
     setRangeModalOpen(true)
   }
 
   const openCreateRange = () => {
     setEditingRangeId(null)
+    setIsCustomRangeRole(false)
     if (dynamicRangeStartEnabled && subnet) {
       setRangeForm({ ...emptyRangeForm, startOctet: getSuggestedRangeStartOctet(subnet, devices) })
     } else {
@@ -839,7 +879,7 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
 
   function renderSubnetModal() {
     return (
-      <Dialog open={subnetModalOpen} onOpenChange={(open) => { if (!open) { setSubnetModalOpen(false); setEditingSubnetId(null) } }}>
+      <Dialog open={subnetModalOpen} onOpenChange={(open) => { if (!open) { setSubnetModalOpen(false); setEditingSubnetId(null); setIsCustomSubnetRole(false) } }}>
         <DialogContent className="max-w-[720px]">
           <DialogHeader>
             <DialogTitle>{editingSubnetId ? 'Edit Subnet' : 'Create Subnet'}</DialogTitle>
@@ -909,16 +949,19 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
                 <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Role</Label>
                 <select
                   className="w-full h-9 border border-border rounded bg-(--surface-alt) text-(--text) text-[13px] px-3 focus:outline-none focus:border-(--blue) focus:bg-(--surface)"
-                  value={subnetRoleSuggestions.includes(subnetForm.role) ? subnetForm.role : (subnetForm.role ? '__custom__' : '')}
+                  value={isCustomSubnetRole ? '__custom__' : subnetForm.role}
                   onChange={(e) => {
                     if (e.target.value === '') {
+                      setIsCustomSubnetRole(false)
                       setSubnetForm({ ...subnetForm, role: '' })
                       return
                     }
                     if (e.target.value === '__custom__') {
+                      setIsCustomSubnetRole(true)
                       setSubnetForm({ ...subnetForm, role: subnetRoleSuggestions.includes(subnetForm.role) ? '' : subnetForm.role })
                       return
                     }
+                    setIsCustomSubnetRole(false)
                     setSubnetForm({ ...subnetForm, role: e.target.value })
                   }}
                 >
@@ -928,7 +971,7 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
                   ))}
                   <option value="__custom__">Custom role…</option>
                 </select>
-                {(subnetForm.role && !subnetRoleSuggestions.includes(subnetForm.role)) && (
+                {isCustomSubnetRole && (
                   <Input value={subnetForm.role} onChange={e => setSubnetForm({ ...subnetForm, role: e.target.value })} placeholder="Custom subnet role" className="h-9 text-[13px]" />
                 )}
               </div>
@@ -1445,7 +1488,7 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
       {subnetModalOpen && renderSubnetModal()}
 
       {/* Range Create Modal */}
-      <Dialog open={rangeModalOpen && !!subnet} onOpenChange={(open) => { if (!open) { setRangeModalOpen(false); setEditingRangeId(null) } }}>
+      <Dialog open={rangeModalOpen && !!subnet} onOpenChange={(open) => { if (!open) { setRangeModalOpen(false); setEditingRangeId(null); setIsCustomRangeRole(false) } }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{editingRangeId ? 'Edit' : 'Add'} IP Range {editingRangeId ? '' : `to ${subnet?.prefix}/${subnet?.mask}`}</DialogTitle>
@@ -1466,16 +1509,19 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
                 <Label className="text-xs font-semibold text-muted-foreground">Role</Label>
                 <select
                   className="w-full h-9 border border-border rounded bg-(--surface-alt) text-(--text) text-[13px] px-3 focus:outline-none focus:border-(--blue) focus:bg-(--surface)"
-                  value={rangeRoleSuggestions.includes(rangeForm.role) ? rangeForm.role : (rangeForm.role ? '__custom__' : '')}
+                  value={isCustomRangeRole ? '__custom__' : rangeForm.role}
                   onChange={(e) => {
                     if (e.target.value === '') {
+                      setIsCustomRangeRole(false)
                       setRangeForm({ ...rangeForm, role: '' })
                       return
                     }
                     if (e.target.value === '__custom__') {
+                      setIsCustomRangeRole(true)
                       setRangeForm({ ...rangeForm, role: rangeRoleSuggestions.includes(rangeForm.role) ? '' : rangeForm.role })
                       return
                     }
+                    setIsCustomRangeRole(false)
                     setRangeForm({ ...rangeForm, role: e.target.value })
                   }}
                 >
@@ -1485,7 +1531,7 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
                   ))}
                   <option value="__custom__">Custom role…</option>
                 </select>
-                {(rangeForm.role && !rangeRoleSuggestions.includes(rangeForm.role)) && (
+                {isCustomRangeRole && (
                   <Input value={rangeForm.role} onChange={e => setRangeForm({ ...rangeForm, role: e.target.value })} placeholder="Custom range role" className="h-9 text-[13px]" />
                 )}
               </div>

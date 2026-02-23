@@ -64,6 +64,7 @@ function PlatformOptionsTab({ options, onOptionsChange }: { options?: PlatformOp
 function PlatformOptionGroup({ title, description, type, entries, onOptionsChange }: { title: string, description: string, type: string, entries: CustomCategory[], onOptionsChange?: () => void }) {
   const [newName, setNewName] = useState('')
   const [newColor, setNewColor] = useState('#5e6670')
+  const [deleteTarget, setDeleteTarget] = useState<CustomCategory | null>(null)
 
   const handleCreate = async () => {
     if (!newName.trim()) return
@@ -76,9 +77,10 @@ function PlatformOptionGroup({ title, description, type, entries, onOptionsChang
     onOptionsChange?.()
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm(`Delete option from ${title}?`)) return
-    await fetch(`/api/categories/${id}`, { method: 'DELETE' })
+  const handleDelete = async () => {
+    if (!deleteTarget) return
+    await fetch(`/api/categories/${deleteTarget.id}`, { method: 'DELETE' })
+    setDeleteTarget(null)
     onOptionsChange?.()
   }
 
@@ -109,13 +111,31 @@ function PlatformOptionGroup({ title, description, type, entries, onOptionsChang
             <div key={entry.id} className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md border border-border bg-(--surface-alt) text-[12px]">
               <span className="w-2 h-2 rounded-full" style={{ background: entry.color }} />
               <span>{entry.name}</span>
-              <button className="text-(--red) hover:text-(--red)" onClick={() => handleDelete(entry.id)} title="Delete option">
+              <button className="text-(--red) hover:text-(--red)" onClick={() => setDeleteTarget(entry)} title="Delete option">
                 <Trash2 size={12} />
               </button>
             </div>
           ))}
         </div>
       )}
+
+      <Dialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null) }}>
+        <DialogContent className="max-w-[420px] text-center">
+          <DialogHeader className="flex flex-col items-center">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-(--red-bg-subtle) text-(--red)">
+              <Trash2 size={22} />
+            </div>
+            <DialogTitle className="text-lg font-semibold">Delete option?</DialogTitle>
+            <DialogDescription className="mt-2">
+              Remove <strong>{deleteTarget?.name}</strong> from <strong>{title}</strong>. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex justify-center gap-4 sm:justify-center">
+            <Button type="button" variant="outline" onClick={() => setDeleteTarget(null)}>Cancel</Button>
+            <Button type="button" variant="destructive" onClick={handleDelete}>Delete</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
