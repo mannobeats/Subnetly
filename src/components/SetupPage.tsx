@@ -89,7 +89,7 @@ export default function SetupPage({ setupTokenRequired, onSetupComplete }: Setup
         {setupTokenRequired && (
           <div className="mb-6 flex gap-2 rounded-md border border-(--info-border) bg-(--blue-bg) p-3 text-xs text-(--info-text)">
             <ShieldCheck size={14} className="mt-0.5 shrink-0" />
-            <span>This deployment requires a setup token for first account creation.</span>
+            <span>This deployment requires an initial setup token for first account creation.</span>
           </div>
         )}
 
@@ -166,7 +166,7 @@ export default function SetupPage({ setupTokenRequired, onSetupComplete }: Setup
                 id="setup-token"
                 value={setupToken}
                 onChange={(e) => setSetupToken(e.target.value)}
-                placeholder="Enter setup token"
+                placeholder="Enter initial setup token"
                 required
                 autoComplete="one-time-code"
                 className="h-9 text-[13px]"

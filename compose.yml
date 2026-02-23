@@ -21,13 +21,14 @@ services:
       db:
         condition: service_healthy
     ports:
-      - "3000:3000"
+      - "${APP_PORT:-3000}:3000"
     environment:
-      DATABASE_URL: "postgresql://subnetly:subnetly@db:5432/subnetly?schema=public"
+      DATABASE_URL: "${DATABASE_URL:-postgresql://subnetly:subnetly@db:5432/subnetly?schema=public}"
       NODE_ENV: production
       BETTER_AUTH_SECRET: "${BETTER_AUTH_SECRET:?set-in-.env}"
-      BETTER_AUTH_URL: "${BETTER_AUTH_URL:-http://localhost:3000}"
-      SETUP_TOKEN: "${SETUP_TOKEN:-}"
+      BETTER_AUTH_URL: "${BETTER_AUTH_URL:-}"
+      BETTER_AUTH_TRUSTED_ORIGINS: "${BETTER_AUTH_TRUSTED_ORIGINS:-}"
+      INITIAL_SETUP_TOKEN: "${INITIAL_SETUP_TOKEN:-}"
       HEALTHCHECK_ALLOW_SELF_SIGNED: "${HEALTHCHECK_ALLOW_SELF_SIGNED:-false}"
 
 volumes:

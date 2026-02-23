@@ -6,6 +6,10 @@ function normalize(value: unknown) {
   return typeof value === 'string' ? value.trim() : ''
 }
 
+function getSetupToken() {
+  return normalize(process.env.INITIAL_SETUP_TOKEN)
+}
+
 export async function POST(request: Request) {
   try {
     const existingUsers = await prisma.user.count()
@@ -28,7 +32,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ setup: false, error: 'Password must be at least 10 characters' }, { status: 400 })
     }
 
-    const setupToken = normalize(process.env.SETUP_TOKEN)
+    const setupToken = getSetupToken()
     if (setupToken) {
       const providedToken = normalize(request.headers.get('x-setup-token') || body?.setupToken)
       if (!providedToken || providedToken !== setupToken) {
@@ -67,13 +71,13 @@ export async function GET() {
   try {
     const userCount = await prisma.user.count()
     const needsSetup = userCount === 0
-    const setupTokenRequired = needsSetup && Boolean(normalize(process.env.SETUP_TOKEN))
+    const setupTokenRequired = needsSetup && Boolean(getSetupToken())
     return NextResponse.json({
       needsSetup,
       setupEnabled: needsSetup,
       setupTokenRequired,
     })
   } catch {
-    return NextResponse.json({ needsSetup: true, setupEnabled: true, setupTokenRequired: Boolean(normalize(process.env.SETUP_TOKEN)) })
+    return NextResponse.json({ needsSetup: true, setupEnabled: true, setupTokenRequired: Boolean(getSetupToken()) })
   }
 }
