@@ -155,6 +155,63 @@ function gridColumns(mask: number): number {
   return 16                   // /24 and larger → 16 cols
 }
 
+function getSuggestedRangeStartOctet(subnet: SubnetWithRelations, devices: Device[]): string {
+  const parts = subnet.prefix.split('.').map(Number)
+  if (parts.length !== 4 || parts.some(Number.isNaN)) return ''
+
+  const maskBits = ((0xffffffff << (32 - subnet.mask)) >>> 0)
+  const subnetInt = ipToInt(subnet.prefix)
+  const networkInt = subnetInt & maskBits
+  const blockSize = subnetSize(subnet.mask)
+  const broadcastInt = (networkInt + blockSize - 1) >>> 0
+
+  const hostMinInt = subnet.mask < 31 ? (networkInt + 1) >>> 0 : networkInt
+  const hostMaxInt = subnet.mask < 31 ? (broadcastInt - 1) >>> 0 : broadcastInt
+  if (hostMinInt > hostMaxInt) return ''
+
+  const occupied = new Set<number>()
+
+  // Existing ranges
+  subnet.ipRanges.forEach((range) => {
+    const start = ipToInt(range.startAddr)
+    const end = ipToInt(range.endAddr)
+    const from = Math.max(hostMinInt, Math.min(start, end))
+    const to = Math.min(hostMaxInt, Math.max(start, end))
+    for (let value = from; value <= to; value += 1) occupied.add(value)
+  })
+
+  // Assigned IPAM records
+  subnet.ipAddresses.forEach((ip) => {
+    const value = ipToInt(ip.address)
+    if (value >= hostMinInt && value <= hostMaxInt) occupied.add(value)
+  })
+
+  // Device-only addresses within the same subnet
+  devices.forEach((device) => {
+    if (!device.ipAddress) return
+    const value = ipToInt(device.ipAddress)
+    if ((value & maskBits) === networkInt && value >= hostMinInt && value <= hostMaxInt) {
+      occupied.add(value)
+    }
+  })
+
+  // Gateway should never be suggested as range start
+  if (subnet.gateway) {
+    const gatewayInt = ipToInt(subnet.gateway)
+    if (gatewayInt >= hostMinInt && gatewayInt <= hostMaxInt) {
+      occupied.add(gatewayInt)
+    }
+  }
+
+  for (let value = hostMinInt; value <= hostMaxInt; value += 1) {
+    if (!occupied.has(value)) {
+      return String(value & 255)
+    }
+  }
+
+  return ''
+}
+
 const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) => {
   const [subnets, setSubnets] = useState<SubnetWithRelations[]>([])
   const [selectedSubnet, setSelectedSubnet] = useState<string | null>(null)
@@ -166,6 +223,8 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
   const [devices, setDevices] = useState<Device[]>([])
   const [customSubnetTemplates, setCustomSubnetTemplates] = useState<PersistedSubnetTemplate[]>([])
   const [rangeSchemes, setRangeSchemes] = useState<IPRangeScheme[]>([])
+  const [subnetRoleCategories, setSubnetRoleCategories] = useState<Array<{ id: string; name: string; slug: string }>>([])
+  const [ipRangeRoleCategories, setIpRangeRoleCategories] = useState<Array<{ id: string; name: string; slug: string }>>([])
 
   // Modals
   const [subnetModalOpen, setSubnetModalOpen] = useState(false)
@@ -200,12 +259,16 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
       fetch('/api/devices').then(r => r.json()),
       fetch('/api/subnet-templates').then(r => r.ok ? r.json() : []),
       fetch('/api/range-schemes').then(r => r.ok ? r.json() : []),
-    ]).then(([subnetData, vlanData, deviceData, subnetTemplateData, rangeSchemeData]) => {
+      fetch('/api/categories?type=subnet_role').then(r => r.ok ? r.json() : []),
+      fetch('/api/categories?type=ip_range_role').then(r => r.ok ? r.json() : []),
+    ]).then(([subnetData, vlanData, deviceData, subnetTemplateData, rangeSchemeData, subnetRoleData, ipRangeRoleData]) => {
       setSubnets(subnetData)
       setVlans(vlanData)
       setDevices(deviceData)
       setCustomSubnetTemplates(Array.isArray(subnetTemplateData) ? subnetTemplateData : [])
       setRangeSchemes(Array.isArray(rangeSchemeData) ? rangeSchemeData : [])
+      setSubnetRoleCategories(Array.isArray(subnetRoleData) ? subnetRoleData : [])
+      setIpRangeRoleCategories(Array.isArray(ipRangeRoleData) ? ipRangeRoleData : [])
       setSelectedSubnet(prev => {
         if (prev && subnetData.some((s: SubnetWithRelations) => s.id === prev)) return prev
         return subnetData.length > 0 ? subnetData[0].id : null
@@ -275,18 +338,18 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
   }, [customSubnetTemplates])
 
   const rangeRoleSuggestions = useMemo(() => {
-    const roles = new Set<string>(['dhcp', 'reserved', 'infrastructure', 'general'])
+    const roles = new Set<string>(ipRangeRoleCategories.map((role) => role.slug))
     subnets.forEach((s) => s.ipRanges.forEach((r) => roles.add(r.role)))
     rangeSchemes.forEach((scheme) => scheme.entries.forEach((entry) => roles.add(entry.role)))
     return Array.from(roles)
-  }, [subnets, rangeSchemes])
+  }, [subnets, rangeSchemes, ipRangeRoleCategories])
 
   const subnetRoleSuggestions = useMemo(() => {
-    const roles = new Set<string>(['production', 'management', 'iot', 'guest'])
+    const roles = new Set<string>(subnetRoleCategories.map((role) => role.slug))
     subnets.forEach((s) => { if (s.role) roles.add(s.role) })
     subnetTemplateOptions.forEach((t) => { if (t.role) roles.add(t.role) })
     return Array.from(roles)
-  }, [subnets, subnetTemplateOptions])
+  }, [subnets, subnetTemplateOptions, subnetRoleCategories])
 
   // Build a map of IP address -> device for quick lookup
   const ipToDevice = useMemo(() => {
@@ -630,18 +693,7 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
   const openCreateRange = () => {
     setEditingRangeId(null)
     if (dynamicRangeStartEnabled && subnet) {
-      const occupied = new Set<number>()
-      subnet.ipRanges.forEach((range) => {
-        const start = parseInt(range.startAddr.split('.').pop() || '0', 10)
-        const end = parseInt(range.endAddr.split('.').pop() || '0', 10)
-        const from = Math.max(1, Math.min(start, end))
-        const to = Math.min(254, Math.max(start, end))
-        for (let i = from; i <= to; i += 1) occupied.add(i)
-      })
-
-      let nextStart = 1
-      while (nextStart <= 254 && occupied.has(nextStart)) nextStart += 1
-      setRangeForm({ ...emptyRangeForm, startOctet: nextStart <= 254 ? String(nextStart) : '' })
+      setRangeForm({ ...emptyRangeForm, startOctet: getSuggestedRangeStartOctet(subnet, devices) })
     } else {
       setRangeForm(emptyRangeForm)
     }
@@ -855,12 +907,30 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
             <div className="grid grid-cols-2 gap-5">
               <div className="space-y-1.5">
                 <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Role</Label>
-                <Input list="ipam-subnet-role-options" value={subnetForm.role} onChange={e => setSubnetForm({ ...subnetForm, role: e.target.value })} placeholder="e.g. production, management, iot" className="h-9 text-[13px]" />
-                <datalist id="ipam-subnet-role-options">
+                <select
+                  className="w-full h-9 border border-border rounded bg-(--surface-alt) text-(--text) text-[13px] px-3 focus:outline-none focus:border-(--blue) focus:bg-(--surface)"
+                  value={subnetRoleSuggestions.includes(subnetForm.role) ? subnetForm.role : (subnetForm.role ? '__custom__' : '')}
+                  onChange={(e) => {
+                    if (e.target.value === '') {
+                      setSubnetForm({ ...subnetForm, role: '' })
+                      return
+                    }
+                    if (e.target.value === '__custom__') {
+                      setSubnetForm({ ...subnetForm, role: subnetRoleSuggestions.includes(subnetForm.role) ? '' : subnetForm.role })
+                      return
+                    }
+                    setSubnetForm({ ...subnetForm, role: e.target.value })
+                  }}
+                >
+                  <option value="">None</option>
                   {subnetRoleSuggestions.map((role) => (
-                    <option key={role} value={role} />
+                    <option key={role} value={role}>{role}</option>
                   ))}
-                </datalist>
+                  <option value="__custom__">Custom role…</option>
+                </select>
+                {(subnetForm.role && !subnetRoleSuggestions.includes(subnetForm.role)) && (
+                  <Input value={subnetForm.role} onChange={e => setSubnetForm({ ...subnetForm, role: e.target.value })} placeholder="Custom subnet role" className="h-9 text-[13px]" />
+                )}
               </div>
               <div className="space-y-1.5">
                 <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Description</Label>
@@ -1394,12 +1464,30 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
             <div className="grid grid-cols-2 gap-5">
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold text-muted-foreground">Role</Label>
-                <Input list="ipam-range-role-options" value={rangeForm.role} onChange={e => setRangeForm({ ...rangeForm, role: e.target.value })} placeholder="e.g. dhcp, hypervisors, core-services" className="h-9 text-[13px]" />
-                <datalist id="ipam-range-role-options">
+                <select
+                  className="w-full h-9 border border-border rounded bg-(--surface-alt) text-(--text) text-[13px] px-3 focus:outline-none focus:border-(--blue) focus:bg-(--surface)"
+                  value={rangeRoleSuggestions.includes(rangeForm.role) ? rangeForm.role : (rangeForm.role ? '__custom__' : '')}
+                  onChange={(e) => {
+                    if (e.target.value === '') {
+                      setRangeForm({ ...rangeForm, role: '' })
+                      return
+                    }
+                    if (e.target.value === '__custom__') {
+                      setRangeForm({ ...rangeForm, role: rangeRoleSuggestions.includes(rangeForm.role) ? '' : rangeForm.role })
+                      return
+                    }
+                    setRangeForm({ ...rangeForm, role: e.target.value })
+                  }}
+                >
+                  <option value="">None</option>
                   {rangeRoleSuggestions.map((role) => (
-                    <option key={role} value={role} />
+                    <option key={role} value={role}>{role}</option>
                   ))}
-                </datalist>
+                  <option value="__custom__">Custom role…</option>
+                </select>
+                {(rangeForm.role && !rangeRoleSuggestions.includes(rangeForm.role)) && (
+                  <Input value={rangeForm.role} onChange={e => setRangeForm({ ...rangeForm, role: e.target.value })} placeholder="Custom range role" className="h-9 text-[13px]" />
+                )}
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold text-muted-foreground">Description</Label>

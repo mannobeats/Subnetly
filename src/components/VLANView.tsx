@@ -30,12 +30,13 @@ interface VLANViewProps {
   searchTerm?: string
   selectedRole?: string | null
   vlanRoles?: CustomCategory[]
+  vlanStatuses?: CustomCategory[]
   highlightId?: string | null
 }
 
 const emptyForm = { vid: '', name: '', status: 'active', role: '', description: '' }
 
-const VLANView = ({ searchTerm = '', selectedRole = null, vlanRoles = [], highlightId = null }: VLANViewProps) => {
+const VLANView = ({ searchTerm = '', selectedRole = null, vlanRoles = [], vlanStatuses = [], highlightId = null }: VLANViewProps) => {
   const [vlans, setVlans] = useState<VLANData[]>([])
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
@@ -240,9 +241,15 @@ const VLANView = ({ searchTerm = '', selectedRole = null, vlanRoles = [], highli
               <div>
                 <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Status</Label>
                 <select className="w-full h-9 border border-border rounded bg-(--surface-alt) text-(--text) text-[13px] px-3 focus:outline-none focus:border-(--blue) focus:bg-(--surface)" value={form.status} onChange={e => setForm({ ...form, status: e.target.value })}>
-                  <option value="active">Active</option>
-                  <option value="reserved">Reserved</option>
-                  <option value="deprecated">Deprecated</option>
+                  {vlanStatuses.length > 0 ? vlanStatuses.map((status) => (
+                    <option key={status.id} value={status.slug}>{status.name}</option>
+                  )) : (
+                    <>
+                      <option value="active">Active</option>
+                      <option value="reserved">Reserved</option>
+                      <option value="deprecated">Deprecated</option>
+                    </>
+                  )}
                 </select>
               </div>
             </div>

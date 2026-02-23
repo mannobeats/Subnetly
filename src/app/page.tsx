@@ -41,14 +41,32 @@ export default function Home() {
   const [activeSiteId, setActiveSiteId] = useState<string | null>(null)
   const [categories, setCategories] = useState<CustomCategory[]>([])
   const [vlanRoles, setVlanRoles] = useState<CustomCategory[]>([])
+  const [deviceStatuses, setDeviceStatuses] = useState<CustomCategory[]>([])
+  const [vlanStatuses, setVlanStatuses] = useState<CustomCategory[]>([])
+  const [serviceProtocols, setServiceProtocols] = useState<CustomCategory[]>([])
+  const [serviceEnvironments, setServiceEnvironments] = useState<CustomCategory[]>([])
+  const [serviceHealthStatuses, setServiceHealthStatuses] = useState<CustomCategory[]>([])
+  const [wifiSecurities, setWifiSecurities] = useState<CustomCategory[]>([])
+  const [subnetRoles, setSubnetRoles] = useState<CustomCategory[]>([])
+  const [ipRangeRoles, setIpRangeRoles] = useState<CustomCategory[]>([])
+  const [ipAddressTypes, setIpAddressTypes] = useState<CustomCategory[]>([])
   const [siteKey, setSiteKey] = useState(0)
 
   const fetchSitesAndCategories = useCallback(async () => {
     try {
-      const [sitesRes, catsRes, rolesRes] = await Promise.all([
+      const [sitesRes, catsRes, rolesRes, deviceStatusRes, vlanStatusRes, protocolRes, envRes, healthRes, wifiSecurityRes, subnetRoleRes, ipRangeRoleRes, ipAddressTypeRes] = await Promise.all([
         fetch('/api/sites').then(r => r.json()),
         fetch('/api/categories?type=device').then(r => r.json()),
         fetch('/api/categories?type=vlan_role').then(r => r.json()),
+        fetch('/api/categories?type=device_status').then(r => r.json()),
+        fetch('/api/categories?type=vlan_status').then(r => r.json()),
+        fetch('/api/categories?type=service_protocol').then(r => r.json()),
+        fetch('/api/categories?type=service_environment').then(r => r.json()),
+        fetch('/api/categories?type=service_health').then(r => r.json()),
+        fetch('/api/categories?type=wifi_security').then(r => r.json()),
+        fetch('/api/categories?type=subnet_role').then(r => r.json()),
+        fetch('/api/categories?type=ip_range_role').then(r => r.json()),
+        fetch('/api/categories?type=ip_address_type').then(r => r.json()),
       ])
       if (sitesRes.sites) {
         setSites(sitesRes.sites)
@@ -56,6 +74,15 @@ export default function Home() {
       }
       if (Array.isArray(catsRes)) setCategories(catsRes)
       if (Array.isArray(rolesRes)) setVlanRoles(rolesRes)
+      if (Array.isArray(deviceStatusRes)) setDeviceStatuses(deviceStatusRes)
+      if (Array.isArray(vlanStatusRes)) setVlanStatuses(vlanStatusRes)
+      if (Array.isArray(protocolRes)) setServiceProtocols(protocolRes)
+      if (Array.isArray(envRes)) setServiceEnvironments(envRes)
+      if (Array.isArray(healthRes)) setServiceHealthStatuses(healthRes)
+      if (Array.isArray(wifiSecurityRes)) setWifiSecurities(wifiSecurityRes)
+      if (Array.isArray(subnetRoleRes)) setSubnetRoles(subnetRoleRes)
+      if (Array.isArray(ipRangeRoleRes)) setIpRangeRoles(ipRangeRoleRes)
+      if (Array.isArray(ipAddressTypeRes)) setIpAddressTypes(ipAddressTypeRes)
     } catch { /* ignore */ }
   }, [])
 
@@ -615,6 +642,9 @@ export default function Home() {
         onCreateSite={handleCreateSite}
         categories={categories}
         vlanRoles={vlanRoles}
+        serviceProtocols={serviceProtocols}
+        wifiSecurities={wifiSecurities}
+        ipAddressTypes={ipAddressTypes}
       />
 
       <div className="flex-1 flex flex-col overflow-hidden bg-(--bg)">
@@ -636,12 +666,12 @@ export default function Home() {
         {activeView === 'dashboard' && <div className="flex-1 overflow-auto p-4 px-6" key={`dash-${siteKey}`}><DashboardView categories={categories} /></div>}
         {activeView === 'devices' && renderDevicesView()}
         {activeView === 'ipam' && <div className="flex-1 overflow-auto p-4 px-6" key={`ipam-${siteKey}`}><IPPlannerView searchTerm={searchTerm} selectedIpFilter={selectedIpFilter} /></div>}
-        {activeView === 'vlans' && <div className="flex-1 overflow-auto p-4 px-6" key={`vlans-${siteKey}`}><VLANView searchTerm={searchTerm} selectedRole={selectedVlanRole} vlanRoles={vlanRoles} highlightId={highlightId} /></div>}
-        {activeView === 'wifi' && <div className="flex-1 overflow-auto p-4 px-6" key={`wifi-${siteKey}`}><WiFiView searchTerm={searchTerm} selectedSecurityFilter={selectedServiceFilter} highlightId={highlightId} /></div>}
+        {activeView === 'vlans' && <div className="flex-1 overflow-auto p-4 px-6" key={`vlans-${siteKey}`}><VLANView searchTerm={searchTerm} selectedRole={selectedVlanRole} vlanRoles={vlanRoles} vlanStatuses={vlanStatuses} highlightId={highlightId} /></div>}
+        {activeView === 'wifi' && <div className="flex-1 overflow-auto p-4 px-6" key={`wifi-${siteKey}`}><WiFiView searchTerm={searchTerm} selectedSecurityFilter={selectedServiceFilter} securityOptions={wifiSecurities} highlightId={highlightId} /></div>}
         {activeView === 'topology' && <div className="flex-1 overflow-auto p-4 px-6" key={`topo-${siteKey}`}><TopologyView selectedCategory={selectedCategory} /></div>}
-        {activeView === 'services' && <div className="flex-1 overflow-auto p-4 px-6" key={`svc-${siteKey}`}><ServicesView searchTerm={searchTerm} selectedProtocol={selectedServiceFilter} highlightId={highlightId} /></div>}
+        {activeView === 'services' && <div className="flex-1 overflow-auto p-4 px-6" key={`svc-${siteKey}`}><ServicesView searchTerm={searchTerm} selectedProtocol={selectedServiceFilter} protocolOptions={serviceProtocols} environmentOptions={serviceEnvironments} healthStatusOptions={serviceHealthStatuses} highlightId={highlightId} /></div>}
         {activeView === 'changelog' && <div className="flex-1 overflow-auto p-4 px-6" key={`log-${siteKey}`}><ChangelogView searchTerm={searchTerm} selectedFilter={selectedChangelogFilter} /></div>}
-        {activeView === 'settings' && <div className="flex-1 overflow-auto p-4 px-6"><SettingsView activeTab={settingsTab as 'profile' | 'security' | 'notifications' | 'application' | 'data' | 'about' | 'categories' | 'sites' | 'vlan-roles'} categories={categories} vlanRoles={vlanRoles} onCategoriesChange={fetchSitesAndCategories} sites={sites} activeSiteId={activeSiteId} onSitesChange={fetchSitesAndCategories} /></div>}
+        {activeView === 'settings' && <div className="flex-1 overflow-auto p-4 px-6"><SettingsView activeTab={settingsTab as 'profile' | 'security' | 'notifications' | 'application' | 'data' | 'about' | 'categories' | 'sites' | 'vlan-roles' | 'platform-options'} categories={categories} vlanRoles={vlanRoles} platformOptions={{ deviceStatuses, vlanStatuses, serviceProtocols, serviceEnvironments, serviceHealthStatuses, wifiSecurities, subnetRoles, ipRangeRoles, ipAddressTypes }} onCategoriesChange={fetchSitesAndCategories} sites={sites} activeSiteId={activeSiteId} onSitesChange={fetchSitesAndCategories} /></div>}
       </div>
 
       {/* Global Command Palette (Cmd+K) */}
@@ -721,11 +751,17 @@ export default function Home() {
               <div>
                 <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Status</Label>
                 <select className="w-full h-9 border border-border rounded bg-(--surface-alt) text-(--text) text-[13px] px-3 focus:outline-none focus:border-(--blue) focus:bg-(--surface)" value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})}>
-                  <option value="active">Active</option>
-                  <option value="planned">Planned</option>
-                  <option value="staged">Staged</option>
-                  <option value="offline">Offline</option>
-                  <option value="decommissioned">Decommissioned</option>
+                  {deviceStatuses.length > 0 ? deviceStatuses.map((status) => (
+                    <option key={status.id} value={status.slug}>{status.name}</option>
+                  )) : (
+                    <>
+                      <option value="active">Active</option>
+                      <option value="planned">Planned</option>
+                      <option value="staged">Staged</option>
+                      <option value="offline">Offline</option>
+                      <option value="decommissioned">Decommissioned</option>
+                    </>
+                  )}
                 </select>
               </div>
             </div>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Globe, Radio, Plus, Edit2, Trash2, Zap, AlertTriangle, ExternalLink, Container, Server, Activity, RefreshCw } from 'lucide-react'
-import { Device } from '@/types'
+import { Device, CustomCategory } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -56,7 +56,21 @@ const emptyForm = {
   dependencies: '', tags: '', healthCheckEnabled: false,
 }
 
-const ServicesView = ({ searchTerm, selectedProtocol = null, highlightId = null }: { searchTerm: string; selectedProtocol?: string | null; highlightId?: string | null }) => {
+const ServicesView = ({
+  searchTerm,
+  selectedProtocol = null,
+  protocolOptions = [],
+  environmentOptions = [],
+  healthStatusOptions = [],
+  highlightId = null,
+}: {
+  searchTerm: string
+  selectedProtocol?: string | null
+  protocolOptions?: CustomCategory[]
+  environmentOptions?: CustomCategory[]
+  healthStatusOptions?: CustomCategory[]
+  highlightId?: string | null
+}) => {
   const [services, setServices] = useState<ServiceData[]>([])
   const [devices, setDevices] = useState<Device[]>([])
   const [loading, setLoading] = useState(true)
@@ -66,6 +80,40 @@ const ServicesView = ({ searchTerm, selectedProtocol = null, highlightId = null 
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState(emptyForm)
   const [healthChecking, setHealthChecking] = useState(false)
+
+  const protocolMap = new Map(protocolOptions.map((option) => [option.slug, option]))
+  const environmentMap = new Map(environmentOptions.map((option) => [option.slug, option]))
+
+  const protocolSelectOptions = protocolOptions.length > 0
+    ? protocolOptions.map((option) => ({ value: option.slug, label: option.name }))
+    : [
+      { value: 'tcp', label: 'TCP' },
+      { value: 'udp', label: 'UDP' },
+    ]
+
+  const environmentSelectOptions = environmentOptions.length > 0
+    ? environmentOptions.map((option) => ({ value: option.slug, label: option.name }))
+    : [
+      { value: 'production', label: 'Production' },
+      { value: 'staging', label: 'Staging' },
+      { value: 'development', label: 'Development' },
+      { value: 'testing', label: 'Testing' },
+    ]
+
+  const healthSelectOptions = healthStatusOptions.length > 0
+    ? healthStatusOptions.map((option) => ({ value: option.slug, label: option.name }))
+    : [
+      { value: 'healthy', label: 'Healthy' },
+      { value: 'degraded', label: 'Degraded' },
+      { value: 'down', label: 'Down' },
+      { value: 'unknown', label: 'Unknown' },
+    ]
+
+  const getProtocolLabel = (slug: string) => protocolMap.get(slug)?.name || slug.toUpperCase()
+  const getEnvironmentLabel = (slug?: string | null) => {
+    if (!slug) return 'production'
+    return environmentMap.get(slug)?.name || slug
+  }
 
   const fetchData = () => {
     Promise.all([
@@ -405,7 +453,7 @@ const ServicesView = ({ searchTerm, selectedProtocol = null, highlightId = null 
                         <div className="flex gap-1.5 flex-wrap mt-2 pl-13">
                           {s.isDocker && <span className="rounded px-1.5 py-px text-[9px] font-medium bg-[#dbeafe] text-[#1e40af]">Docker</span>}
                           {s.dockerImage && <span className="rounded px-1.5 py-px text-[9px] font-medium bg-(--muted-bg) text-(--text-slate)">{s.dockerImage.length > 25 ? s.dockerImage.slice(0, 25) + '…' : s.dockerImage}</span>}
-                          <span className="rounded px-1.5 py-px text-[9px] font-medium" style={{ background: ec.bg, color: ec.color }}>{s.environment || 'production'}</span>
+                          <span className="rounded px-1.5 py-px text-[9px] font-medium" style={{ background: ec.bg, color: ec.color }}>{getEnvironmentLabel(s.environment)}</span>
                           {s.tags && s.tags.split(',').map(t => t.trim()).filter(Boolean).map(t => (
                             <span key={t} className="rounded px-1.5 py-px text-[9px] font-medium bg-(--muted-bg) text-(--text-slate)">{t}</span>
                           ))}
@@ -455,7 +503,7 @@ const ServicesView = ({ searchTerm, selectedProtocol = null, highlightId = null 
                             {s.url && <a href={s.url} target="_blank" rel="noopener noreferrer" className="text-[#3366ff] inline-flex"><ExternalLink size={10} /></a>}
                           </div>
                         </td>
-                        <td><span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-(--blue-bg) text-(--blue)">{s.protocol.toUpperCase()}</span></td>
+                        <td><span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-(--blue-bg) text-(--blue)">{getProtocolLabel(s.protocol)}</span></td>
                         <td><code className="text-[11px] bg-(--muted-bg) px-1.5 py-0.5 rounded">{s.ports}</code></td>
                         <td>
                           <div className="flex items-center gap-1">
@@ -463,7 +511,7 @@ const ServicesView = ({ searchTerm, selectedProtocol = null, highlightId = null 
                             <span className="text-xs">{s.device?.name}</span>
                           </div>
                         </td>
-                        <td><span className="px-1.5 py-0.5 rounded text-[9px] font-semibold whitespace-nowrap" style={{ background: ec.bg, color: ec.color }}>{s.environment || 'production'}</span></td>
+                        <td><span className="px-1.5 py-0.5 rounded text-[9px] font-semibold whitespace-nowrap" style={{ background: ec.bg, color: ec.color }}>{getEnvironmentLabel(s.environment)}</span></td>
                         <td className="overflow-visible!">
                           <select
                             value={s.healthStatus || 'unknown'}
@@ -471,10 +519,9 @@ const ServicesView = ({ searchTerm, selectedProtocol = null, highlightId = null 
                             className="text-[11px] px-2 py-1 rounded cursor-pointer outline-none whitespace-nowrap"
                             style={{ border: `1px solid ${hc.dot}`, background: hc.bg, color: hc.color }}
                           >
-                            <option value="healthy">Healthy</option>
-                            <option value="degraded">Degraded</option>
-                            <option value="down">Down</option>
-                            <option value="unknown">Unknown</option>
+                            {healthSelectOptions.map((option) => (
+                              <option key={option.value} value={option.value}>{option.label}</option>
+                            ))}
                           </select>
                         </td>
                         <td>
@@ -538,8 +585,9 @@ const ServicesView = ({ searchTerm, selectedProtocol = null, highlightId = null 
               <div>
                 <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Protocol</Label>
                 <select className="w-full h-9 border border-border rounded bg-(--surface-alt) text-(--text) text-[13px] px-3 focus:outline-none focus:border-(--blue) focus:bg-(--surface)" value={form.protocol} onChange={e => setForm({ ...form, protocol: e.target.value })}>
-                  <option value="tcp">TCP</option>
-                  <option value="udp">UDP</option>
+                  {protocolSelectOptions.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
                 </select>
               </div>
               <div>
@@ -559,10 +607,9 @@ const ServicesView = ({ searchTerm, selectedProtocol = null, highlightId = null 
               <div>
                 <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Environment</Label>
                 <select className="w-full h-9 border border-border rounded bg-(--surface-alt) text-(--text) text-[13px] px-3 focus:outline-none focus:border-(--blue) focus:bg-(--surface)" value={form.environment} onChange={e => setForm({ ...form, environment: e.target.value })}>
-                  <option value="production">Production</option>
-                  <option value="staging">Staging</option>
-                  <option value="development">Development</option>
-                  <option value="testing">Testing</option>
+                  {environmentSelectOptions.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -570,10 +617,9 @@ const ServicesView = ({ searchTerm, selectedProtocol = null, highlightId = null 
               <div>
                 <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Health Status</Label>
                 <select className="w-full h-9 border border-border rounded bg-(--surface-alt) text-(--text) text-[13px] px-3 focus:outline-none focus:border-(--blue) focus:bg-(--surface)" value={form.healthStatus} onChange={e => setForm({ ...form, healthStatus: e.target.value })}>
-                  <option value="healthy">Healthy</option>
-                  <option value="degraded">Degraded</option>
-                  <option value="down">Down</option>
-                  <option value="unknown">Unknown</option>
+                  {healthSelectOptions.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
                 </select>
               </div>
               <div>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { Wifi, Plus, Edit2, Trash2, Shield, Eye, EyeOff, Radio, Signal, Lock, Unlock, Users } from 'lucide-react'
+import { CustomCategory } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -64,10 +65,11 @@ const emptyForm = {
 interface WiFiViewProps {
   searchTerm?: string
   selectedSecurityFilter?: string | null
+  securityOptions?: CustomCategory[]
   highlightId?: string | null
 }
 
-const WiFiView = ({ searchTerm = '', selectedSecurityFilter = null, highlightId = null }: WiFiViewProps) => {
+const WiFiView = ({ searchTerm = '', selectedSecurityFilter = null, securityOptions = [], highlightId = null }: WiFiViewProps) => {
   const [networks, setNetworks] = useState<WifiData[]>([])
   const [vlans, setVlans] = useState<WifiVlan[]>([])
   const [subnets, setSubnets] = useState<WifiSubnet[]>([])
@@ -78,6 +80,28 @@ const WiFiView = ({ searchTerm = '', selectedSecurityFilter = null, highlightId 
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState(emptyForm)
   const [showPassphrase, setShowPassphrase] = useState(false)
+
+  const securityOptionMap = useMemo(() => {
+    const map = new Map<string, CustomCategory>()
+    securityOptions.forEach((option) => map.set(option.slug, option))
+    return map
+  }, [securityOptions])
+
+  const securitySelectOptions = useMemo(() => {
+    if (securityOptions.length > 0) {
+      return securityOptions.map((option) => ({ value: option.slug, label: option.name }))
+    }
+    return [
+      { value: 'wpa2-personal', label: 'WPA2 Personal' },
+      { value: 'wpa3-personal', label: 'WPA3 Personal' },
+      { value: 'wpa2-enterprise', label: 'WPA2 Enterprise' },
+      { value: 'wpa3-enterprise', label: 'WPA3 Enterprise' },
+      { value: 'open', label: 'Open (No Security)' },
+    ]
+  }, [securityOptions])
+
+  const getSecurityLabel = (slug: string) => securityOptionMap.get(slug)?.name || securityLabels[slug] || slug
+  const getSecurityColor = (slug: string) => securityOptionMap.get(slug)?.color || securityColors[slug] || '#64748b'
 
   const fetchData = () => {
     Promise.all([
@@ -143,6 +167,9 @@ const WiFiView = ({ searchTerm = '', selectedSecurityFilter = null, highlightId 
   const filtered = useMemo(() => {
     return networks.filter(n => {
       if (selectedSecurityFilter) {
+        if (securityOptions.some((option) => option.slug === selectedSecurityFilter)) {
+          if (n.security !== selectedSecurityFilter) return false
+        }
         if (selectedSecurityFilter === 'wpa2' && !n.security.startsWith('wpa2')) return false
         if (selectedSecurityFilter === 'wpa3' && !n.security.startsWith('wpa3')) return false
         if (selectedSecurityFilter === 'open' && n.security !== 'open') return false
@@ -153,7 +180,7 @@ const WiFiView = ({ searchTerm = '', selectedSecurityFilter = null, highlightId 
       }
       return true
     })
-  }, [networks, searchTerm, selectedSecurityFilter])
+  }, [networks, searchTerm, selectedSecurityFilter, securityOptions])
 
   const enabledCount = networks.filter(n => n.enabled).length
   const guestCount = networks.filter(n => n.guestNetwork).length
@@ -195,7 +222,7 @@ const WiFiView = ({ searchTerm = '', selectedSecurityFilter = null, highlightId 
           {/* WiFi Network Cards */}
           <div className="grid grid-cols-[repeat(auto-fill,minmax(340px,1fr))] gap-4 mb-6">
             {filtered.map(n => {
-              const secColor = securityColors[n.security] || '#64748b'
+              const secColor = getSecurityColor(n.security)
               return (
                 <div key={n.id} className="bg-card border border-border rounded-[10px] p-5 relative" style={{ opacity: n.enabled ? 1 : 0.6 }}>
                   <div className="flex justify-between items-start mb-4">
@@ -208,7 +235,7 @@ const WiFiView = ({ searchTerm = '', selectedSecurityFilter = null, highlightId 
                         <div className="flex gap-1.5 items-center mt-0.5">
                           <span className="inline-flex items-center gap-0.5 px-1.5 py-px rounded text-[9px] font-semibold" style={{ background: `${secColor}14`, color: secColor }}>
                             {n.security === 'open' ? <Unlock size={8} /> : <Lock size={8} />}
-                            {securityLabels[n.security] || n.security}
+                            {getSecurityLabel(n.security)}
                           </span>
                           <span className="text-[10px] text-muted-foreground">{bandLabels[n.band] || n.band}</span>
                         </div>
@@ -269,11 +296,11 @@ const WiFiView = ({ searchTerm = '', selectedSecurityFilter = null, highlightId 
                   <tr key={n.id} data-highlight-id={n.id} className={highlightId === n.id ? 'highlight-flash' : ''} style={{ opacity: n.enabled ? 1 : 0.5 }}>
                     <td className="font-medium">
                       <div className="flex items-center gap-1.5">
-                        <Wifi size={13} style={{ color: securityColors[n.security] || '#64748b' }} />
+                        <Wifi size={13} style={{ color: getSecurityColor(n.security) }} />
                         {n.ssid}
                       </div>
                     </td>
-                    <td><span className="px-2 py-0.5 rounded text-[11px] font-semibold" style={{ background: `${securityColors[n.security] || '#64748b'}14`, color: securityColors[n.security] || '#64748b' }}>{securityLabels[n.security] || n.security}</span></td>
+                    <td><span className="px-2 py-0.5 rounded text-[11px] font-semibold" style={{ background: `${getSecurityColor(n.security)}14`, color: getSecurityColor(n.security) }}>{getSecurityLabel(n.security)}</span></td>
                     <td className="text-xs">{bandLabels[n.band] || n.band}</td>
                     <td>{n.vlan ? `VLAN ${n.vlan.vid}` : <span className="text-(--text-light)">—</span>}</td>
                     <td>{n.subnet ? <code className="text-[11px] bg-(--muted-bg) px-1.5 py-0.5 rounded">{n.subnet.prefix}/{n.subnet.mask}</code> : <span className="text-(--text-light)">—</span>}</td>
@@ -308,11 +335,9 @@ const WiFiView = ({ searchTerm = '', selectedSecurityFilter = null, highlightId 
               <div>
                 <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Security</Label>
                 <select className="w-full h-9 border border-border rounded bg-(--surface-alt) text-(--text) text-[13px] px-3 focus:outline-none focus:border-(--blue) focus:bg-(--surface)" value={form.security} onChange={e => setForm({ ...form, security: e.target.value })}>
-                  <option value="wpa2-personal">WPA2 Personal</option>
-                  <option value="wpa3-personal">WPA3 Personal</option>
-                  <option value="wpa2-enterprise">WPA2 Enterprise</option>
-                  <option value="wpa3-enterprise">WPA3 Enterprise</option>
-                  <option value="open">Open (No Security)</option>
+                  {securitySelectOptions.map((security) => (
+                    <option key={security.value} value={security.value}>{security.label}</option>
+                  ))}
                 </select>
               </div>
             </div>

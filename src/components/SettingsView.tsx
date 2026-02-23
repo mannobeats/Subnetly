@@ -12,7 +12,19 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 
-type SettingsTab = 'profile' | 'security' | 'notifications' | 'application' | 'data' | 'about' | 'categories' | 'sites' | 'vlan-roles'
+type SettingsTab = 'profile' | 'security' | 'notifications' | 'application' | 'data' | 'about' | 'categories' | 'sites' | 'vlan-roles' | 'platform-options'
+
+interface PlatformOptions {
+  deviceStatuses?: CustomCategory[]
+  vlanStatuses?: CustomCategory[]
+  serviceProtocols?: CustomCategory[]
+  serviceEnvironments?: CustomCategory[]
+  serviceHealthStatuses?: CustomCategory[]
+  wifiSecurities?: CustomCategory[]
+  subnetRoles?: CustomCategory[]
+  ipRangeRoles?: CustomCategory[]
+  ipAddressTypes?: CustomCategory[]
+}
 
 interface UserSession {
   user: {
@@ -23,17 +35,103 @@ interface UserSession {
   }
 }
 
+function PlatformOptionsTab({ options, onOptionsChange }: { options?: PlatformOptions, onOptionsChange?: () => void }) {
+  const groups: Array<{ title: string; description: string; type: string; entries: CustomCategory[] }> = [
+    { title: 'Device Statuses', description: 'Statuses used in device forms and status tags', type: 'device_status', entries: options?.deviceStatuses || [] },
+    { title: 'VLAN Statuses', description: 'Statuses available in VLAN create/edit forms', type: 'vlan_status', entries: options?.vlanStatuses || [] },
+    { title: 'Subnet Roles', description: 'Suggested roles for subnets in IP Planner', type: 'subnet_role', entries: options?.subnetRoles || [] },
+    { title: 'IP Range Roles', description: 'Suggested roles for IP range allocations', type: 'ip_range_role', entries: options?.ipRangeRoles || [] },
+    { title: 'IP Address Types', description: 'Address type filters shown in IP Planner sidebar', type: 'ip_address_type', entries: options?.ipAddressTypes || [] },
+    { title: 'Service Protocols', description: 'Protocols used in service forms and filters', type: 'service_protocol', entries: options?.serviceProtocols || [] },
+    { title: 'Service Environments', description: 'Environment labels for service classification', type: 'service_environment', entries: options?.serviceEnvironments || [] },
+    { title: 'Service Health Statuses', description: 'Health states available for service monitoring', type: 'service_health', entries: options?.serviceHealthStatuses || [] },
+    { title: 'WiFi Security Types', description: 'Security modes for WiFi forms and filters', type: 'wifi_security', entries: options?.wifiSecurities || [] },
+  ]
+
+  return (
+    <>
+      <h2 className="text-lg font-bold text-(--text)">Platform Options</h2>
+      <p className="text-[13px] text-(--text-muted) mb-8">Manage all customizable option sets used across filters, forms, and tags.</p>
+      <div className="space-y-4">
+        {groups.map((group) => (
+          <PlatformOptionGroup key={group.type} title={group.title} description={group.description} type={group.type} entries={group.entries} onOptionsChange={onOptionsChange} />
+        ))}
+      </div>
+    </>
+  )
+}
+
+function PlatformOptionGroup({ title, description, type, entries, onOptionsChange }: { title: string, description: string, type: string, entries: CustomCategory[], onOptionsChange?: () => void }) {
+  const [newName, setNewName] = useState('')
+  const [newColor, setNewColor] = useState('#5e6670')
+
+  const handleCreate = async () => {
+    if (!newName.trim()) return
+    await fetch('/api/categories', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: newName.trim(), color: newColor, icon: 'tag', type }),
+    })
+    setNewName('')
+    onOptionsChange?.()
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!confirm(`Delete option from ${title}?`)) return
+    await fetch(`/api/categories/${id}`, { method: 'DELETE' })
+    onOptionsChange?.()
+  }
+
+  return (
+    <div className="bg-(--surface) border border-border rounded-lg p-6">
+      <div className="mb-4">
+        <h3 className="text-sm font-semibold text-(--text)">{title}</h3>
+        <p className="text-[11px] text-(--text-muted) mt-1">{description}</p>
+      </div>
+      <div className="flex gap-2 items-end flex-wrap mb-4">
+        <div className="flex-1 min-w-[180px] space-y-1.5">
+          <Label className="text-xs font-semibold text-muted-foreground">Name</Label>
+          <Input value={newName} onChange={e => setNewName(e.target.value)} placeholder="Add option" onKeyDown={e => e.key === 'Enter' && handleCreate()} className="h-9 text-[13px]" />
+        </div>
+        <div className="w-[60px] space-y-1.5">
+          <Label className="text-xs font-semibold text-muted-foreground">Color</Label>
+          <input type="color" value={newColor} onChange={e => setNewColor(e.target.value)} className="w-full h-[34px] p-0.5 border border-border rounded cursor-pointer" />
+        </div>
+        <Button onClick={handleCreate} disabled={!newName.trim()} className="h-9">
+          <Plus size={14} /> Add
+        </Button>
+      </div>
+      {entries.length === 0 ? (
+        <p className="text-muted-foreground text-[12px]">No options configured yet.</p>
+      ) : (
+        <div className="flex flex-wrap gap-2">
+          {entries.map((entry) => (
+            <div key={entry.id} className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md border border-border bg-(--surface-alt) text-[12px]">
+              <span className="w-2 h-2 rounded-full" style={{ background: entry.color }} />
+              <span>{entry.name}</span>
+              <button className="text-(--red) hover:text-(--red)" onClick={() => handleDelete(entry.id)} title="Delete option">
+                <Trash2 size={12} />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 interface SettingsViewProps {
   activeTab?: SettingsTab
   categories?: CustomCategory[]
   vlanRoles?: CustomCategory[]
+  platformOptions?: PlatformOptions
   onCategoriesChange?: () => void
   sites?: Site[]
   activeSiteId?: string | null
   onSitesChange?: () => void
 }
 
-export default function SettingsView({ activeTab = 'profile', categories = [], vlanRoles = [], onCategoriesChange, sites = [], activeSiteId, onSitesChange }: SettingsViewProps) {
+export default function SettingsView({ activeTab = 'profile', categories = [], vlanRoles = [], platformOptions, onCategoriesChange, sites = [], activeSiteId, onSitesChange }: SettingsViewProps) {
   const APP_SETTINGS_KEY = 'subnetly-settings'
   const LEGACY_APP_SETTINGS_KEY = 'homelab-settings'
   const [session, setSession] = useState<UserSession | null>(null)
@@ -806,6 +904,11 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
           {/* ── VLAN ROLES ── */}
           {activeTab === 'vlan-roles' && (
             <VlanRolesTab roles={vlanRoles} onRolesChange={onCategoriesChange} />
+          )}
+
+          {/* ── PLATFORM OPTIONS ── */}
+          {activeTab === 'platform-options' && (
+            <PlatformOptionsTab options={platformOptions} onOptionsChange={onCategoriesChange} />
           )}
 
           {/* ── ABOUT ── */}
