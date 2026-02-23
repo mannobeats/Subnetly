@@ -30,6 +30,8 @@ model Site {
   categories   CustomCategory[]
   wifiNetworks WifiNetwork[]
   settings     SiteSettings?
+  subnetTemplates SubnetTemplate[]
+  rangeSchemes    IPRangeScheme[]
 
   @@index([userId])
 }
@@ -198,11 +200,64 @@ model IPRange {
   endAddr     String
   subnetId    String
   subnet      Subnet   @relation(fields: [subnetId], references: [id], onDelete: Cascade)
+  schemeEntryId String?
+  schemeEntry   IPRangeSchemeEntry? @relation(fields: [schemeEntryId], references: [id], onDelete: SetNull)
   role        String   @default("general")
   description String?
   status      String   @default("active")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model SubnetTemplate {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String
+  prefix      String
+  mask        Int
+  gateway     String?
+  role        String?
+  description String?
+  siteId      String
+  site        Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([siteId, slug])
+  @@index([siteId])
+}
+
+model IPRangeScheme {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String
+  description String?
+  siteId      String
+  site        Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  entries     IPRangeSchemeEntry[]
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([siteId, slug])
+  @@index([siteId])
+}
+
+model IPRangeSchemeEntry {
+  id          String   @id @default(cuid())
+  schemeId    String
+  scheme      IPRangeScheme @relation(fields: [schemeId], references: [id], onDelete: Cascade)
+  startOctet  Int
+  endOctet    Int
+  role        String   @default("general")
+  description String?
+  sortOrder   Int      @default(0)
+  ranges      IPRange[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([schemeId])
 }
 
 model VLAN {

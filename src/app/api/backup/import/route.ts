@@ -19,8 +19,12 @@ export async function POST(request: Request) {
     // ── Phase 1: Delete all existing data in the current site ──
     // Order matters due to foreign key constraints
     await prisma.changeLog.deleteMany({ where: { siteId } })
+    await prisma.iPRange.updateMany({ where: { subnet: { siteId } }, data: { schemeEntryId: null } })
     await prisma.iPAddress.deleteMany({ where: { subnet: { siteId } } })
     await prisma.iPRange.deleteMany({ where: { subnet: { siteId } } })
+    await prisma.iPRangeSchemeEntry.deleteMany({ where: { scheme: { siteId } } })
+    await prisma.iPRangeScheme.deleteMany({ where: { siteId } })
+    await prisma.subnetTemplate.deleteMany({ where: { siteId } })
     await prisma.wifiNetwork.deleteMany({ where: { siteId } })
     await prisma.service.deleteMany({ where: { siteId } })
     await prisma.device.deleteMany({ where: { siteId } })
@@ -126,7 +130,54 @@ export async function POST(request: Request) {
       }
     }
 
-    // ── Phase 7: Import IP Ranges ──
+    // ── Phase 7: Import templates and range schemes ──
+    if (backup.subnetTemplates?.length) {
+      await prisma.subnetTemplate.createMany({
+        data: (backup.subnetTemplates as Record<string, unknown>[]).map((t) => ({
+          siteId,
+          name: t.name as string,
+          slug: (t.slug as string) || (t.name as string).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
+          prefix: t.prefix as string,
+          mask: (t.mask as number) || 24,
+          gateway: t.gateway as string | null,
+          role: t.role as string | null,
+          description: t.description as string | null,
+          sortOrder: (t.sortOrder as number) || 0,
+        })),
+      })
+    }
+
+    const schemeEntryIdMap: Record<string, string> = {}
+    if (backup.rangeSchemes?.length) {
+      for (const s of backup.rangeSchemes as Record<string, unknown>[]) {
+        const scheme = await prisma.iPRangeScheme.create({
+          data: {
+            siteId,
+            name: s.name as string,
+            slug: (s.slug as string) || (s.name as string).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
+            description: s.description as string | null,
+            sortOrder: (s.sortOrder as number) || 0,
+          },
+        })
+
+        const entries = Array.isArray(s.entries) ? s.entries as Record<string, unknown>[] : []
+        for (const [idx, e] of entries.entries()) {
+          const created = await prisma.iPRangeSchemeEntry.create({
+            data: {
+              schemeId: scheme.id,
+              startOctet: (e.startOctet as number) || 1,
+              endOctet: (e.endOctet as number) || 1,
+              role: (e.role as string) || 'general',
+              description: e.description as string | null,
+              sortOrder: (e.sortOrder as number) ?? idx,
+            },
+          })
+          if (e._exportId) schemeEntryIdMap[e._exportId as string] = created.id
+        }
+      }
+    }
+
+    // ── Phase 8: Import IP Ranges ──
     if (backup.ipRanges?.length) {
       for (const r of backup.ipRanges as Record<string, unknown>[]) {
         const subnetId = r._subnetExportId ? subnetIdMap[r._subnetExportId as string] || null : null
@@ -138,13 +189,14 @@ export async function POST(request: Request) {
             role: (r.role as string) || 'general',
             description: r.description as string | null,
             status: (r.status as string) || 'active',
+            schemeEntryId: r._schemeEntryExportId ? schemeEntryIdMap[r._schemeEntryExportId as string] || null : null,
             subnetId,
           },
         })
       }
     }
 
-    // ── Phase 8: Import Services ──
+    // ── Phase 9: Import Services ──
     if (backup.services?.length) {
       for (const s of backup.services as Record<string, unknown>[]) {
         const deviceId = s._deviceExportId ? deviceIdMap[s._deviceExportId as string] || null : null
@@ -173,7 +225,7 @@ export async function POST(request: Request) {
       }
     }
 
-    // ── Phase 9: Import WiFi Networks ──
+    // ── Phase 10: Import WiFi Networks ──
     if (backup.wifiNetworks?.length) {
       for (const w of backup.wifiNetworks as Record<string, unknown>[]) {
         const vlanId = w._vlanExportId ? vlanIdMap[w._vlanExportId as string] || null : null
@@ -201,7 +253,7 @@ export async function POST(request: Request) {
       }
     }
 
-    // ── Phase 10: Import Site Settings ──
+    // ── Phase 11: Import Site Settings ──
     if (backup.siteSettings) {
       const ss = backup.siteSettings as Record<string, unknown>
       await prisma.siteSettings.create({
@@ -214,7 +266,7 @@ export async function POST(request: Request) {
       })
     }
 
-    // ── Phase 11: Import Changelog ──
+    // ── Phase 12: Import Changelog ──
     if (backup.changeLogs?.length) {
       await prisma.changeLog.createMany({
         data: (backup.changeLogs as Record<string, unknown>[]).map(l => ({
@@ -246,6 +298,8 @@ export async function POST(request: Request) {
       devices: backup.devices?.length || 0,
       ipAddresses: backup.ipAddresses?.length || 0,
       ipRanges: backup.ipRanges?.length || 0,
+      subnetTemplates: backup.subnetTemplates?.length || 0,
+      rangeSchemes: backup.rangeSchemes?.length || 0,
       services: backup.services?.length || 0,
       wifiNetworks: backup.wifiNetworks?.length || 0,
       changeLogs: backup.changeLogs?.length || 0,

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { IPAddress, IPRange, Device } from '@/types'
+import { IPAddress, IPRange, Device, SubnetTemplate as PersistedSubnetTemplate, IPRangeScheme } from '@/types'
 import { Info, Plus, Trash2, Globe, Server, LayoutGrid, List, BarChart3, Edit2, ChevronLeft, ChevronRight, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -26,7 +26,7 @@ interface IPPlannerProps {
   selectedIpFilter?: string | null
 }
 
-interface SubnetTemplate {
+interface SubnetTemplateOption {
   id: string
   name: string
   prefix: string
@@ -34,6 +34,7 @@ interface SubnetTemplate {
   gateway: string
   role: string
   description: string
+  source: 'default' | 'custom'
 }
 
 const rangeColors: Record<string, { bg: string; border: string; label: string }> = {
@@ -49,7 +50,7 @@ const emptyIpForm = { address: '', dnsName: '', description: '', status: 'active
 const APP_SETTINGS_KEY = 'subnetly-settings'
 const LEGACY_APP_SETTINGS_KEY = 'homelab-settings'
 
-const subnetTemplates: SubnetTemplate[] = [
+const defaultSubnetTemplates: SubnetTemplateOption[] = [
   {
     id: 'home-lan',
     name: 'Home LAN',
@@ -58,6 +59,7 @@ const subnetTemplates: SubnetTemplate[] = [
     gateway: '192.168.1.1',
     role: 'production',
     description: 'Primary user and workstation network',
+    source: 'default',
   },
   {
     id: 'iot-segment',
@@ -67,6 +69,7 @@ const subnetTemplates: SubnetTemplate[] = [
     gateway: '192.168.20.1',
     role: 'iot',
     description: 'Smart home and unmanaged IoT devices',
+    source: 'default',
   },
   {
     id: 'guest-network',
@@ -76,6 +79,7 @@ const subnetTemplates: SubnetTemplate[] = [
     gateway: '192.168.50.1',
     role: 'guest',
     description: 'Isolated guest access network',
+    source: 'default',
   },
   {
     id: 'management',
@@ -85,6 +89,7 @@ const subnetTemplates: SubnetTemplate[] = [
     gateway: '10.0.10.1',
     role: 'management',
     description: 'Switches, hypervisors, and core services',
+    source: 'default',
   },
 ]
 
@@ -159,6 +164,8 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
   const [loading, setLoading] = useState(true)
   const [vlans, setVlans] = useState<{ id: string; vid: number; name: string }[]>([])
   const [devices, setDevices] = useState<Device[]>([])
+  const [customSubnetTemplates, setCustomSubnetTemplates] = useState<PersistedSubnetTemplate[]>([])
+  const [rangeSchemes, setRangeSchemes] = useState<IPRangeScheme[]>([])
 
   // Modals
   const [subnetModalOpen, setSubnetModalOpen] = useState(false)
@@ -174,17 +181,30 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
   const [editingIpId, setEditingIpId] = useState<string | null>(null)
   const [subnetTemplatesEnabled, setSubnetTemplatesEnabled] = useState(true)
   const [smartGatewayEnabled, setSmartGatewayEnabled] = useState(true)
+  const [rangeSchemesEnabled, setRangeSchemesEnabled] = useState(true)
   const [selectedSubnetTemplate, setSelectedSubnetTemplate] = useState('')
+  const [saveAsTemplate, setSaveAsTemplate] = useState(false)
+  const [templateName, setTemplateName] = useState('')
+  const [saveSchemeModalOpen, setSaveSchemeModalOpen] = useState(false)
+  const [applySchemeModalOpen, setApplySchemeModalOpen] = useState(false)
+  const [newSchemeName, setNewSchemeName] = useState('')
+  const [newSchemeDescription, setNewSchemeDescription] = useState('')
+  const [selectedSchemeId, setSelectedSchemeId] = useState('')
+  const [replaceExistingRanges, setReplaceExistingRanges] = useState(true)
 
   const fetchData = useCallback(() => {
     Promise.all([
       fetch('/api/subnets').then(r => r.json()),
       fetch('/api/vlans').then(r => r.json()),
       fetch('/api/devices').then(r => r.json()),
-    ]).then(([subnetData, vlanData, deviceData]) => {
+      fetch('/api/subnet-templates').then(r => r.ok ? r.json() : []),
+      fetch('/api/range-schemes').then(r => r.ok ? r.json() : []),
+    ]).then(([subnetData, vlanData, deviceData, subnetTemplateData, rangeSchemeData]) => {
       setSubnets(subnetData)
       setVlans(vlanData)
       setDevices(deviceData)
+      setCustomSubnetTemplates(Array.isArray(subnetTemplateData) ? subnetTemplateData : [])
+      setRangeSchemes(Array.isArray(rangeSchemeData) ? rangeSchemeData : [])
       setSelectedSubnet(prev => {
         if (prev && subnetData.some((s: SubnetWithRelations) => s.id === prev)) return prev
         return subnetData.length > 0 ? subnetData[0].id : null
@@ -206,6 +226,9 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
         }
         if (settings.ipamSmartGatewayEnabled !== undefined) {
           setSmartGatewayEnabled(!!settings.ipamSmartGatewayEnabled)
+        }
+        if (settings.ipamRangeSchemesEnabled !== undefined) {
+          setRangeSchemesEnabled(!!settings.ipamRangeSchemesEnabled)
         }
       } catch {
         // Ignore malformed local settings
@@ -232,6 +255,27 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
   }, [ipModalOpen, rangeModalOpen, subnetModalOpen, deleteSubnetModal])
 
   const subnet = useMemo(() => subnets.find(s => s.id === selectedSubnet), [subnets, selectedSubnet])
+
+  const subnetTemplateOptions = useMemo<SubnetTemplateOption[]>(() => {
+    const custom = customSubnetTemplates.map((template) => ({
+      id: template.id,
+      name: template.name,
+      prefix: template.prefix,
+      mask: String(template.mask),
+      gateway: template.gateway || '',
+      role: template.role || '',
+      description: template.description || '',
+      source: 'custom' as const,
+    }))
+    return [...defaultSubnetTemplates, ...custom]
+  }, [customSubnetTemplates])
+
+  const rangeRoleSuggestions = useMemo(() => {
+    const roles = new Set<string>(['dhcp', 'reserved', 'infrastructure', 'general'])
+    subnets.forEach((s) => s.ipRanges.forEach((r) => roles.add(r.role)))
+    rangeSchemes.forEach((scheme) => scheme.entries.forEach((entry) => roles.add(entry.role)))
+    return Array.from(roles)
+  }, [subnets, rangeSchemes])
 
   // Build a map of IP address -> device for quick lookup
   const ipToDevice = useMemo(() => {
@@ -385,9 +429,30 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
     })
     if (res.ok) {
       const saved = await res.json()
+
+      if (!editingSubnetId && subnetTemplatesEnabled && saveAsTemplate) {
+        const tRes = await fetch('/api/subnet-templates', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: templateName.trim() || `${subnetForm.prefix}/${subnetForm.mask}`,
+            prefix: subnetForm.prefix,
+            mask: parseInt(subnetForm.mask, 10),
+            gateway: subnetForm.gateway || null,
+            role: subnetForm.role || null,
+            description: subnetForm.description || null,
+          }),
+        })
+        if (!tRes.ok) {
+          alert('Subnet created, but saving template failed (possibly duplicate template name).')
+        }
+      }
+
       setSubnetModalOpen(false)
       setSubnetForm(emptySubnetForm)
       setEditingSubnetId(null)
+      setSaveAsTemplate(false)
+      setTemplateName('')
       fetchData()
       if (!editingSubnetId) setSelectedSubnet(saved.id)
     } else { alert(editingSubnetId ? 'Failed to update subnet' : 'Failed to create subnet') }
@@ -411,12 +476,14 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
     setEditingSubnetId(null)
     setSubnetForm(emptySubnetForm)
     setSelectedSubnetTemplate('')
+    setSaveAsTemplate(false)
+    setTemplateName('')
     setSubnetModalOpen(true)
   }
 
   const applySubnetTemplate = (templateId: string) => {
     setSelectedSubnetTemplate(templateId)
-    const template = subnetTemplates.find((t) => t.id === templateId)
+    const template = subnetTemplateOptions.find((t) => t.id === templateId)
     if (!template) return
 
     setSubnetForm((prev) => ({
@@ -427,6 +494,63 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
       role: template.role,
       description: template.description,
     }))
+
+    if (template.source === 'custom') {
+      setTemplateName(template.name)
+    }
+  }
+
+  const handleSaveRangeScheme = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!subnet || subnet.ipRanges.length === 0) {
+      alert('Add at least one range to this subnet before saving a scheme.')
+      return
+    }
+    const entries = subnet.ipRanges.map((range) => ({
+      startOctet: parseInt(range.startAddr.split('.').pop() || '0', 10),
+      endOctet: parseInt(range.endAddr.split('.').pop() || '0', 10),
+      role: range.role,
+      description: range.description || null,
+    }))
+    const res = await fetch('/api/range-schemes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: newSchemeName.trim(),
+        description: newSchemeDescription.trim() || null,
+        entries,
+      }),
+    })
+    if (res.ok) {
+      setSaveSchemeModalOpen(false)
+      setNewSchemeName('')
+      setNewSchemeDescription('')
+      fetchData()
+    } else {
+      const data = await res.json().catch(() => null)
+      alert(data?.error || 'Failed to save range scheme')
+    }
+  }
+
+  const handleApplyRangeScheme = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!subnet || !selectedSchemeId) return
+    const res = await fetch('/api/range-schemes/apply', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        subnetId: subnet.id,
+        schemeId: selectedSchemeId,
+        replaceExisting: replaceExistingRanges,
+      }),
+    })
+    if (res.ok) {
+      setApplySchemeModalOpen(false)
+      fetchData()
+    } else {
+      const data = await res.json().catch(() => null)
+      alert(data?.error || 'Failed to apply range scheme')
+    }
   }
 
   const updateSubnetFormWithSmartGateway = (updates: Partial<typeof emptySubnetForm>) => {
@@ -657,8 +781,8 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
                   onChange={(e) => applySubnetTemplate(e.target.value)}
                 >
                   <option value="">Start from blank subnet</option>
-                  {subnetTemplates.map((template) => (
-                    <option key={template.id} value={template.id}>{template.name} — {template.prefix}/{template.mask}</option>
+                  {subnetTemplateOptions.map((template) => (
+                    <option key={template.id} value={template.id}>{template.name} — {template.prefix}/{template.mask}{template.source === 'custom' ? ' (Custom)' : ''}</option>
                   ))}
                 </select>
               </div>
@@ -718,6 +842,20 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
                 <Input value={subnetForm.description} onChange={e => setSubnetForm({ ...subnetForm, description: e.target.value })} placeholder="Optional" className="h-9 text-[13px]" />
               </div>
             </div>
+            {!editingSubnetId && subnetTemplatesEnabled && (
+              <div className="rounded-md border border-border bg-(--surface-alt) px-3 py-2.5">
+                <label className="flex items-center gap-2 text-[12px] font-medium text-(--text)">
+                  <input type="checkbox" checked={saveAsTemplate} onChange={(e) => setSaveAsTemplate(e.target.checked)} />
+                  Save this subnet as a reusable template
+                </label>
+                {saveAsTemplate && (
+                  <div className="mt-2">
+                    <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Template Name</Label>
+                    <Input value={templateName} onChange={(e) => setTemplateName(e.target.value)} placeholder="e.g. Core Infrastructure /24" className="h-9 text-[13px]" />
+                  </div>
+                )}
+              </div>
+            )}
             <DialogFooter className="mt-6">
               <Button type="button" variant="outline" onClick={() => { setSubnetModalOpen(false); setEditingSubnetId(null) }}>Cancel</Button>
               <Button type="submit">{editingSubnetId ? 'Save Changes' : 'Create Subnet'}</Button>
@@ -762,6 +900,23 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
           <Button onClick={openCreateSubnet}><Plus size={14} /> Subnet</Button>
           {subnet && <Button variant="outline" onClick={openEditSubnet} title="Edit Subnet"><Edit2 size={14} /></Button>}
           {subnet && <Button variant="outline" onClick={openCreateRange}><Plus size={14} /> Range</Button>}
+          {subnet && rangeSchemesEnabled && (
+            <Button variant="outline" onClick={() => {
+              if (!selectedSchemeId && rangeSchemes.length > 0) setSelectedSchemeId(rangeSchemes[0].id)
+              setApplySchemeModalOpen(true)
+            }}>
+              Apply Scheme
+            </Button>
+          )}
+          {subnet && rangeSchemesEnabled && (
+            <Button variant="outline" onClick={() => {
+              setNewSchemeName(`${subnet.prefix}/${subnet.mask} plan`)
+              setNewSchemeDescription(subnet.description || '')
+              setSaveSchemeModalOpen(true)
+            }}>
+              Save Scheme
+            </Button>
+          )}
           {subnet && <Button variant="ghost" className="text-(--red) hover:text-(--red)" onClick={() => setDeleteSubnetModal(true)}><Trash2 size={14} /></Button>}
         </div>
       </div>
@@ -1214,11 +1369,12 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
             <div className="grid grid-cols-2 gap-5">
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold text-muted-foreground">Role</Label>
-                <select className="w-full h-9 border border-border rounded bg-(--surface-alt) text-(--text) text-[13px] px-3 focus:outline-none focus:border-(--blue) focus:bg-(--surface)" value={rangeForm.role} onChange={e => setRangeForm({ ...rangeForm, role: e.target.value })}>
-                  <option value="dhcp">DHCP Pool</option>
-                  <option value="reserved">Reserved</option>
-                  <option value="infrastructure">Infrastructure</option>
-                </select>
+                <Input list="ipam-range-role-options" value={rangeForm.role} onChange={e => setRangeForm({ ...rangeForm, role: e.target.value })} placeholder="e.g. dhcp, hypervisors, core-services" className="h-9 text-[13px]" />
+                <datalist id="ipam-range-role-options">
+                  {rangeRoleSuggestions.map((role) => (
+                    <option key={role} value={role} />
+                  ))}
+                </datalist>
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold text-muted-foreground">Description</Label>
@@ -1228,6 +1384,64 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
             <DialogFooter className="mt-6">
               <Button type="button" variant="outline" onClick={() => { setRangeModalOpen(false); setEditingRangeId(null) }}>Cancel</Button>
               <Button type="submit">{editingRangeId ? 'Save Changes' : 'Add Range'}</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={saveSchemeModalOpen && !!subnet} onOpenChange={setSaveSchemeModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Save Range Scheme</DialogTitle>
+            <DialogDescription>
+              Save current ranges from {subnet?.prefix}/{subnet?.mask} as a reusable scheme.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSaveRangeScheme} className="space-y-4 mt-2">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold text-muted-foreground">Scheme Name</Label>
+              <Input required value={newSchemeName} onChange={(e) => setNewSchemeName(e.target.value)} placeholder="e.g. Home Core Allocation" className="h-9 text-[13px]" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold text-muted-foreground">Description</Label>
+              <Input value={newSchemeDescription} onChange={(e) => setNewSchemeDescription(e.target.value)} placeholder="Optional" className="h-9 text-[13px]" />
+            </div>
+            <div className="rounded-md border border-border bg-(--surface-alt) px-3 py-2.5 text-xs text-(--text-muted)">
+              This will save {subnet?.ipRanges.length || 0} range entries from the selected subnet.
+            </div>
+            <DialogFooter className="mt-6">
+              <Button type="button" variant="outline" onClick={() => setSaveSchemeModalOpen(false)}>Cancel</Button>
+              <Button type="submit">Save Scheme</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={applySchemeModalOpen && !!subnet} onOpenChange={setApplySchemeModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Apply Range Scheme</DialogTitle>
+            <DialogDescription>
+              Apply a saved multi-range allocation scheme to {subnet?.prefix}/{subnet?.mask}.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleApplyRangeScheme} className="space-y-4 mt-2">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold text-muted-foreground">Scheme</Label>
+              <select className="w-full h-9 border border-border rounded bg-(--surface-alt) text-(--text) text-[13px] px-3 focus:outline-none focus:border-(--blue) focus:bg-(--surface)" value={selectedSchemeId} onChange={(e) => setSelectedSchemeId(e.target.value)}>
+                <option value="">Select a scheme</option>
+                {rangeSchemes.map((scheme) => (
+                  <option key={scheme.id} value={scheme.id}>{scheme.name} ({scheme.entries.length} entries)</option>
+                ))}
+              </select>
+            </div>
+            <label className="flex items-center gap-2 text-[12px] font-medium text-(--text)">
+              <input type="checkbox" checked={replaceExistingRanges} onChange={(e) => setReplaceExistingRanges(e.target.checked)} />
+              Replace existing ranges on this subnet
+            </label>
+            <DialogFooter className="mt-6">
+              <Button type="button" variant="outline" onClick={() => setApplySchemeModalOpen(false)}>Cancel</Button>
+              <Button type="submit" disabled={!selectedSchemeId}>Apply Scheme</Button>
             </DialogFooter>
           </form>
         </DialogContent>

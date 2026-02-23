@@ -162,9 +162,49 @@ export interface IPRange {
   endAddr: string
   subnetId: string
   subnet?: Subnet
+  schemeEntryId?: string | null
   role: string
   description?: string
   status: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface SubnetTemplate {
+  id: string
+  name: string
+  slug: string
+  prefix: string
+  mask: number
+  gateway?: string | null
+  role?: string | null
+  description?: string | null
+  siteId: string
+  sortOrder: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface IPRangeSchemeEntry {
+  id: string
+  schemeId: string
+  startOctet: number
+  endOctet: number
+  role: string
+  description?: string | null
+  sortOrder: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface IPRangeScheme {
+  id: string
+  name: string
+  slug: string
+  description?: string | null
+  siteId: string
+  sortOrder: number
+  entries: IPRangeSchemeEntry[]
   createdAt: string
   updatedAt: string
 }

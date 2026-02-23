@@ -480,6 +480,16 @@ export default function Home() {
   }
 
   const renderDevicesView = () => {
+    if (loading) {
+      return (
+        <div className="flex-1 overflow-auto p-4 px-6">
+          <div className="flex items-center justify-center h-[220px] text-muted-foreground text-[13px]">
+            <Loader2 size={16} className="animate-spin mr-2" /> Loading devices...
+          </div>
+        </div>
+      )
+    }
+
     if (!loading && devices.length === 0) {
       return (
         <div className="flex-1 overflow-auto p-4 px-6">
