@@ -60,6 +60,8 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
   const [itemsPerPage, setItemsPerPage] = useState('50')
   const [confirmDeletes, setConfirmDeletes] = useState(true)
   const [changelogEnabled, setChangelogEnabled] = useState(true)
+  const [ipamSubnetTemplatesEnabled, setIpamSubnetTemplatesEnabled] = useState(true)
+  const [ipamSmartGatewayEnabled, setIpamSmartGatewayEnabled] = useState(true)
 
   // Theme
   const { theme, setTheme } = useTheme()
@@ -115,19 +117,30 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
         if (s.itemsPerPage) setItemsPerPage(s.itemsPerPage)
         if (s.confirmDeletes !== undefined) setConfirmDeletes(s.confirmDeletes)
         if (s.changelogEnabled !== undefined) setChangelogEnabled(s.changelogEnabled)
+        if (s.ipamSubnetTemplatesEnabled !== undefined) setIpamSubnetTemplatesEnabled(!!s.ipamSubnetTemplatesEnabled)
+        if (s.ipamSmartGatewayEnabled !== undefined) setIpamSmartGatewayEnabled(!!s.ipamSmartGatewayEnabled)
       } catch { /* ignore */ }
     }
   }, [])
 
   const saveAppSettings = () => {
-    const settings = { autoRefresh, showTooltips, defaultView, itemsPerPage, confirmDeletes, changelogEnabled }
+    const settings = {
+      autoRefresh,
+      showTooltips,
+      defaultView,
+      itemsPerPage,
+      confirmDeletes,
+      changelogEnabled,
+      ipamSubnetTemplatesEnabled,
+      ipamSmartGatewayEnabled,
+    }
     localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(settings))
   }
 
   useEffect(() => {
     saveAppSettings()
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoRefresh, showTooltips, defaultView, itemsPerPage, confirmDeletes, changelogEnabled])
+  }, [autoRefresh, showTooltips, defaultView, itemsPerPage, confirmDeletes, changelogEnabled, ipamSubnetTemplatesEnabled, ipamSmartGatewayEnabled])
 
   const handleHealthCheckSave = async () => {
     setHcSaving(true)
@@ -469,6 +482,30 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
                   <button
                     className={`settings-toggle ${confirmDeletes ? 'active' : ''}`}
                     onClick={() => setConfirmDeletes(!confirmDeletes)}
+                  />
+                </div>
+              </div>
+
+              <div className="bg-(--surface) border border-border rounded-lg p-6 mb-6">
+                <h3 className="text-sm font-semibold text-(--text) mb-5">IPAM Automation</h3>
+                <div className="flex items-center justify-between py-3 border-b border-(--muted-bg-alt)">
+                  <div>
+                    <div className="text-[13px] font-medium text-(--text)">Subnet Templates</div>
+                    <div className="text-[11px] text-(--text-muted) mt-0.5">Show ready-to-use subnet templates in the Create Subnet modal</div>
+                  </div>
+                  <button
+                    className={`settings-toggle ${ipamSubnetTemplatesEnabled ? 'active' : ''}`}
+                    onClick={() => setIpamSubnetTemplatesEnabled(!ipamSubnetTemplatesEnabled)}
+                  />
+                </div>
+                <div className="flex items-center justify-between py-3 border-b border-(--muted-bg-alt) last:border-b-0">
+                  <div>
+                    <div className="text-[13px] font-medium text-(--text)">Smart Gateway Suggestion</div>
+                    <div className="text-[11px] text-(--text-muted) mt-0.5">Auto-fill gateway as the first usable IP when creating new subnets</div>
+                  </div>
+                  <button
+                    className={`settings-toggle ${ipamSmartGatewayEnabled ? 'active' : ''}`}
+                    onClick={() => setIpamSmartGatewayEnabled(!ipamSmartGatewayEnabled)}
                   />
                 </div>
               </div>

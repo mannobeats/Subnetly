@@ -26,6 +26,16 @@ interface IPPlannerProps {
   selectedIpFilter?: string | null
 }
 
+interface SubnetTemplate {
+  id: string
+  name: string
+  prefix: string
+  mask: string
+  gateway: string
+  role: string
+  description: string
+}
+
 const rangeColors: Record<string, { bg: string; border: string; label: string }> = {
   dhcp: { bg: '#fef3c7', border: '#f59e0b', label: 'DHCP' },
   reserved: { bg: '#ede9fe', border: '#8b5cf6', label: 'Reserved' },
@@ -36,6 +46,79 @@ const rangeColors: Record<string, { bg: string; border: string; label: string }>
 const emptySubnetForm = { prefix: '', mask: '24', description: '', gateway: '', vlanId: '', role: '' }
 const emptyRangeForm = { startOctet: '', endOctet: '', role: 'dhcp', description: '' }
 const emptyIpForm = { address: '', dnsName: '', description: '', status: 'active', deviceId: '' }
+const APP_SETTINGS_KEY = 'subnetly-settings'
+const LEGACY_APP_SETTINGS_KEY = 'homelab-settings'
+
+const subnetTemplates: SubnetTemplate[] = [
+  {
+    id: 'home-lan',
+    name: 'Home LAN',
+    prefix: '192.168.1.0',
+    mask: '24',
+    gateway: '192.168.1.1',
+    role: 'production',
+    description: 'Primary user and workstation network',
+  },
+  {
+    id: 'iot-segment',
+    name: 'IoT Segment',
+    prefix: '192.168.20.0',
+    mask: '24',
+    gateway: '192.168.20.1',
+    role: 'iot',
+    description: 'Smart home and unmanaged IoT devices',
+  },
+  {
+    id: 'guest-network',
+    name: 'Guest WiFi',
+    prefix: '192.168.50.0',
+    mask: '24',
+    gateway: '192.168.50.1',
+    role: 'guest',
+    description: 'Isolated guest access network',
+  },
+  {
+    id: 'management',
+    name: 'Infrastructure Mgmt',
+    prefix: '10.0.10.0',
+    mask: '24',
+    gateway: '10.0.10.1',
+    role: 'management',
+    description: 'Switches, hypervisors, and core services',
+  },
+]
+
+function isValidIPv4(value: string): boolean {
+  const parts = value.split('.')
+  if (parts.length !== 4) return false
+  return parts.every((part) => {
+    if (part === '' || Number.isNaN(Number(part))) return false
+    const n = Number(part)
+    return n >= 0 && n <= 255
+  })
+}
+
+function ipToInt(ip: string): number {
+  const [a, b, c, d] = ip.split('.').map(Number)
+  return (((a << 24) | (b << 16) | (c << 8) | d) >>> 0)
+}
+
+function intToIp(value: number): string {
+  return [
+    (value >>> 24) & 255,
+    (value >>> 16) & 255,
+    (value >>> 8) & 255,
+    value & 255,
+  ].join('.')
+}
+
+function suggestGatewayFromPrefix(prefix: string, mask: number): string {
+  if (!isValidIPv4(prefix)) return ''
+  if (mask < 1 || mask > 30) return ''
+  const maskBits = ((0xffffffff << (32 - mask)) >>> 0)
+  const network = ipToInt(prefix) & maskBits
+  return intToIp((network + 1) >>> 0)
+}
 
 // ─── Subnet math helpers ────────────────────────────────────
 function subnetSize(mask: number): number {
@@ -89,6 +172,9 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
   const [ipForm, setIpForm] = useState(emptyIpForm)
 
   const [editingIpId, setEditingIpId] = useState<string | null>(null)
+  const [subnetTemplatesEnabled, setSubnetTemplatesEnabled] = useState(true)
+  const [smartGatewayEnabled, setSmartGatewayEnabled] = useState(true)
+  const [selectedSubnetTemplate, setSelectedSubnetTemplate] = useState('')
 
   const fetchData = useCallback(() => {
     Promise.all([
@@ -108,6 +194,28 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
   }, [])
 
   useEffect(() => { fetchData() }, [fetchData])
+
+  useEffect(() => {
+    const loadSettings = () => {
+      try {
+        const saved = localStorage.getItem(APP_SETTINGS_KEY) ?? localStorage.getItem(LEGACY_APP_SETTINGS_KEY)
+        if (!saved) return
+        const settings = JSON.parse(saved)
+        if (settings.ipamSubnetTemplatesEnabled !== undefined) {
+          setSubnetTemplatesEnabled(!!settings.ipamSubnetTemplatesEnabled)
+        }
+        if (settings.ipamSmartGatewayEnabled !== undefined) {
+          setSmartGatewayEnabled(!!settings.ipamSmartGatewayEnabled)
+        }
+      } catch {
+        // Ignore malformed local settings
+      }
+    }
+
+    loadSettings()
+    window.addEventListener('storage', loadSettings)
+    return () => window.removeEventListener('storage', loadSettings)
+  }, [])
 
   // Escape key handler for all modals
   useEffect(() => {
@@ -302,7 +410,34 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
   const openCreateSubnet = () => {
     setEditingSubnetId(null)
     setSubnetForm(emptySubnetForm)
+    setSelectedSubnetTemplate('')
     setSubnetModalOpen(true)
+  }
+
+  const applySubnetTemplate = (templateId: string) => {
+    setSelectedSubnetTemplate(templateId)
+    const template = subnetTemplates.find((t) => t.id === templateId)
+    if (!template) return
+
+    setSubnetForm((prev) => ({
+      ...prev,
+      prefix: template.prefix,
+      mask: template.mask,
+      gateway: smartGatewayEnabled ? suggestGatewayFromPrefix(template.prefix, parseInt(template.mask, 10)) || template.gateway : template.gateway,
+      role: template.role,
+      description: template.description,
+    }))
+  }
+
+  const updateSubnetFormWithSmartGateway = (updates: Partial<typeof emptySubnetForm>) => {
+    setSubnetForm((prev) => {
+      const next = { ...prev, ...updates }
+      if (!editingSubnetId && smartGatewayEnabled && updates.gateway === undefined && !prev.gateway.trim()) {
+        const suggested = suggestGatewayFromPrefix(next.prefix, parseInt(next.mask, 10))
+        if (suggested) next.gateway = suggested
+      }
+      return next
+    })
   }
 
   const handleDeleteSubnet = async () => {
@@ -489,10 +624,10 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
   if (subnets.length === 0) {
     return (
       <div className="p-0 animate-fade-in">
-        <div className="flex flex-col items-center justify-center p-16 px-8 text-center bg-(--surface) border border-border rounded-lg">
-          <Globe size={40} color="#cbd5e1" />
-          <h3>No subnets configured</h3>
-          <p>Create your first subnet to start planning IP addresses.</p>
+        <div className="flex flex-col items-center justify-center py-16 px-8 text-center bg-(--surface) border border-border rounded-lg">
+          <Globe size={40} className="text-[#cbd5e1]" />
+          <h3 className="text-base font-semibold mt-4 mb-2">No subnets configured</h3>
+          <p className="text-[13px] text-muted-foreground mb-6 max-w-[360px]">Create your first subnet to start planning IP addresses.</p>
           <Button onClick={openCreateSubnet}><Plus size={14} /> Create Subnet</Button>
         </div>
         {subnetModalOpen && renderSubnetModal()}
@@ -503,19 +638,39 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
   function renderSubnetModal() {
     return (
       <Dialog open={subnetModalOpen} onOpenChange={(open) => { if (!open) { setSubnetModalOpen(false); setEditingSubnetId(null) } }}>
-        <DialogContent>
+        <DialogContent className="max-w-[720px]">
           <DialogHeader>
             <DialogTitle>{editingSubnetId ? 'Edit Subnet' : 'Create Subnet'}</DialogTitle>
+            {!editingSubnetId && subnetTemplatesEnabled && (
+              <DialogDescription>
+                Start from a template to speed up subnet planning. You can adjust any field before saving.
+              </DialogDescription>
+            )}
           </DialogHeader>
           <form onSubmit={handleSaveSubnet} className="space-y-4 mt-2">
+            {!editingSubnetId && subnetTemplatesEnabled && (
+              <div className="space-y-1.5">
+                <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Template</Label>
+                <select
+                  className="w-full h-9 border border-border rounded bg-(--surface-alt) text-(--text) text-[13px] px-3 focus:outline-none focus:border-(--blue) focus:bg-(--surface)"
+                  value={selectedSubnetTemplate}
+                  onChange={(e) => applySubnetTemplate(e.target.value)}
+                >
+                  <option value="">Start from blank subnet</option>
+                  {subnetTemplates.map((template) => (
+                    <option key={template.id} value={template.id}>{template.name} — {template.prefix}/{template.mask}</option>
+                  ))}
+                </select>
+              </div>
+            )}
             <div className="grid grid-cols-[2fr_1fr] gap-5">
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold text-muted-foreground">Network Prefix</Label>
-                <Input required value={subnetForm.prefix} onChange={e => setSubnetForm({ ...subnetForm, prefix: e.target.value })} placeholder="e.g. 10.0.10.0" className="h-9 text-[13px]" />
+                <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Network Prefix</Label>
+                <Input required value={subnetForm.prefix} onChange={e => updateSubnetFormWithSmartGateway({ prefix: e.target.value })} placeholder="e.g. 10.0.10.0" className="h-9 text-[13px]" />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold text-muted-foreground">Mask</Label>
-                <select className="w-full h-9 border border-border rounded bg-(--surface-alt) text-(--text) text-[13px] px-3 focus:outline-none focus:border-(--blue) focus:bg-(--surface)" value={subnetForm.mask} onChange={e => setSubnetForm({ ...subnetForm, mask: e.target.value })}>
+                <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Mask</Label>
+                <select className="w-full h-9 border border-border rounded bg-(--surface-alt) text-(--text) text-[13px] px-3 focus:outline-none focus:border-(--blue) focus:bg-(--surface)" value={subnetForm.mask} onChange={e => updateSubnetFormWithSmartGateway({ mask: e.target.value })}>
                   <option value="8">/8 (16.7M hosts)</option>
                   <option value="16">/16 (65,534 hosts)</option>
                   <option value="20">/20 (4,094 hosts)</option>
@@ -533,11 +688,14 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
             </div>
             <div className="grid grid-cols-2 gap-5">
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold text-muted-foreground">Gateway</Label>
+                <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Gateway</Label>
                 <Input value={subnetForm.gateway} onChange={e => setSubnetForm({ ...subnetForm, gateway: e.target.value })} placeholder="e.g. 10.0.10.1" className="h-9 text-[13px]" />
+                {!editingSubnetId && smartGatewayEnabled && !subnetForm.gateway.trim() && (
+                  <p className="text-[11px] text-(--text-muted)">Gateway will auto-suggest as first usable host when possible.</p>
+                )}
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold text-muted-foreground">VLAN</Label>
+                <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">VLAN</Label>
                 <select className="w-full h-9 border border-border rounded bg-(--surface-alt) text-(--text) text-[13px] px-3 focus:outline-none focus:border-(--blue) focus:bg-(--surface)" value={subnetForm.vlanId} onChange={e => setSubnetForm({ ...subnetForm, vlanId: e.target.value })}>
                   <option value="">None</option>
                   {vlans.map(v => <option key={v.id} value={v.id}>VLAN {v.vid} — {v.name}</option>)}
@@ -546,7 +704,7 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
             </div>
             <div className="grid grid-cols-2 gap-5">
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold text-muted-foreground">Role</Label>
+                <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Role</Label>
                 <select className="w-full h-9 border border-border rounded bg-(--surface-alt) text-(--text) text-[13px] px-3 focus:outline-none focus:border-(--blue) focus:bg-(--surface)" value={subnetForm.role} onChange={e => setSubnetForm({ ...subnetForm, role: e.target.value })}>
                   <option value="">None</option>
                   <option value="production">Production</option>
@@ -556,7 +714,7 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
                 </select>
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold text-muted-foreground">Description</Label>
+                <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Description</Label>
                 <Input value={subnetForm.description} onChange={e => setSubnetForm({ ...subnetForm, description: e.target.value })} placeholder="Optional" className="h-9 text-[13px]" />
               </div>
             </div>
