@@ -1,15 +1,17 @@
-import { NextResponse } from 'next/server'
-import prisma from '@/lib/db'
-import { getActiveSite } from '@/lib/site-context'
+import { NextResponse } from "next/server";
+import prisma from "@/lib/db";
+import { getActiveSite } from "@/lib/site-context";
 
 // GET — Export full site data as JSON backup
 export async function GET() {
   try {
-    const { siteId } = await getActiveSite()
-    if (!siteId) return NextResponse.json({ error: 'No active site' }, { status: 401 })
+    const { siteId } = await getActiveSite();
+    if (!siteId)
+      return NextResponse.json({ error: "No active site" }, { status: 401 });
 
-    const site = await prisma.site.findUnique({ where: { id: siteId } })
-    if (!site) return NextResponse.json({ error: 'Site not found' }, { status: 404 })
+    const site = await prisma.site.findUnique({ where: { id: siteId } });
+    if (!site)
+      return NextResponse.json({ error: "Site not found" }, { status: 404 });
 
     const [
       categories,
@@ -25,22 +27,44 @@ export async function GET() {
       changeLogs,
       siteSettings,
     ] = await Promise.all([
-      prisma.customCategory.findMany({ where: { siteId }, orderBy: { sortOrder: 'asc' } }),
-      prisma.device.findMany({ where: { siteId }, orderBy: { name: 'asc' } }),
-      prisma.subnet.findMany({ where: { siteId }, orderBy: { prefix: 'asc' } }),
-      prisma.vLAN.findMany({ where: { siteId }, orderBy: { vid: 'asc' } }),
-      prisma.service.findMany({ where: { siteId }, orderBy: { name: 'asc' } }),
-      prisma.wifiNetwork.findMany({ where: { siteId }, orderBy: { ssid: 'asc' } }),
-      prisma.iPAddress.findMany({ where: { subnet: { siteId } }, orderBy: { address: 'asc' } }),
-      prisma.iPRange.findMany({ where: { subnet: { siteId } }, orderBy: { startAddr: 'asc' } }),
-      prisma.subnetTemplate.findMany({ where: { siteId }, orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }] }),
-      prisma.iPRangeScheme.findMany({ where: { siteId }, include: { entries: { orderBy: { sortOrder: 'asc' } } }, orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }] }),
-      prisma.changeLog.findMany({ where: { siteId }, orderBy: { timestamp: 'desc' } }),
+      prisma.customCategory.findMany({
+        where: { siteId },
+        orderBy: { sortOrder: "asc" },
+      }),
+      prisma.device.findMany({ where: { siteId }, orderBy: { name: "asc" } }),
+      prisma.subnet.findMany({ where: { siteId }, orderBy: { prefix: "asc" } }),
+      prisma.vLAN.findMany({ where: { siteId }, orderBy: { vid: "asc" } }),
+      prisma.service.findMany({ where: { siteId }, orderBy: { name: "asc" } }),
+      prisma.wifiNetwork.findMany({
+        where: { siteId },
+        orderBy: { ssid: "asc" },
+      }),
+      prisma.iPAddress.findMany({
+        where: { subnet: { siteId } },
+        orderBy: { address: "asc" },
+      }),
+      prisma.iPRange.findMany({
+        where: { subnet: { siteId } },
+        orderBy: { startAddr: "asc" },
+      }),
+      prisma.subnetTemplate.findMany({
+        where: { siteId },
+        orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+      }),
+      prisma.iPRangeScheme.findMany({
+        where: { siteId },
+        include: { entries: { orderBy: { sortOrder: "asc" } } },
+        orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+      }),
+      prisma.changeLog.findMany({
+        where: { siteId },
+        orderBy: { timestamp: "desc" },
+      }),
       prisma.siteSettings.findUnique({ where: { siteId } }),
-    ])
+    ]);
 
     const backup = {
-      version: '1.0',
+      version: "1.0",
       exportedAt: new Date().toISOString(),
       site: {
         name: site.name,
@@ -48,12 +72,14 @@ export async function GET() {
         description: site.description,
         address: site.address,
       },
-      siteSettings: siteSettings ? {
-        healthCheckEnabled: siteSettings.healthCheckEnabled,
-        healthCheckInterval: siteSettings.healthCheckInterval,
-        healthCheckTimeout: siteSettings.healthCheckTimeout,
-      } : null,
-      categories: categories.map(c => ({
+      siteSettings: siteSettings
+        ? {
+            healthCheckEnabled: siteSettings.healthCheckEnabled,
+            healthCheckInterval: siteSettings.healthCheckInterval,
+            healthCheckTimeout: siteSettings.healthCheckTimeout,
+          }
+        : null,
+      categories: categories.map((c) => ({
         type: c.type,
         name: c.name,
         slug: c.slug,
@@ -61,7 +87,7 @@ export async function GET() {
         color: c.color,
         sortOrder: c.sortOrder,
       })),
-      vlans: vlans.map(v => ({
+      vlans: vlans.map((v) => ({
         vid: v.vid,
         name: v.name,
         status: v.status,
@@ -69,7 +95,7 @@ export async function GET() {
         description: v.description,
         _exportId: v.id,
       })),
-      subnets: subnets.map(s => ({
+      subnets: subnets.map((s) => ({
         prefix: s.prefix,
         mask: s.mask,
         description: s.description,
@@ -80,7 +106,7 @@ export async function GET() {
         _exportId: s.id,
         _vlanExportId: s.vlanId,
       })),
-      ipAddresses: ipAddresses.map(ip => ({
+      ipAddresses: ipAddresses.map((ip) => ({
         address: ip.address,
         mask: ip.mask,
         status: ip.status,
@@ -89,7 +115,7 @@ export async function GET() {
         assignedTo: ip.assignedTo,
         _subnetExportId: ip.subnetId,
       })),
-      ipRanges: ipRanges.map(r => ({
+      ipRanges: ipRanges.map((r) => ({
         startAddr: r.startAddr,
         endAddr: r.endAddr,
         role: r.role,
@@ -98,7 +124,7 @@ export async function GET() {
         _subnetExportId: r.subnetId,
         _schemeEntryExportId: r.schemeEntryId,
       })),
-      subnetTemplates: subnetTemplates.map(t => ({
+      subnetTemplates: subnetTemplates.map((t) => ({
         name: t.name,
         slug: t.slug,
         prefix: t.prefix,
@@ -108,12 +134,12 @@ export async function GET() {
         description: t.description,
         sortOrder: t.sortOrder,
       })),
-      rangeSchemes: rangeSchemes.map(s => ({
+      rangeSchemes: rangeSchemes.map((s) => ({
         name: s.name,
         slug: s.slug,
         description: s.description,
         sortOrder: s.sortOrder,
-        entries: s.entries.map(e => ({
+        entries: s.entries.map((e) => ({
           startOctet: e.startOctet,
           endOctet: e.endOctet,
           role: e.role,
@@ -122,7 +148,7 @@ export async function GET() {
           _exportId: e.id,
         })),
       })),
-      devices: devices.map(d => ({
+      devices: devices.map((d) => ({
         name: d.name,
         macAddress: d.macAddress,
         ipAddress: d.ipAddress,
@@ -134,7 +160,7 @@ export async function GET() {
         platform: d.platform,
         _exportId: d.id,
       })),
-      services: services.map(s => ({
+      services: services.map((s) => ({
         name: s.name,
         protocol: s.protocol,
         ports: s.ports,
@@ -152,7 +178,7 @@ export async function GET() {
         healthCheckEnabled: s.healthCheckEnabled,
         _deviceExportId: s.deviceId,
       })),
-      wifiNetworks: wifiNetworks.map(w => ({
+      wifiNetworks: wifiNetworks.map((w) => ({
         ssid: w.ssid,
         security: w.security,
         passphrase: w.passphrase,
@@ -169,25 +195,28 @@ export async function GET() {
         _vlanExportId: w.vlanId,
         _subnetExportId: w.subnetId,
       })),
-      changeLogs: changeLogs.map(l => ({
+      changeLogs: changeLogs.map((l) => ({
         objectType: l.objectType,
         objectId: l.objectId,
         action: l.action,
         changes: l.changes,
         timestamp: l.timestamp.toISOString(),
       })),
-    }
+    };
 
-    const json = JSON.stringify(backup, null, 2)
-    const filename = `subnetly-backup-${site.slug}-${new Date().toISOString().split('T')[0]}.json`
+    const json = JSON.stringify(backup, null, 2);
+    const filename = `subnetly-backup-${site.slug}-${new Date().toISOString().split("T")[0]}.json`;
 
     return new NextResponse(json, {
       headers: {
-        'Content-Type': 'application/json; charset=utf-8',
-        'Content-Disposition': `attachment; filename="${filename}"`,
+        "Content-Type": "application/json; charset=utf-8",
+        "Content-Disposition": `attachment; filename="${filename}"`,
       },
-    })
+    });
   } catch {
-    return NextResponse.json({ error: 'Failed to export data' }, { status: 500 })
+    return NextResponse.json(
+      { error: "Failed to export data" },
+      { status: 500 },
+    );
   }
 }

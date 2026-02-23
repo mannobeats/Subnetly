@@ -1,61 +1,68 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { authClient } from '@/lib/auth-client'
-import { Wifi, Eye, EyeOff, AlertCircle, Loader2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { cn } from '@/lib/utils'
+import { AlertCircle, Eye, EyeOff, Loader2, Wifi } from "lucide-react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { authClient } from "@/lib/auth-client";
+import { cn } from "@/lib/utils";
 
 interface LoginPageProps {
-  onLogin: () => void
+  onLogin: () => void;
 }
 
 export default function LoginPage({ onLogin }: LoginPageProps) {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-    setLoading(true)
+    e.preventDefault();
+    setError("");
+    setLoading(true);
 
     try {
       const result = await authClient.signIn.email({
         email,
         password,
-      })
+      });
 
       if (result.error) {
-        setError(result.error.message || 'Invalid email or password')
-        setLoading(false)
-        return
+        setError(result.error.message || "Invalid email or password");
+        setLoading(false);
+        return;
       }
 
-      onLogin()
+      onLogin();
     } catch {
-      setError('An error occurred. Please try again.')
-      setLoading(false)
+      setError("An error occurred. Please try again.");
+      setLoading(false);
     }
-  }
+  };
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4" style={{ background: 'var(--gradient-login-bg)' }}>
-      <div className={cn(
-        "w-full max-w-[400px] rounded-xl border border-border bg-card p-10",
-        "shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05),0_20px_25px_-5px_rgba(0,0,0,0.08)]",
-        "animate-in fade-in slide-in-from-bottom-1 duration-300"
-      )}>
+    <div
+      className="flex min-h-screen items-center justify-center p-4"
+      style={{ background: "var(--gradient-login-bg)" }}
+    >
+      <div
+        className={cn(
+          "w-full max-w-[400px] rounded-xl border border-border bg-card p-10",
+          "shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05),0_20px_25px_-5px_rgba(0,0,0,0.08)]",
+          "animate-in fade-in slide-in-from-bottom-1 duration-300",
+        )}
+      >
         <div className="mb-8 text-center">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-[14px] bg-linear-to-br from-(--blue) to-(--blue-light) text-white">
             <Wifi size={28} />
           </div>
           <h1 className="text-xl font-bold text-foreground mb-1">Subnetly</h1>
-          <p className="text-[13px] text-muted-foreground">Network & Infrastructure Management</p>
+          <p className="text-[13px] text-muted-foreground">
+            Network & Infrastructure Management
+          </p>
         </div>
 
         {error && (
@@ -67,7 +74,12 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
 
         <form onSubmit={handleLogin}>
           <div className="mb-5">
-            <Label htmlFor="email" className="mb-2 block text-xs font-semibold text-muted-foreground">Email</Label>
+            <Label
+              htmlFor="email"
+              className="mb-2 block text-xs font-semibold text-muted-foreground"
+            >
+              Email
+            </Label>
             <Input
               id="email"
               type="email"
@@ -82,11 +94,16 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
           </div>
 
           <div className="mb-5">
-            <Label htmlFor="password" className="mb-2 block text-xs font-semibold text-muted-foreground">Password</Label>
+            <Label
+              htmlFor="password"
+              className="mb-2 block text-xs font-semibold text-muted-foreground"
+            >
+              Password
+            </Label>
             <div className="relative">
               <Input
                 id="password"
-                type={showPassword ? 'text' : 'password'}
+                type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
@@ -110,7 +127,13 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
             className="mt-2 w-full h-10 text-sm font-semibold"
             disabled={loading || !email || !password}
           >
-            {loading ? <><Loader2 size={14} className="animate-spin" /> Signing in...</> : 'Sign In'}
+            {loading ? (
+              <>
+                <Loader2 size={14} className="animate-spin" /> Signing in...
+              </>
+            ) : (
+              "Sign In"
+            )}
           </Button>
         </form>
 
@@ -119,5 +142,5 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
         </div>
       </div>
     </div>
-  )
+  );
 }

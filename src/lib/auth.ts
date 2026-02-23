@@ -1,27 +1,29 @@
-import { betterAuth } from 'better-auth'
-import { prismaAdapter } from 'better-auth/adapters/prisma'
-import prisma from './db'
+import { betterAuth } from "better-auth";
+import { prismaAdapter } from "better-auth/adapters/prisma";
+import prisma from "./db";
 
 function normalize(value: unknown): string {
-  return typeof value === 'string' ? value.trim() : ''
+  return typeof value === "string" ? value.trim() : "";
 }
 
 function parseOrigins(value: unknown): string[] {
   return normalize(value)
-    .split(',')
+    .split(",")
     .map((origin) => origin.trim())
-    .filter(Boolean)
+    .filter(Boolean);
 }
 
-const configuredBaseUrl = normalize(process.env.BETTER_AUTH_URL)
-const trustedOrigins = Array.from(new Set([
-  ...parseOrigins(process.env.BETTER_AUTH_TRUSTED_ORIGINS),
-  ...(configuredBaseUrl ? [configuredBaseUrl] : []),
-]))
+const configuredBaseUrl = normalize(process.env.BETTER_AUTH_URL);
+const trustedOrigins = Array.from(
+  new Set([
+    ...parseOrigins(process.env.BETTER_AUTH_TRUSTED_ORIGINS),
+    ...(configuredBaseUrl ? [configuredBaseUrl] : []),
+  ]),
+);
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
-    provider: 'postgresql',
+    provider: "postgresql",
   }),
   baseURL: configuredBaseUrl || undefined,
   emailAndPassword: {
@@ -37,4 +39,4 @@ export const auth = betterAuth({
     // can provide the correct public origin.
     trustedProxyHeaders: true,
   },
-})
+});

@@ -1,38 +1,51 @@
-import { NextResponse } from 'next/server'
-import prisma from '@/lib/db'
-import { ApiRouteError, handleApiError, requireActiveSiteContext } from '@/lib/api-guard'
+import { NextResponse } from "next/server";
+import {
+  ApiRouteError,
+  handleApiError,
+  requireActiveSiteContext,
+} from "@/lib/api-guard";
+import prisma from "@/lib/db";
 
-export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
   try {
-    const { siteId } = await requireActiveSiteContext()
-    const { id } = await params
-    const body = await request.json()
+    const { siteId } = await requireActiveSiteContext();
+    const { id } = await params;
+    const body = await request.json();
 
-    const existingNetwork = await prisma.wifiNetwork.findFirst({ where: { id, siteId } })
+    const existingNetwork = await prisma.wifiNetwork.findFirst({
+      where: { id, siteId },
+    });
     if (!existingNetwork) {
-      throw new ApiRouteError('WiFi network not found in active site', 404)
+      throw new ApiRouteError("WiFi network not found in active site", 404);
     }
 
-    let vlanId = existingNetwork.vlanId
+    let vlanId = existingNetwork.vlanId;
     if (body.vlanId) {
-      const vlan = await prisma.vLAN.findFirst({ where: { id: String(body.vlanId), siteId } })
+      const vlan = await prisma.vLAN.findFirst({
+        where: { id: String(body.vlanId), siteId },
+      });
       if (!vlan) {
-        throw new ApiRouteError('VLAN not found in active site', 404)
+        throw new ApiRouteError("VLAN not found in active site", 404);
       }
-      vlanId = vlan.id
-    } else if (body.vlanId === null || body.vlanId === '') {
-      vlanId = null
+      vlanId = vlan.id;
+    } else if (body.vlanId === null || body.vlanId === "") {
+      vlanId = null;
     }
 
-    let subnetId = existingNetwork.subnetId
+    let subnetId = existingNetwork.subnetId;
     if (body.subnetId) {
-      const subnet = await prisma.subnet.findFirst({ where: { id: String(body.subnetId), siteId } })
+      const subnet = await prisma.subnet.findFirst({
+        where: { id: String(body.subnetId), siteId },
+      });
       if (!subnet) {
-        throw new ApiRouteError('Subnet not found in active site', 404)
+        throw new ApiRouteError("Subnet not found in active site", 404);
       }
-      subnetId = subnet.id
-    } else if (body.subnetId === null || body.subnetId === '') {
-      subnetId = null
+      subnetId = subnet.id;
+    } else if (body.subnetId === null || body.subnetId === "") {
+      subnetId = null;
     }
 
     const network = await prisma.wifiNetwork.update({
@@ -58,32 +71,49 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         vlan: { select: { id: true, vid: true, name: true } },
         subnet: { select: { id: true, prefix: true, mask: true } },
       },
-    })
+    });
     await prisma.changeLog.create({
-      data: { objectType: 'WifiNetwork', objectId: network.id, action: 'update', changes: JSON.stringify(body), siteId },
-    })
-    return NextResponse.json(network)
+      data: {
+        objectType: "WifiNetwork",
+        objectId: network.id,
+        action: "update",
+        changes: JSON.stringify(body),
+        siteId,
+      },
+    });
+    return NextResponse.json(network);
   } catch (error) {
-    return handleApiError(error, 'Failed to update WiFi network')
+    return handleApiError(error, "Failed to update WiFi network");
   }
 }
 
-export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
   try {
-    const { siteId } = await requireActiveSiteContext()
-    const { id } = await params
+    const { siteId } = await requireActiveSiteContext();
+    const { id } = await params;
 
-    const existingNetwork = await prisma.wifiNetwork.findFirst({ where: { id, siteId } })
+    const existingNetwork = await prisma.wifiNetwork.findFirst({
+      where: { id, siteId },
+    });
     if (!existingNetwork) {
-      throw new ApiRouteError('WiFi network not found in active site', 404)
+      throw new ApiRouteError("WiFi network not found in active site", 404);
     }
 
     await prisma.changeLog.create({
-      data: { objectType: 'WifiNetwork', objectId: id, action: 'delete', changes: '{}', siteId },
-    })
-    await prisma.wifiNetwork.delete({ where: { id } })
-    return NextResponse.json({ success: true })
+      data: {
+        objectType: "WifiNetwork",
+        objectId: id,
+        action: "delete",
+        changes: "{}",
+        siteId,
+      },
+    });
+    await prisma.wifiNetwork.delete({ where: { id } });
+    return NextResponse.json({ success: true });
   } catch (error) {
-    return handleApiError(error, 'Failed to delete WiFi network')
+    return handleApiError(error, "Failed to delete WiFi network");
   }
 }
