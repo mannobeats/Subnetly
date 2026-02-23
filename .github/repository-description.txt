@@ -1,0 +1,1 @@
+Self-hosted network and infrastructure management platform with IPAM, topology, VLAN/WiFi planning, service monitoring, and multi-site support.

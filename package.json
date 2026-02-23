@@ -1,6 +1,16 @@
 {
   "name": "subnetly",
   "version": "0.1.0",
+  "description": "Self-hosted network and infrastructure operations platform for homelabs and small teams.",
+  "license": "AGPL-3.0-only",
+  "homepage": "https://github.com/mannobeats/Subnetly",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mannobeats/Subnetly.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mannobeats/Subnetly/issues"
+  },
   "private": true,
   "scripts": {
     "dev": "next dev",

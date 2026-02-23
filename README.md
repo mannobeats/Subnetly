@@ -1,134 +1,113 @@
 # Subnetly
 
-Subnetly is a self-hosted network and infrastructure operations platform for homelabs and small teams.
+[![CI](https://github.com/mannobeats/Subnetly/actions/workflows/ci.yml/badge.svg)](https://github.com/mannobeats/Subnetly/actions/workflows/ci.yml)
+[![Release](https://github.com/mannobeats/Subnetly/actions/workflows/release.yml/badge.svg)](https://github.com/mannobeats/Subnetly/actions/workflows/release.yml)
+[![License: AGPL-3.0-only](https://img.shields.io/badge/License-AGPL%203.0-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 
-It combines:
-- device inventory,
-- IP address management (IPAM),
-- VLAN and WiFi planning,
-- service catalog + health checks,
-- topology visualization,
-- changelog auditing,
-- backup/export + restore/import,
-- multi-site workspace isolation.
+Self-hosted network and infrastructure operations platform for homelabs and small teams.
 
-## Core Features
+## GitHub About (repository description)
 
-- **Dashboard**
-  - live counts for devices, subnets, VLANs, WiFi, services
-  - subnet utilization and recent changes
-  - service health snapshots
+Use this as your GitHub repository description:
 
-- **Device Management**
-  - CRUD for devices with category/status/platform metadata
-  - automatic IPAM link when a device IP matches a subnet
+`Self-hosted network and infrastructure management platform with IPAM, topology, VLAN/WiFi planning, service monitoring, and multi-site support.`
 
-- **IPAM**
-  - subnet CRUD
-  - IP range management (DHCP/reserved/infrastructure/general)
-  - overlap detection and utilization tracking
-  - visual grid/list/summary planning views
+## Features
 
-- **VLAN + WiFi**
-  - VLAN CRUD with role tagging
-  - WiFi SSID management with security mode, band, PMF, TX power, guest/isolation controls
-  - VLAN/subnet mapping for wireless networks
+- Device inventory with categories, status, and platform metadata
+- IPAM with subnet/range planning, utilization, and overlap detection
+- VLAN and WiFi planning with mapping controls
+- Topology visualization with drag-and-drop layout persistence
+- Service catalog with health checks and change tracking
+- Multi-site isolation, backup/export, restore/import, and audit trail
 
-- **Services + Monitoring**
-  - service catalog linked to devices
-  - optional periodic URL health checks with uptime stats
-  - status change logging
+## License
 
-- **Topology**
-  - graph view of devices, cable links, and subnet grouping
-  - draggable layouts with persisted positions
+This project is licensed under **AGPL-3.0-only**. See `/LICENSE`.
 
-- **Ops & Governance**
-  - changelog trail for create/update/delete actions
-  - full-site JSON backup export/import
-  - per-site settings and multi-site switching
+## Quick Start (local dev)
 
-## Tech Stack
-
-- **Framework:** Next.js (App Router)
-- **Runtime:** React + TypeScript
-- **Database:** PostgreSQL
-- **ORM:** Prisma
-- **Auth:** better-auth (email/password)
-- **Styling/UI:** Tailwind CSS + component primitives
-
-## Getting Started (Local)
-
-### 1) Install dependencies
+### 1) Install
 
 ```bash
-npm install
-```
-
-### 2) Configure environment
-
-Create/update `.env` with at least:
-
-You can start from `.env.example`:
-
-```bash
+npm ci
 cp .env.example .env
 ```
+
+### 2) Configure `.env`
 
 ```env
 DATABASE_URL="postgresql://subnetly:subnetly@localhost:5432/subnetly?schema=public"
 BETTER_AUTH_SECRET="replace-with-a-long-random-secret"
 BETTER_AUTH_URL="http://localhost:3000"
-
-# Production-only setup protection (recommended in all environments)
-SETUP_TOKEN="replace-with-a-random-one-time-setup-token"
-
-# Optional: allow self-signed TLS for service health checks
+SETUP_TOKEN=""
 HEALTHCHECK_ALLOW_SELF_SIGNED="false"
 ```
 
-### 3) Prepare database
+### 3) Start PostgreSQL + app
 
 ```bash
-npm run db:push
+docker compose -f docker-compose.yml up --build
 ```
 
-### 4) Start development server
+Then open `http://localhost:3000`.
+
+## Deploy with GHCR image
+
+`compose.yml` in this repository pulls prebuilt public images from GHCR.
+
+### 1) Download deploy files
 
 ```bash
-npm run dev
+curl -fsSL https://raw.githubusercontent.com/mannobeats/Subnetly/main/compose.yml -o compose.yml
+curl -fsSL https://raw.githubusercontent.com/mannobeats/Subnetly/main/.env.example -o .env
 ```
 
-Open `http://localhost:3000`.
+### 2) Update `.env`
 
-On first run (empty database), Subnetly shows an **Initial Setup** screen where you create the owner account (name, email, password).
+- Set a strong `BETTER_AUTH_SECRET`
+- Set `BETTER_AUTH_URL` to your public URL
+- Optionally set `SETUP_TOKEN`
 
-If `SETUP_TOKEN` is configured, you must enter it during initial setup.
-
-## Docker (Optional)
-
-If using Docker Compose (PostgreSQL 18):
+### 3) Run
 
 ```bash
-docker compose up --build
+docker compose up -d
 ```
 
-The app runs on `http://localhost:3000` and PostgreSQL 18 on `localhost:5432`.
+App: `http://localhost:3000`
 
-## Data Safety Notes
+## Release and image strategy
 
-- Backup import **replaces all data in the currently active site**.
-- Use export before import or destructive operations.
-- For production usage, set strong secrets and a setup token.
-- All API mutations are scoped to the authenticated active site; never send `siteId` from clients for ownership control.
+- `main` pushes:
+  - run validation (lint, typecheck, build)
+  - publish multi-arch container images to `ghcr.io/mannobeats/subnetly`
+  - update `edge` pre-release automatically
+- tag pushes (`v*`):
+  - run validation
+  - publish versioned images
+  - create GitHub release notes automatically
+
+## Published image tags
+
+- `ghcr.io/mannobeats/subnetly:latest` (default branch)
+- `ghcr.io/mannobeats/subnetly:main`
+- `ghcr.io/mannobeats/subnetly:sha-<commit>`
+- `ghcr.io/mannobeats/subnetly:vX.Y.Z` (on tags)
 
 ## Scripts
 
-- `npm run dev` — start local dev server
-- `npm run build` — prisma generate + Next build
-- `npm run start` — run production server
-- `npm run lint` — run ESLint
-- `npm run typecheck` — run strict TypeScript checks
-- `npm run db:push` — sync Prisma schema to DB
-- `npm run db:migrate` — run Prisma migrations (dev)
-- `npm run db:seed` — run seed script
+- `npm run dev`
+- `npm run lint`
+- `npm run typecheck`
+- `npm run build`
+- `npm run start`
+- `npm run db:push`
+- `npm run db:migrate`
+- `npm run db:seed`
+
+## Contributing and security
+
+- Contribution guide: `/CONTRIBUTING.md`
+- Security policy: `/SECURITY.md`
+- Code of conduct: `/CODE_OF_CONDUCT.md`
