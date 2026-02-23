@@ -21,15 +21,26 @@ services:
       db:
         condition: service_healthy
     ports:
-      - "${APP_PORT:-3000}:3000"
+      # Change the host port (left side) if needed.
+      - "3000:3000"
     environment:
-      DATABASE_URL: "${DATABASE_URL:-postgresql://subnetly:subnetly@db:5432/subnetly?schema=public}"
+      DATABASE_URL: "postgresql://subnetly:subnetly@db:5432/subnetly?schema=public"
       NODE_ENV: production
-      BETTER_AUTH_SECRET: "${BETTER_AUTH_SECRET:?set-in-.env}"
-      BETTER_AUTH_URL: "${BETTER_AUTH_URL:-}"
-      BETTER_AUTH_TRUSTED_ORIGINS: "${BETTER_AUTH_TRUSTED_ORIGINS:-}"
-      INITIAL_SETUP_TOKEN: "${INITIAL_SETUP_TOKEN:-}"
-      HEALTHCHECK_ALLOW_SELF_SIGNED: "${HEALTHCHECK_ALLOW_SELF_SIGNED:-false}"
+
+      # REQUIRED: replace with a strong random secret.
+      BETTER_AUTH_SECRET: "replace-with-a-long-random-secret"
+
+      # Set to your public URL when using domain/tunnel/reverse proxy.
+      # Examples:
+      # - http://10.0.10.50:3000
+      # - https://subnetly.example.com
+      BETTER_AUTH_URL: "http://localhost:3000"
+
+      # Optional: comma-separated additional trusted origins.
+      BETTER_AUTH_TRUSTED_ORIGINS: ""
+
+      # Optional: allow self-signed certs for service health checks.
+      HEALTHCHECK_ALLOW_SELF_SIGNED: "false"
 
 volumes:
   subnetly-db:

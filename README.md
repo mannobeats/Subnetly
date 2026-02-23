@@ -6,46 +6,30 @@ Self-hosted network and infrastructure management platform for homelabs and smal
 
 ## Project Goal
 
-Subnetly helps you manage core infrastructure in one place:
+Subnetly gives you one place to operate infrastructure:
 
 - devices and inventory,
 - IPAM (subnets, ranges, allocations),
 - VLAN and WiFi planning,
-- service catalog and health checks,
+- service catalog + health checks,
 - topology visualization,
-- multi-site workspaces and auditing.
-
-The goal is simple deployment, clear operations, and practical day-to-day visibility.
+- multi-site organization and auditing.
 
 ## Features
 
 - Device management (category, status, platform, metadata)
 - IPAM with subnet/range planning and utilization visibility
-- VLAN and WiFi modeling with mapping support
-- Topology view with drag/drop layout persistence
-- Service catalog with health checks and status tracking
+- VLAN + WiFi modeling and mapping
+- Topology with drag/drop layout persistence
+- Service monitoring and status history
 - Backup/export and restore/import
-- Multi-site isolation with changelog auditing
+- Multi-site isolation with changelog tracking
 
-## Quick Setup
+## Quick Setup (No `.env` required)
 
-### 1) Requirements
+### 1) Create `compose.yml`
 
-- Docker + Docker Compose
-
-### 2) Create `.env`
-
-```env
-APP_PORT="3000"
-DATABASE_URL="postgresql://subnetly:subnetly@db:5432/subnetly?schema=public"
-BETTER_AUTH_SECRET="replace-with-a-long-random-secret"
-BETTER_AUTH_URL=""
-BETTER_AUTH_TRUSTED_ORIGINS=""
-INITIAL_SETUP_TOKEN=""
-HEALTHCHECK_ALLOW_SELF_SIGNED="false"
-```
-
-### 3) Create `compose.yml`
+Copy and paste this file:
 
 ```yaml
 services:
@@ -71,69 +55,72 @@ services:
       db:
         condition: service_healthy
     ports:
-      - "${APP_PORT:-3000}:3000"
+      # Change host port on the left side only.
+      - "3000:3000"
     environment:
-      DATABASE_URL: "${DATABASE_URL:-postgresql://subnetly:subnetly@db:5432/subnetly?schema=public}"
+      DATABASE_URL: "postgresql://subnetly:subnetly@db:5432/subnetly?schema=public"
       NODE_ENV: production
-      BETTER_AUTH_SECRET: "${BETTER_AUTH_SECRET:?set-in-.env}"
-      BETTER_AUTH_URL: "${BETTER_AUTH_URL:-}"
-      BETTER_AUTH_TRUSTED_ORIGINS: "${BETTER_AUTH_TRUSTED_ORIGINS:-}"
-      INITIAL_SETUP_TOKEN: "${INITIAL_SETUP_TOKEN:-}"
-      HEALTHCHECK_ALLOW_SELF_SIGNED: "${HEALTHCHECK_ALLOW_SELF_SIGNED:-false}"
+
+      # REQUIRED: replace with a strong random secret.
+      BETTER_AUTH_SECRET: "replace-with-a-long-random-secret"
+
+      # Set to your public URL when using reverse proxy/tunnel/domain.
+      # Examples:
+      # - http://10.0.10.50:3000
+      # - https://subnetly.example.com
+      BETTER_AUTH_URL: "http://localhost:3000"
+
+      # Optional: comma-separated additional trusted origins.
+      BETTER_AUTH_TRUSTED_ORIGINS: ""
+
+      # Optional: allow self-signed certs for service health checks.
+      HEALTHCHECK_ALLOW_SELF_SIGNED: "false"
 
 volumes:
   subnetly-db:
 ```
 
-### 4) Start
+### 2) Start
 
 ```bash
 docker compose up -d
 ```
 
-Open:
+### 3) Open
 
-```text
-http://localhost:APP_PORT
-```
-
-Replace `APP_PORT` with your configured value (default `3000`).
+- `http://localhost:3000`
+- If you changed host port, use that port.
 
 ## First Run
 
-On first startup, Subnetly shows **Initial Setup** to create the owner account.
+On first startup, Subnetly shows **Initial Setup**.
 
-- If `INITIAL_SETUP_TOKEN` is empty, no token is required.
-- If `INITIAL_SETUP_TOKEN` is set, that token must be entered during first setup.
+- Create owner name/email/password.
 
 ## Cloudflare Tunnel / Reverse Proxy
 
-For public domain access, set:
-
-- `BETTER_AUTH_URL=https://your-domain.example`
-- Optional: `BETTER_AUTH_TRUSTED_ORIGINS` for additional origins, comma-separated
+Set `BETTER_AUTH_URL` to your public URL.
 
 Example:
 
 ```env
 BETTER_AUTH_URL="https://subnetly.example.com"
-BETTER_AUTH_TRUSTED_ORIGINS="https://subnetly.example.com,https://subnetly.internal.example"
+BETTER_AUTH_TRUSTED_ORIGINS="https://subnetly.example.com"
 ```
 
-Tunnel route basics:
+Route basics:
 
-- Hostname: your public domain/subdomain
+- Hostname: your public subdomain
 - Path: empty (route all paths)
 - Service type: HTTP
-- Service URL: your host IP + `APP_PORT` (example `http://10.0.10.50:3008`)
+- Service URL: your host IP + chosen host port (example `http://10.0.10.50:3000`)
 
-If you see `NXDOMAIN`, fix DNS/hostname mapping in Cloudflare first.
+If you get `NXDOMAIN`, fix DNS record/tunnel routing first.
 
 ## Local Development
 
 ```bash
 npm ci
-cp .env.example .env
 npm run db:push
 npm run dev
 ```
@@ -143,14 +130,12 @@ npm run dev
 Contributions are welcome.
 
 - Read `/CONTRIBUTING.md`
-- Open issues for bugs or feature requests
-- Submit pull requests with clear scope and validation
+- Open issues for bugs and feature requests
+- Submit pull requests with clear validation
 
 ## Security
 
-Report vulnerabilities through:
-
-- `/SECURITY.md`
+- See `/SECURITY.md` for vulnerability reporting
 
 ## License
 

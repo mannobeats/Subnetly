@@ -35,7 +35,6 @@ export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [authLoading, setAuthLoading] = useState(true)
   const [needsSetup, setNeedsSetup] = useState(false)
-  const [setupTokenRequired, setSetupTokenRequired] = useState(false)
   const [userName, setUserName] = useState('')
   const [userEmail, setUserEmail] = useState('')
   const [sites, setSites] = useState<Site[]>([])
@@ -110,7 +109,6 @@ export default function Home() {
       if (res.data?.user) {
         setIsAuthenticated(true)
         setNeedsSetup(false)
-        setSetupTokenRequired(false)
         setUserName(res.data.user.name || '')
         setUserEmail(res.data.user.email || '')
       } else {
@@ -120,20 +118,16 @@ export default function Home() {
           if (setupRes.ok) {
             const setupData = await setupRes.json()
             setNeedsSetup(Boolean(setupData.needsSetup))
-            setSetupTokenRequired(Boolean(setupData.setupTokenRequired))
           } else {
             setNeedsSetup(false)
-            setSetupTokenRequired(false)
           }
         } catch {
           setNeedsSetup(false)
-          setSetupTokenRequired(false)
         }
       }
     } catch {
       setIsAuthenticated(false)
       setNeedsSetup(false)
-      setSetupTokenRequired(false)
     } finally {
       setAuthLoading(false)
     }
@@ -524,7 +518,7 @@ export default function Home() {
   // Login gate
   if (!isAuthenticated) {
     if (needsSetup) {
-      return <SetupPage setupTokenRequired={setupTokenRequired} onSetupComplete={() => checkSession()} />
+      return <SetupPage onSetupComplete={() => checkSession()} />
     }
     return <LoginPage onLogin={() => checkSession()} />
   }

@@ -22,7 +22,8 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     ports:
-      - "${APP_PORT:-3000}:3000"
+      # Change the host port (left side) if needed.
+      - "3000:3000"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     # For health checks to reach LAN services on Linux, uncomment the next line
@@ -31,13 +32,20 @@ services:
     # Then also change DATABASE_URL below to use 127.0.0.1 instead of db:
     # DATABASE_URL: "postgresql://subnetly:subnetly@127.0.0.1:5432/subnetly?schema=public"
     environment:
-      DATABASE_URL: "${DATABASE_URL:-postgresql://subnetly:subnetly@db:5432/subnetly?schema=public}"
+      DATABASE_URL: "postgresql://subnetly:subnetly@db:5432/subnetly?schema=public"
       NODE_ENV: production
-      BETTER_AUTH_SECRET: "${BETTER_AUTH_SECRET:-dev-only-change-me-before-production}"
-      BETTER_AUTH_URL: "${BETTER_AUTH_URL:-}"
-      BETTER_AUTH_TRUSTED_ORIGINS: "${BETTER_AUTH_TRUSTED_ORIGINS:-}"
-      INITIAL_SETUP_TOKEN: "${INITIAL_SETUP_TOKEN:-}"
-      HEALTHCHECK_ALLOW_SELF_SIGNED: "${HEALTHCHECK_ALLOW_SELF_SIGNED:-false}"
+
+      # REQUIRED: replace with a strong random secret.
+      BETTER_AUTH_SECRET: "replace-with-a-long-random-secret"
+
+      # Set to your public URL when using domain/tunnel/reverse proxy.
+      BETTER_AUTH_URL: "http://localhost:3000"
+
+      # Optional: comma-separated additional trusted origins.
+      BETTER_AUTH_TRUSTED_ORIGINS: ""
+
+      # Optional: allow self-signed certs for service health checks.
+      HEALTHCHECK_ALLOW_SELF_SIGNED: "false"
     depends_on:
       db:
         condition: service_healthy

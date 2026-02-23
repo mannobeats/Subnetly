@@ -1,7 +1,7 @@
 'use client'
 
 import { FormEvent, useState } from 'react'
-import { Wifi, AlertCircle, Loader2, ShieldCheck } from 'lucide-react'
+import { Wifi, AlertCircle, Loader2 } from 'lucide-react'
 import { authClient } from '@/lib/auth-client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -9,16 +9,14 @@ import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 
 interface SetupPageProps {
-  setupTokenRequired: boolean
   onSetupComplete: () => void
 }
 
-export default function SetupPage({ setupTokenRequired, onSetupComplete }: SetupPageProps) {
+export default function SetupPage({ onSetupComplete }: SetupPageProps) {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [setupToken, setSetupToken] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -34,11 +32,6 @@ export default function SetupPage({ setupTokenRequired, onSetupComplete }: Setup
       setError('Password must be at least 10 characters')
       return
     }
-    if (setupTokenRequired && !setupToken.trim()) {
-      setError('Setup token is required')
-      return
-    }
-
     setLoading(true)
     try {
       const response = await fetch('/api/auth/setup', {
@@ -48,7 +41,6 @@ export default function SetupPage({ setupTokenRequired, onSetupComplete }: Setup
           name: name.trim(),
           email: email.trim().toLowerCase(),
           password,
-          setupToken: setupToken.trim() || undefined,
         }),
       })
       const result = await response.json()
@@ -85,13 +77,6 @@ export default function SetupPage({ setupTokenRequired, onSetupComplete }: Setup
           <h1 className="text-xl font-bold text-foreground mb-1">Initial Setup</h1>
           <p className="text-[13px] text-muted-foreground">Create the owner account to finish bootstrapping Subnetly</p>
         </div>
-
-        {setupTokenRequired && (
-          <div className="mb-6 flex gap-2 rounded-md border border-(--info-border) bg-(--blue-bg) p-3 text-xs text-(--info-text)">
-            <ShieldCheck size={14} className="mt-0.5 shrink-0" />
-            <span>This deployment requires an initial setup token for first account creation.</span>
-          </div>
-        )}
 
         {error && (
           <div className="mb-6 flex items-center gap-2 rounded-md border border-(--red-border) bg-(--red-bg) p-3 text-xs text-(--red)">
@@ -159,22 +144,7 @@ export default function SetupPage({ setupTokenRequired, onSetupComplete }: Setup
             />
           </div>
 
-          {setupTokenRequired && (
-            <div>
-              <Label htmlFor="setup-token" className="mb-2 block text-xs font-semibold text-muted-foreground">Setup Token</Label>
-              <Input
-                id="setup-token"
-                value={setupToken}
-                onChange={(e) => setSetupToken(e.target.value)}
-                placeholder="Enter initial setup token"
-                required
-                autoComplete="one-time-code"
-                className="h-9 text-[13px]"
-              />
-            </div>
-          )}
-
-          <Button type="submit" className="mt-2 w-full h-10 text-sm font-semibold" disabled={loading || !name || !email || !password || !confirmPassword || (setupTokenRequired && !setupToken)}>
+          <Button type="submit" className="mt-2 w-full h-10 text-sm font-semibold" disabled={loading || !name || !email || !password || !confirmPassword}>
             {loading ? <><Loader2 size={14} className="animate-spin" /> Creating owner account...</> : 'Create Owner Account'}
           </Button>
         </form>
