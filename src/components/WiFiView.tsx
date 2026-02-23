@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 
 interface WifiVlan { id: string; vid: number; name: string; role?: string | null }
-interface WifiSubnet { id: string; prefix: string; mask: number; description?: string | null; gateway?: string | null }
+interface WifiSubnet { id: string; prefix: string; mask: number; role?: string | null; description?: string | null; gateway?: string | null }
 
 interface WifiData {
   id: string
@@ -353,7 +353,7 @@ const WiFiView = ({ searchTerm = '', selectedSecurityFilter = null, highlightId 
                 <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Subnet</Label>
                 <select className="w-full h-9 border border-border rounded bg-(--surface-alt) text-(--text) text-[13px] px-3 focus:outline-none focus:border-(--blue) focus:bg-(--surface)" value={form.subnetId} onChange={e => setForm({ ...form, subnetId: e.target.value })}>
                   <option value="">Auto / None</option>
-                  {subnets.map(s => <option key={s.id} value={s.id}>{s.prefix}/{s.mask} {s.description ? `— ${s.description}` : ''}</option>)}
+                  {subnets.map(s => <option key={s.id} value={s.id}>{s.prefix}/{s.mask}{s.role ? ` • ${s.role}` : ''}</option>)}
                 </select>
               </div>
               <div>

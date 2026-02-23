@@ -182,6 +182,7 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
   const [subnetTemplatesEnabled, setSubnetTemplatesEnabled] = useState(true)
   const [smartGatewayEnabled, setSmartGatewayEnabled] = useState(true)
   const [rangeSchemesEnabled, setRangeSchemesEnabled] = useState(true)
+  const [dynamicRangeStartEnabled, setDynamicRangeStartEnabled] = useState(true)
   const [selectedSubnetTemplate, setSelectedSubnetTemplate] = useState('')
   const [saveAsTemplate, setSaveAsTemplate] = useState(false)
   const [templateName, setTemplateName] = useState('')
@@ -230,6 +231,9 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
         if (settings.ipamRangeSchemesEnabled !== undefined) {
           setRangeSchemesEnabled(!!settings.ipamRangeSchemesEnabled)
         }
+        if (settings.ipamDynamicRangeStartEnabled !== undefined) {
+          setDynamicRangeStartEnabled(!!settings.ipamDynamicRangeStartEnabled)
+        }
       } catch {
         // Ignore malformed local settings
       }
@@ -276,6 +280,13 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
     rangeSchemes.forEach((scheme) => scheme.entries.forEach((entry) => roles.add(entry.role)))
     return Array.from(roles)
   }, [subnets, rangeSchemes])
+
+  const subnetRoleSuggestions = useMemo(() => {
+    const roles = new Set<string>(['production', 'management', 'iot', 'guest'])
+    subnets.forEach((s) => { if (s.role) roles.add(s.role) })
+    subnetTemplateOptions.forEach((t) => { if (t.role) roles.add(t.role) })
+    return Array.from(roles)
+  }, [subnets, subnetTemplateOptions])
 
   // Build a map of IP address -> device for quick lookup
   const ipToDevice = useMemo(() => {
@@ -618,7 +629,22 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
 
   const openCreateRange = () => {
     setEditingRangeId(null)
-    setRangeForm(emptyRangeForm)
+    if (dynamicRangeStartEnabled && subnet) {
+      const occupied = new Set<number>()
+      subnet.ipRanges.forEach((range) => {
+        const start = parseInt(range.startAddr.split('.').pop() || '0', 10)
+        const end = parseInt(range.endAddr.split('.').pop() || '0', 10)
+        const from = Math.max(1, Math.min(start, end))
+        const to = Math.min(254, Math.max(start, end))
+        for (let i = from; i <= to; i += 1) occupied.add(i)
+      })
+
+      let nextStart = 1
+      while (nextStart <= 254 && occupied.has(nextStart)) nextStart += 1
+      setRangeForm({ ...emptyRangeForm, startOctet: nextStart <= 254 ? String(nextStart) : '' })
+    } else {
+      setRangeForm(emptyRangeForm)
+    }
     setRangeModalOpen(true)
   }
 
@@ -829,13 +855,12 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
             <div className="grid grid-cols-2 gap-5">
               <div className="space-y-1.5">
                 <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Role</Label>
-                <select className="w-full h-9 border border-border rounded bg-(--surface-alt) text-(--text) text-[13px] px-3 focus:outline-none focus:border-(--blue) focus:bg-(--surface)" value={subnetForm.role} onChange={e => setSubnetForm({ ...subnetForm, role: e.target.value })}>
-                  <option value="">None</option>
-                  <option value="production">Production</option>
-                  <option value="management">Management</option>
-                  <option value="iot">IoT</option>
-                  <option value="guest">Guest</option>
-                </select>
+                <Input list="ipam-subnet-role-options" value={subnetForm.role} onChange={e => setSubnetForm({ ...subnetForm, role: e.target.value })} placeholder="e.g. production, management, iot" className="h-9 text-[13px]" />
+                <datalist id="ipam-subnet-role-options">
+                  {subnetRoleSuggestions.map((role) => (
+                    <option key={role} value={role} />
+                  ))}
+                </datalist>
               </div>
               <div className="space-y-1.5">
                 <Label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Description</Label>
@@ -875,7 +900,7 @@ const IPPlannerView = ({ searchTerm, selectedIpFilter = null }: IPPlannerProps) 
             <label className="block text-xs font-semibold text-(--text-muted)">Subnet</label>
             <select className="w-full h-9 border border-border rounded bg-(--surface-alt) text-(--text) text-[13px] px-3 focus:outline-none focus:border-(--blue) focus:bg-(--surface)" value={selectedSubnet || ''} onChange={e => { setSelectedSubnet(e.target.value); setGridPage(0) }}>
               {subnets.map(s => (
-                <option key={s.id} value={s.id}>{s.prefix}/{s.mask} — {s.description || 'Unnamed'} {s.vlan ? `(VLAN ${s.vlan.vid})` : ''}</option>
+                <option key={s.id} value={s.id}>{s.prefix}/{s.mask}{s.role ? ` • ${s.role}` : ''}{s.vlan ? ` • VLAN ${s.vlan.vid}` : ''}</option>
               ))}
             </select>
           </div>

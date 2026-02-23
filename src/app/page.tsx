@@ -25,6 +25,7 @@ interface SubnetOption {
   id: string
   prefix: string
   mask: number
+  role?: string | null
   description?: string | null
   gateway?: string | null
   vlan?: { vid: number; name: string } | null
@@ -686,7 +687,7 @@ export default function Home() {
                 <select className="w-full h-9 border border-border rounded bg-(--surface-alt) text-(--text) text-[13px] px-3 focus:outline-none focus:border-(--blue) focus:bg-(--surface)" value={selectedSubnetId} onChange={e => handleSubnetChange(e.target.value)}>
                   <option value="">Manual IP entry</option>
                   {subnets.map(s => (
-                    <option key={s.id} value={s.id}>{s.prefix}/{s.mask} — {s.description || 'Unnamed'} {s.vlan ? `(VLAN ${s.vlan.vid})` : ''}</option>
+                    <option key={s.id} value={s.id}>{s.prefix}/{s.mask}{s.role ? ` • ${s.role}` : ''}{s.vlan ? ` • VLAN ${s.vlan.vid}` : ''}</option>
                   ))}
                 </select>
               </div>
