@@ -94,7 +94,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-[14px] bg-linear-to-br from-(--blue) to-(--blue-light) text-white">
             <Wifi size={28} />
           </div>
-          <h1 className="text-xl font-bold text-foreground mb-1">Homelab Manager</h1>
+          <h1 className="text-xl font-bold text-foreground mb-1">Subnetly</h1>
           <p className="text-[13px] text-muted-foreground">Network & Infrastructure Management</p>
         </div>
 

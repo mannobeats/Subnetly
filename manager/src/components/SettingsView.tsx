@@ -750,7 +750,7 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
               <p className="text-[13px] text-(--text-muted) mb-8">Application information</p>
 
               <div className="bg-(--surface) border border-border rounded-lg p-6 mb-6">
-                <h3 className="text-sm font-semibold text-(--text) mb-5">Homelab Manager</h3>
+                <h3 className="text-sm font-semibold text-(--text) mb-5">Subnetly</h3>
                 <div className="flex items-center justify-between py-3 border-b border-(--muted-bg-alt) last:border-b-0">
                   <div>
                     <div className="text-[13px] font-medium text-(--text)">Version</div>

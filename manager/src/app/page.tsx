@@ -607,7 +607,7 @@ export default function Home() {
       <div className="flex-1 flex flex-col overflow-hidden bg-(--bg)">
         <header className="h-(--topnav-h) bg-(--surface) border-b border-border flex items-center px-6 justify-between">
           <div className="flex items-center gap-2 text-sm">
-            <span>Homelab Manager</span>
+            <span>Subnetly</span>
             <ChevronRight size={14} className="text-(--text-slate)" />
             <strong>{viewTitles[activeView]}</strong>
           </div>

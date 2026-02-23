@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Homelab Manager",
+  title: "Subnetly",
   description: "Next-generation network & infrastructure management platform",
 };
 
