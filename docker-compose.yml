@@ -33,11 +33,13 @@ services:
     environment:
       DATABASE_URL: "postgresql://subnetly:subnetly@db:5432/subnetly?schema=public"
       NODE_ENV: production
-      BETTER_AUTH_SECRET: "${BETTER_AUTH_SECRET:-change-me-to-a-random-32-char-secret-key!}"
+      BETTER_AUTH_SECRET: "${BETTER_AUTH_SECRET:-dev-only-change-me-before-production}"
       BETTER_AUTH_URL: "${BETTER_AUTH_URL:-http://localhost:3000}"
       ADMIN_EMAIL: "${ADMIN_EMAIL:-admin@subnetly.local}"
-      ADMIN_PASSWORD: "${ADMIN_PASSWORD:-admin123}"
+      ADMIN_PASSWORD: "${ADMIN_PASSWORD:-}"
       ADMIN_NAME: "${ADMIN_NAME:-Administrator}"
+      SETUP_TOKEN: "${SETUP_TOKEN:-}"
+      HEALTHCHECK_ALLOW_SELF_SIGNED: "${HEALTHCHECK_ALLOW_SELF_SIGNED:-false}"
     depends_on:
       db:
         condition: service_healthy

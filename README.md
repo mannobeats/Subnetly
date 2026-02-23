@@ -76,8 +76,14 @@ BETTER_AUTH_URL="http://localhost:3000"
 
 # Optional first-run admin bootstrap
 ADMIN_EMAIL="admin@subnetly.local"
-ADMIN_PASSWORD="admin123"
+ADMIN_PASSWORD="replace-with-a-strong-password"
 ADMIN_NAME="Administrator"
+
+# Production-only setup protection (recommended in all environments)
+SETUP_TOKEN="replace-with-a-random-one-time-setup-token"
+
+# Optional: allow self-signed TLS for service health checks
+HEALTHCHECK_ALLOW_SELF_SIGNED="false"
 ```
 
 ### 3) Prepare database
@@ -94,7 +100,8 @@ npm run dev
 
 Open `http://localhost:3000`.
 
-On first run (empty database), Subnetly can auto-create an admin account using `ADMIN_*` variables.
+In local development, Subnetly can auto-create an initial admin account on first run (empty DB) using `ADMIN_*` variables.
+In production, initial setup requires `SETUP_TOKEN` and a strong `ADMIN_PASSWORD` (12+ chars, non-default).
 
 ## Docker (Optional)
 
@@ -111,6 +118,7 @@ The app runs on `http://localhost:3000` and PostgreSQL on `localhost:5432`.
 - Backup import **replaces all data in the currently active site**.
 - Use export before import or destructive operations.
 - For production usage, set strong secrets and non-default admin credentials.
+- All API mutations are scoped to the authenticated active site; never send `siteId` from clients for ownership control.
 
 ## Scripts
 
@@ -118,6 +126,7 @@ The app runs on `http://localhost:3000` and PostgreSQL on `localhost:5432`.
 - `npm run build` — prisma generate + Next build
 - `npm run start` — run production server
 - `npm run lint` — run ESLint
+- `npm run typecheck` — run strict TypeScript checks
 - `npm run db:push` — sync Prisma schema to DB
 - `npm run db:migrate` — run Prisma migrations (dev)
 - `npm run db:seed` — run seed script

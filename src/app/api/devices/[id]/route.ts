@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/db'
+import { ApiRouteError, handleApiError, requireActiveSiteContext } from '@/lib/api-guard'
 
 function ipToInt(ip: string): number {
   return ip.split('.').reduce((acc, octet) => (acc << 8) + parseInt(octet), 0) >>> 0
@@ -17,14 +18,29 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { siteId } = await requireActiveSiteContext()
     const { id } = await params
     const body = await request.json()
-    const cleanBody = { ...body }
-    if (cleanBody.ipAddress) cleanBody.ipAddress = cleanBody.ipAddress.trim()
-    if (cleanBody.name) cleanBody.name = cleanBody.name.trim()
-    if (cleanBody.macAddress) cleanBody.macAddress = cleanBody.macAddress.trim()
+    const oldDevice = await prisma.device.findFirst({ where: { id, siteId } })
+    if (!oldDevice) {
+      throw new ApiRouteError('Device not found in active site', 404)
+    }
 
-    const oldDevice = await prisma.device.findUnique({ where: { id } })
+    const cleanBody = {
+      name: body.name !== undefined ? String(body.name).trim() : undefined,
+      macAddress: body.macAddress !== undefined ? String(body.macAddress).trim() : undefined,
+      ipAddress: body.ipAddress !== undefined ? String(body.ipAddress).trim() : undefined,
+      category: body.category,
+      status: body.status,
+      serial: body.serial,
+      assetTag: body.assetTag,
+      notes: body.notes,
+      rackId: body.rackId,
+      rackPosition: body.rackPosition,
+      deviceTypeId: body.deviceTypeId,
+      platform: body.platform,
+    }
+
     const device = await prisma.device.update({
       where: { id },
       data: cleanBody,
@@ -75,22 +91,25 @@ export async function PATCH(
     }
 
     await prisma.changeLog.create({
-      data: { objectType: 'Device', objectId: id, action: 'update', changes: JSON.stringify(body) },
+      data: { objectType: 'Device', objectId: id, action: 'update', changes: JSON.stringify(body), siteId },
     })
     return NextResponse.json(device)
   } catch (error) {
-    console.error('PATCH Error:', error)
-    return NextResponse.json({ error: 'Failed to update device' }, { status: 500 })
+    return handleApiError(error, 'Failed to update device')
   }
 }
 
 export async function DELETE(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { siteId } = await requireActiveSiteContext()
     const { id } = await params
-    const device = await prisma.device.findUnique({ where: { id } })
+    const device = await prisma.device.findFirst({ where: { id, siteId } })
+    if (!device) {
+      throw new ApiRouteError('Device not found in active site', 404)
+    }
 
     // Clear assignedTo on any IPAM record linked to this device's IP
     if (device?.ipAddress) {
@@ -104,11 +123,10 @@ export async function DELETE(
       where: { id },
     })
     await prisma.changeLog.create({
-      data: { objectType: 'Device', objectId: id, action: 'delete', changes: JSON.stringify({ name: device?.name, ipAddress: device?.ipAddress }) },
+      data: { objectType: 'Device', objectId: id, action: 'delete', changes: JSON.stringify({ name: device.name, ipAddress: device.ipAddress }), siteId },
     })
     return NextResponse.json({ message: 'Device deleted' })
   } catch (error) {
-    console.error('DELETE Error:', error)
-    return NextResponse.json({ error: 'Failed to delete device' }, { status: 500 })
+    return handleApiError(error, 'Failed to delete device')
   }
 }

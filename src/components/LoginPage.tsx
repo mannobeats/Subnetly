@@ -26,11 +26,11 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
       try {
         const res = await fetch('/api/auth/setup')
         const data = await res.json()
-        if (data.needsSetup) {
+        if (data.needsSetup && process.env.NODE_ENV !== 'production') {
           const setupRes = await fetch('/api/auth/setup', { method: 'POST' })
           const setupData = await setupRes.json()
           if (setupData.setup) {
-            setSetupMessage('Default admin account created. Sign in with the credentials below.')
+            setSetupMessage('Initial admin account created from server configuration. Sign in using your configured credentials.')
           }
         }
       } catch {
@@ -104,8 +104,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
             <div>
               <strong className="block mb-1">{setupMessage}</strong>
               <span className="block mt-1 text-[11px] text-(--info-accent) leading-relaxed">
-                Email: <code className="rounded bg-(--info-code-bg) px-1.5 py-px text-[11px]">{process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'admin@subnetly.local'}</code><br />
-                Password: <code className="rounded bg-(--info-code-bg) px-1.5 py-px text-[11px]">{process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'admin123'}</code>
+                Set `ADMIN_EMAIL` and `ADMIN_PASSWORD` in server environment variables before first setup.
               </span>
             </div>
           </div>

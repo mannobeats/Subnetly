@@ -2,32 +2,40 @@ import { NextResponse } from 'next/server'
 import prisma from '@/lib/db'
 import { getActiveSite } from '@/lib/site-context'
 
-async function pingUrl(url: string, timeoutMs: number): Promise<{ status: number; responseTime: number }> {
+async function pingUrl(url: string, timeoutMs: number, allowSelfSigned: boolean): Promise<{ status: number; responseTime: number }> {
   const start = Date.now()
-
-  // Accept self-signed certs (extremely common in homelabs — Proxmox, TrueNAS, etc.)
-  const prevTls = process.env.NODE_TLS_REJECT_UNAUTHORIZED
-  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
+  const previousTlsSetting = process.env.NODE_TLS_REJECT_UNAUTHORIZED
+  if (allowSelfSigned) {
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
+  }
 
   try {
     const controller = new AbortController()
     const timer = setTimeout(() => controller.abort(), timeoutMs)
+    const init: RequestInit = {
+      signal: controller.signal,
+      redirect: 'follow',
+      headers: { 'User-Agent': 'Subnetly/1.0 HealthCheck' },
+    }
 
-    const headers = { 'User-Agent': 'Subnetly/1.0 HealthCheck' }
     let res: Response
     try {
       // Try HEAD first (lighter)
-      res = await fetch(url, { method: 'HEAD', signal: controller.signal, redirect: 'follow', headers })
+      res = await fetch(url, { ...init, method: 'HEAD' })
     } catch {
       // Fallback to GET if HEAD is rejected
-      res = await fetch(url, { method: 'GET', signal: controller.signal, redirect: 'follow', headers })
+      res = await fetch(url, { ...init, method: 'GET' })
     }
     clearTimeout(timer)
     return { status: res.status, responseTime: Date.now() - start }
   } finally {
-    // Restore original TLS setting
-    if (prevTls === undefined) delete process.env.NODE_TLS_REJECT_UNAUTHORIZED
-    else process.env.NODE_TLS_REJECT_UNAUTHORIZED = prevTls
+    if (allowSelfSigned) {
+      if (previousTlsSetting === undefined) {
+        delete process.env.NODE_TLS_REJECT_UNAUTHORIZED
+      } else {
+        process.env.NODE_TLS_REJECT_UNAUTHORIZED = previousTlsSetting
+      }
+    }
   }
 }
 
@@ -59,6 +67,7 @@ export async function POST() {
     })
 
     const timeoutMs = (settings.healthCheckTimeout || 10) * 1000
+    const allowSelfSigned = process.env.HEALTHCHECK_ALLOW_SELF_SIGNED === 'true'
     const results: { id: string; name: string; status: string; previousStatus: string; responseTime: number | null; error?: string }[] = []
 
     for (const svc of services) {
@@ -69,7 +78,7 @@ export async function POST() {
       const previousStatus = svc.healthStatus
 
       try {
-        const ping = await pingUrl(svc.url, timeoutMs)
+        const ping = await pingUrl(svc.url, timeoutMs, allowSelfSigned)
         responseTime = ping.responseTime
         newStatus = determineStatus(ping.status, ping.responseTime)
       } catch (err) {
