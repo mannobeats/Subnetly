@@ -38,12 +38,6 @@ services:
       # REQUIRED: replace with a strong random secret.
       BETTER_AUTH_SECRET: "replace-with-a-long-random-secret"
 
-      # Set to your public URL when using domain/tunnel/reverse proxy.
-      BETTER_AUTH_URL: "http://localhost:3000"
-
-      # Optional: comma-separated additional trusted origins.
-      BETTER_AUTH_TRUSTED_ORIGINS: ""
-
       # Optional: allow self-signed certs for service health checks.
       HEALTHCHECK_ALLOW_SELF_SIGNED: "false"
     depends_on:

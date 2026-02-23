@@ -64,15 +64,6 @@ services:
       # REQUIRED: replace with a strong random secret.
       BETTER_AUTH_SECRET: "replace-with-a-long-random-secret"
 
-      # Set to your public URL when using reverse proxy/tunnel/domain.
-      # Examples:
-      # - http://10.0.10.50:3000
-      # - https://subnetly.example.com
-      BETTER_AUTH_URL: "http://localhost:3000"
-
-      # Optional: comma-separated additional trusted origins.
-      BETTER_AUTH_TRUSTED_ORIGINS: ""
-
       # Optional: allow self-signed certs for service health checks.
       HEALTHCHECK_ALLOW_SELF_SIGNED: "false"
 
@@ -96,26 +87,6 @@ docker compose up -d
 On first startup, Subnetly shows **Initial Setup**.
 
 - Create owner name/email/password.
-
-## Cloudflare Tunnel / Reverse Proxy
-
-Set `BETTER_AUTH_URL` to your public URL.
-
-Example:
-
-```env
-BETTER_AUTH_URL="https://subnetly.example.com"
-BETTER_AUTH_TRUSTED_ORIGINS="https://subnetly.example.com"
-```
-
-Route basics:
-
-- Hostname: your public subdomain
-- Path: empty (route all paths)
-- Service type: HTTP
-- Service URL: your host IP + chosen host port (example `http://10.0.10.50:3000`)
-
-If you get `NXDOMAIN`, fix DNS record/tunnel routing first.
 
 ## Local Development
 
