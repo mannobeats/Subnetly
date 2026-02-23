@@ -162,6 +162,7 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
   const [profileEmail, setProfileEmail] = useState('')
   const [profileSaving, setProfileSaving] = useState(false)
   const [profileSuccess, setProfileSuccess] = useState(false)
+  const [profileError, setProfileError] = useState('')
 
   // Password form
   const [currentPassword, setCurrentPassword] = useState('')
@@ -285,17 +286,41 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
   const handleProfileSave = async () => {
     setProfileSaving(true)
     setProfileSuccess(false)
+    setProfileError('')
     try {
-      await authClient.updateUser({
+      if (!profileName.trim() || !profileEmail.trim()) {
+        setProfileError('Name and email are required')
+        return
+      }
+
+      const updateNameResult = await authClient.updateUser({
         name: profileName,
       })
-      if (profileEmail !== session?.user?.email) {
-        await authClient.changeEmail({ newEmail: profileEmail })
+      if (updateNameResult.error) {
+        setProfileError(updateNameResult.error.message || 'Failed to update profile name')
+        return
       }
+
+      if (profileEmail !== session?.user?.email) {
+        const emailResult = await authClient.changeEmail({ newEmail: profileEmail.trim().toLowerCase() })
+        if (emailResult.error) {
+          setProfileError(emailResult.error.message || 'Failed to update email')
+          return
+        }
+      }
+
+      setSession((prev) => prev ? {
+        ...prev,
+        user: {
+          ...prev.user,
+          name: profileName.trim(),
+          email: profileEmail.trim().toLowerCase(),
+        },
+      } : prev)
       setProfileSuccess(true)
       setTimeout(() => setProfileSuccess(false), 3000)
     } catch {
-      // Error saving profile
+      setProfileError('Failed to update profile')
     } finally {
       setProfileSaving(false)
     }
@@ -356,6 +381,12 @@ export default function SettingsView({ activeTab = 'profile', categories = [], v
 
               <div className="bg-(--surface) border border-border rounded-lg p-6 mb-6">
                 <div className="w-16 h-16 rounded-full bg-linear-to-br from-(--blue) to-(--blue-light) text-white flex items-center justify-center text-2xl font-bold uppercase mb-6">{initials}</div>
+                {profileError && (
+                  <div className="mb-4 flex items-center gap-2 rounded-md border border-(--red-border) bg-(--red-bg) p-3 text-xs text-(--red)">
+                    <AlertCircle size={14} className="shrink-0" />
+                    <span>{profileError}</span>
+                  </div>
+                )}
                 <div className="space-y-4">
                   <div className="space-y-1.5">
                     <Label className="text-xs font-semibold text-muted-foreground">Display Name</Label>

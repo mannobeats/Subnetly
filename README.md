@@ -69,15 +69,16 @@ npm install
 
 Create/update `.env` with at least:
 
+You can start from `.env.example`:
+
+```bash
+cp .env.example .env
+```
+
 ```env
 DATABASE_URL="postgresql://subnetly:subnetly@localhost:5432/subnetly?schema=public"
 BETTER_AUTH_SECRET="replace-with-a-long-random-secret"
 BETTER_AUTH_URL="http://localhost:3000"
-
-# Optional first-run admin bootstrap
-ADMIN_EMAIL="admin@subnetly.local"
-ADMIN_PASSWORD="replace-with-a-strong-password"
-ADMIN_NAME="Administrator"
 
 # Production-only setup protection (recommended in all environments)
 SETUP_TOKEN="replace-with-a-random-one-time-setup-token"
@@ -100,8 +101,9 @@ npm run dev
 
 Open `http://localhost:3000`.
 
-In local development, Subnetly can auto-create an initial admin account on first run (empty DB) using `ADMIN_*` variables.
-In production, initial setup requires `SETUP_TOKEN` and a strong `ADMIN_PASSWORD` (12+ chars, non-default).
+On first run (empty database), Subnetly shows an **Initial Setup** screen where you create the owner account (name, email, password).
+
+If `SETUP_TOKEN` is configured, you must enter it during initial setup.
 
 ## Docker (Optional)
 
@@ -117,7 +119,7 @@ The app runs on `http://localhost:3000` and PostgreSQL on `localhost:5432`.
 
 - Backup import **replaces all data in the currently active site**.
 - Use export before import or destructive operations.
-- For production usage, set strong secrets and non-default admin credentials.
+- For production usage, set strong secrets and a setup token.
 - All API mutations are scoped to the authenticated active site; never send `siteId` from clients for ownership control.
 
 ## Scripts

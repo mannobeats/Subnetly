@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { authClient } from '@/lib/auth-client'
 import { Wifi, Eye, EyeOff, AlertCircle, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -18,29 +18,6 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [checkingSetup, setCheckingSetup] = useState(true)
-  const [setupMessage, setSetupMessage] = useState('')
-
-  useEffect(() => {
-    const checkAndSetup = async () => {
-      try {
-        const res = await fetch('/api/auth/setup')
-        const data = await res.json()
-        if (data.needsSetup && process.env.NODE_ENV !== 'production') {
-          const setupRes = await fetch('/api/auth/setup', { method: 'POST' })
-          const setupData = await setupRes.json()
-          if (setupData.setup) {
-            setSetupMessage('Initial admin account created from server configuration. Sign in using your configured credentials.')
-          }
-        }
-      } catch {
-        // Setup check failed, continue to login
-      } finally {
-        setCheckingSetup(false)
-      }
-    }
-    checkAndSetup()
-  }, [])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -66,23 +43,6 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
     }
   }
 
-  if (checkingSetup) {
-    return (
-      <div className="flex min-h-screen items-center justify-center p-4" style={{ background: 'var(--gradient-login-bg)' }}>
-        <div className={cn(
-          "w-full max-w-[400px] rounded-xl border border-border bg-card p-10",
-          "shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05),0_20px_25px_-5px_rgba(0,0,0,0.08)]",
-          "animate-in fade-in slide-in-from-bottom-1 duration-300"
-        )}>
-          <div className="flex flex-col items-center gap-4 py-8 text-muted-foreground text-[13px]">
-            <Loader2 size={24} className="animate-spin" />
-            <span>Initializing...</span>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="flex min-h-screen items-center justify-center p-4" style={{ background: 'var(--gradient-login-bg)' }}>
       <div className={cn(
@@ -97,18 +57,6 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
           <h1 className="text-xl font-bold text-foreground mb-1">Subnetly</h1>
           <p className="text-[13px] text-muted-foreground">Network & Infrastructure Management</p>
         </div>
-
-        {setupMessage && (
-          <div className="mb-6 flex gap-3 items-start rounded-md border border-(--info-border) bg-(--blue-bg) p-3 text-xs text-(--info-text)">
-            <AlertCircle size={14} className="mt-0.5 shrink-0" />
-            <div>
-              <strong className="block mb-1">{setupMessage}</strong>
-              <span className="block mt-1 text-[11px] text-(--info-accent) leading-relaxed">
-                Set `ADMIN_EMAIL` and `ADMIN_PASSWORD` in server environment variables before first setup.
-              </span>
-            </div>
-          </div>
-        )}
 
         {error && (
           <div className="mb-6 flex items-center gap-2 rounded-md border border-(--red-border) bg-(--red-bg) p-3 text-xs text-(--red)">

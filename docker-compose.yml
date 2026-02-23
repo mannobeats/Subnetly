@@ -35,9 +35,6 @@ services:
       NODE_ENV: production
       BETTER_AUTH_SECRET: "${BETTER_AUTH_SECRET:-dev-only-change-me-before-production}"
       BETTER_AUTH_URL: "${BETTER_AUTH_URL:-http://localhost:3000}"
-      ADMIN_EMAIL: "${ADMIN_EMAIL:-admin@subnetly.local}"
-      ADMIN_PASSWORD: "${ADMIN_PASSWORD:-}"
-      ADMIN_NAME: "${ADMIN_NAME:-Administrator}"
       SETUP_TOKEN: "${SETUP_TOKEN:-}"
       HEALTHCHECK_ALLOW_SELF_SIGNED: "${HEALTHCHECK_ALLOW_SELF_SIGNED:-false}"
     depends_on:
